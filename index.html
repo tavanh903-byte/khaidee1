@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ຂາຍດີ - Khaidee Marketplace</title>
 <meta name="theme-color" content="#0a0a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ຂາຍດີ">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Sarabun:wght@300;400;600;700&family=Noto+Sans+Lao:wght@300;400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -288,10 +294,11 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 /* TOP BAR */
 .topbar{background:linear-gradient(135deg,var(--black) 0%,var(--dark2) 100%);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,168,76,.2);position:sticky;top:0;z-index:100}
 .logo-wrap{display:flex;align-items:center;gap:8px}
-.logo-anim{width:36px;height:36px;position:relative}
-.logo-ring-s{position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--gold);animation:spin 3s linear infinite}
-.logo-ring-s2{position:absolute;inset:4px;border-radius:50%;border:1px solid var(--gold-dark);animation:spin 2s linear infinite reverse}
-.logo-center{position:absolute;inset:8px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:var(--black)}
+.logo-anim{width:40px;height:40px;position:relative;flex-shrink:0}
+.logo-ring-s{position:absolute;inset:-2px;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(201,168,76,.9);border-right-color:rgba(201,168,76,.3);animation:spin 3s linear infinite;filter:drop-shadow(0 0 4px rgba(201,168,76,.7))}
+.logo-ring-s2{position:absolute;inset:3px;border-radius:50%;border:1px solid transparent;border-bottom-color:rgba(255,220,100,.7);border-left-color:rgba(255,220,100,.2);animation:spin 2s linear infinite reverse;filter:drop-shadow(0 0 3px rgba(255,220,100,.5))}
+.logo-center{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a2800,#1a1000);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(201,168,76,.4),0 0 12px rgba(201,168,76,.3),inset 0 0 8px rgba(0,0,0,.5)}
+.logo-center svg{width:16px;height:16px;filter:drop-shadow(0 0 4px rgba(255,220,80,.9)) drop-shadow(0 0 8px rgba(201,168,76,.6))}
 .logo-text{font-family:'Cinzel Decorative',serif;font-size:18px;color:var(--gold);text-shadow:0 0 10px rgba(201,168,76,.5)}
 .wallet-btn{background:linear-gradient(135deg,var(--dark3),var(--gray));border:1px solid var(--gold-dark);border-radius:20px;padding:6px 12px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--gold)}
 .wallet-amount{font-weight:700}
@@ -361,6 +368,46 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .avatar-wrap{position:relative;width:80px;height:80px}
 .avatar{width:80px;height:80px;border-radius:50%;border:3px solid var(--gold);object-fit:cover;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;cursor:pointer}
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* COVER PHOTO */
+.profile-cover{position:relative;width:100%;height:160px;background:linear-gradient(135deg,#1a1200,#2a1f00,#1a1200);overflow:hidden;cursor:pointer}
+.profile-cover img{width:100%;height:100%;object-fit:cover}
+.profile-cover-edit{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px)}
+.profile-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.7))}
+/* Avatar floats outside cover using negative margin-top */
+.profile-avatar-outer{position:relative;height:52px;display:flex;align-items:flex-start;padding-left:20px;pointer-events:none}
+.profile-avatar-over{position:relative;top:-44px;width:88px;height:88px;border-radius:50%;border:3px solid var(--gold);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);flex-shrink:0;z-index:5;pointer-events:all}
+.profile-avatar-over img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.profile-avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--black);border:2px solid var(--black);z-index:6;pointer-events:none}
+/* PUBLIC PROFILE MODAL */
+.pub-profile-modal{position:fixed;inset:0;z-index:900;background:var(--black);overflow-y:auto;display:none;flex-direction:column}
+.pub-cover{position:relative;width:100%;height:200px;background:linear-gradient(135deg,#1a1200,#2a1f00);overflow:hidden;flex-shrink:0}
+.pub-cover img{width:100%;height:100%;object-fit:cover}
+.pub-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.85))}
+.pub-back-btn{position:absolute;top:16px;left:16px;width:36px;height:36px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#fff;backdrop-filter:blur(4px);z-index:10}
+/* pub-avatar อยู่นอก cover */
+.pub-avatar-outer{padding-left:20px;height:0;position:relative}
+.pub-avatar{position:relative;top:-44px;width:88px;height:88px;border-radius:50%;border:3px solid var(--gold);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+.pub-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pub-info{padding:52px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.pub-name{font-size:20px;font-weight:700;color:var(--text)}
+.pub-id{font-size:11px;color:var(--text2);margin-top:2px;letter-spacing:1px}
+.pub-bio{font-size:13px;color:var(--text2);margin-top:6px;line-height:1.5}
+.pub-stats{display:flex;gap:24px;margin-top:12px}
+.pub-stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+.pub-stat-num{font-size:18px;font-weight:700;color:var(--gold)}
+.pub-stat-label{font-size:11px;color:var(--text2)}
+/* TIKTOK GRID */
+.tiktok-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.07);padding:0 16px}
+.tiktok-tab{flex:1;text-align:center;padding:12px 0;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.tiktok-tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:700}
+.tiktok-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px}
+.tiktok-cell{aspect-ratio:3/4;background:var(--dark2);overflow:hidden;cursor:pointer;position:relative}
+.tiktok-cell:active{opacity:.8}
+.tiktok-cell-img{width:100%;height:100%;object-fit:cover}
+.tiktok-cell-emoji{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--dark2)}
+.tiktok-cell-price{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:4px 6px 6px;font-size:11px;font-weight:700;color:#fff}
+.tiktok-cell-sold{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.7);font-size:9px;border-radius:4px;padding:2px 4px}
+.tiktok-empty{grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text2);font-size:13px}
 .cart-badge{position:absolute;top:-5px;right:-5px;background:#e53;color:#fff;border-radius:50%;width:20px;height:20px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #0a0a0a;pointer-events:none}
 /* NOTIFICATION BADGE */
 .notif-badge{position:absolute;top:4px;right:4px;background:#e53;color:#fff;border-radius:10px;min-width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
@@ -407,8 +454,29 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .bill-id{font-size:11px;color:var(--text2);font-family:monospace}
 .bill-status{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
 .bill-status.pending{background:rgba(201,168,76,.2);color:var(--gold)}
+.bill-status.packed{background:rgba(255,160,0,.2);color:#ffa040}
 .bill-status.sent{background:rgba(74,127,193,.2);color:var(--accent)}
+.bill-status.delivering{background:rgba(100,180,255,.2);color:#64b4ff}
 .bill-status.done{background:rgba(0,180,100,.2);color:#4c8}
+/* TRACKING TIMELINE */
+.tracking-wrap{padding:8px 0 4px}
+.tracking-step{display:flex;gap:12px;position:relative;padding-bottom:18px}
+.tracking-step:last-child{padding-bottom:0}
+.tracking-step:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;width:2px;bottom:0;background:rgba(255,255,255,.08)}
+.tracking-step.active::before{background:rgba(201,168,76,.3)}
+.tracking-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:2px solid rgba(255,255,255,.1);background:var(--dark2)}
+.tracking-step.active .tracking-icon{border-color:var(--gold);background:rgba(201,168,76,.15);box-shadow:0 0 10px rgba(201,168,76,.3)}
+.tracking-step.done-step .tracking-icon{border-color:#4c8;background:rgba(0,180,100,.15)}
+.tracking-body{flex:1;padding-top:4px}
+.tracking-title{font-size:13px;font-weight:700;color:var(--text)}
+.tracking-step.active .tracking-title{color:var(--gold)}
+.tracking-step.done-step .tracking-title{color:#4c8}
+.tracking-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.5}
+.tracking-num-box{background:rgba(74,127,193,.08);border:1px solid rgba(74,127,193,.25);border-radius:8px;padding:10px 12px;margin-top:10px;display:flex;align-items:center;gap:10px}
+.tracking-num-box .tn-label{font-size:11px;color:var(--text2)}
+.tracking-num-box .tn-val{font-size:15px;font-weight:700;color:var(--accent);letter-spacing:1px}
+.copy-btn{background:rgba(74,127,193,.2);border:1px solid rgba(74,127,193,.4);color:var(--accent);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer}
+.seller-track-card{background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:14px;margin-bottom:10px}
 .bill-product{display:flex;gap:10px;align-items:center;margin-bottom:10px}
 .bill-product-img{width:50px;height:50px;border-radius:8px;object-fit:cover;background:var(--dark2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .bill-product-info{flex:1}
@@ -426,6 +494,8 @@ select.form-input{-webkit-appearance:none;appearance:none}
 /* NOTIFICATION */
 .notif{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--dark3);border:1px solid var(--gold-dark);border-radius:12px;padding:12px 20px;z-index:1000;font-size:13px;color:var(--gold);text-align:center;animation:notifAnim .3s ease;max-width:340px;width:90%}
 @keyframes notifAnim{from{top:60px;opacity:0}to{top:80px;opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* UPLOAD BOX */
 .upload-box{border:2px dashed rgba(201,168,76,.3);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;color:var(--text2);font-size:13px}
 .upload-box:hover{border-color:var(--gold);color:var(--gold)}
@@ -605,7 +675,22 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <div class="logo-anim">
         <div class="logo-ring-s"></div>
         <div class="logo-ring-s2"></div>
-        <div class="logo-center">ຂດ</div>
+        <div class="logo-center">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ncg" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#fff8d0"/>
+                <stop offset="40%" stop-color="#f5e070"/>
+                <stop offset="100%" stop-color="#c9a84c"/>
+              </linearGradient>
+            </defs>
+            <path d="M10 20h5" stroke="url(#ncg)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M15 20h5l7 26h26l5-18H28" stroke="url(#ncg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M28 28h26" stroke="url(#ncg)" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+            <circle cx="33" cy="52" r="5" fill="url(#ncg)"/>
+            <circle cx="53" cy="52" r="5" fill="url(#ncg)"/>
+          </svg>
+        </div>
       </div>
       <span class="logo-text">ຂາຍດີ</span>
     </div>
@@ -639,7 +724,21 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <div style="font-size:16px;font-weight:700;color:var(--gold)">💬 ຫ້ອງສົນທະນາ</div>
     </div>
     <div id="chatListView" style="display:flex;flex-direction:column;flex:1;overflow-y:auto">
-      <!-- Admin / VIP profiles -->
+
+      <!-- 🔍 Friend search — ຢູ່ດ້ານເທິງ -->
+      <div style="padding:12px 16px 10px;background:var(--dark2);border-bottom:1px solid rgba(255,255,255,.07);position:sticky;top:0;z-index:10">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative;flex:1">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none">🔍</span>
+            <input class="form-input" id="friendSearchId"
+              placeholder="ຄົ້ນຫາ ID ຫຼື ຊື່ເພື່ອນ..."
+              style="padding:12px 12px 12px 38px;font-size:14px;width:100%;border-radius:14px;background:var(--dark3)"
+              oninput="searchFriendById()" onkeydown="if(event.key==='Enter')searchFriendById()">
+          </div>
+          <button onclick="searchFriendById()" style="background:var(--gold-dark);border:none;color:var(--black);border-radius:12px;padding:12px 14px;font-size:18px;cursor:pointer;flex-shrink:0">➤</button>
+        </div>
+        <div id="friendSearchResult" style="margin-top:8px"></div>
+      </div>
       <div style="padding:12px 16px;font-size:11px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;letter-spacing:1px">👑 ADMIN — ສາມາດຕິດຕໍ່ໄດ້</div>
       <div class="chat-room-item" onclick="openAdminChat('Tavanh999','99999')" style="border-bottom:1px solid rgba(201,168,76,.1)">
         <div style="position:relative">
@@ -689,16 +788,6 @@ select.form-input{-webkit-appearance:none;appearance:none}
         </div>
       </div>
 
-      <!-- Friend search -->
-      <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.05)">
-        <div style="font-size:11px;color:var(--text2);font-weight:700;letter-spacing:1px;margin-bottom:8px">🔍 ຄົ້ນຫາເພື່ອນດ້ວຍ ID</div>
-        <div style="display:flex;gap:8px">
-          <input class="form-input" id="friendSearchId" placeholder="ໃສ່ User ID ຫຼື ຊື່..." style="flex:1;padding:8px 12px;font-size:13px">
-          <button class="btn btn-gold" style="padding:8px 14px;font-size:13px" onclick="searchFriendById()">ຄົ້ນ</button>
-        </div>
-        <div id="friendSearchResult" style="margin-top:8px"></div>
-      </div>
-
       <div id="privateChatList"></div>
       <div style="padding:16px;text-align:center">
         <button class="btn btn-outline btn-sm" onclick="startNewChat()">+ ເລີ່ມສົນທະນາໃໝ່</button>
@@ -706,9 +795,10 @@ select.form-input{-webkit-appearance:none;appearance:none}
     </div>
     <!-- Chat Room View -->
     <div id="chatRoomView" style="display:none;flex-direction:column;flex:1">
-      <div class="page-header">
+      <div class="page-header" style="gap:10px">
         <button class="back-btn" onclick="backToChatList()">←</button>
-        <div id="chatRoomTitle" style="font-size:15px;font-weight:700"></div>
+        <div id="chatRoomAvatar" style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--blue),var(--accent));font-size:18px"></div>
+        <div id="chatRoomTitle" style="font-size:15px;font-weight:700;flex:1"></div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-bar">
@@ -740,18 +830,32 @@ select.form-input{-webkit-appearance:none;appearance:none}
     </div>
     <!-- Logged in -->
     <div id="profileLoggedIn" style="display:none">
-      <div class="profile-header">
-        <div class="avatar-wrap" onclick="triggerAvatarUpload()" style="cursor:pointer">
-          <div class="avatar" id="profileAvatar">
-            <img id="profileAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
-            <span id="profileAvatarEmoji">👤</span>
-          </div>
-          <div class="avatar-edit">📷</div>
+      <!-- Cover Photo -->
+      <div class="profile-cover" id="profileCover" onclick="triggerCoverUpload()">
+        <img id="profileCoverImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover">
+        <div class="profile-cover-overlay"></div>
+        <div class="profile-cover-edit">📷 ປ່ຽນຮູບພື້ນຫຼັງ</div>
+      </div>
+      <!-- Avatar — อยู่นอก cover ไม่ถูกตัด -->
+      <div class="profile-avatar-outer">
+        <div class="profile-avatar-over" id="profileAvatarOver" onclick="triggerAvatarUpload()">
+          <img id="profileAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
+          <span id="profileAvatarEmoji">👤</span>
+          <div class="profile-avatar-edit-btn">📷</div>
         </div>
-        <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadAvatar()">
-        <div class="profile-user-id" id="profileUserId">ID: #000000</div>
-        <div class="profile-name" id="profileDisplayName">ຜູ້ໃຊ້</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+      </div>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadAvatar()">
+      <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="uploadCover()">
+      <!-- Profile info row -->
+      <div style="padding:50px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end">
+          <div>
+            <div class="profile-name" id="profileDisplayName">ຜູ້ໃຊ້</div>
+            <div class="profile-user-id" id="profileUserId">ID: #000000</div>
+          </div>
+          <button onclick="openMyPublicProfile()" style="background:rgba(201,168,76,.1);border:1px solid var(--gold-dark);color:var(--gold);border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">👁 ໂປຣໄຟລ</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <span id="sellerBadge" style="display:none;background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--black);font-size:11px;padding:3px 10px;border-radius:10px;font-weight:700">⭐ ຜູ້ຂາຍ</span>
         </div>
       </div>
@@ -1183,6 +1287,11 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <div class="form-group">
       <label class="form-label">ໂທລະສັບ</label>
       <input class="form-input" type="tel" id="saPhone" placeholder="020-XXXXXXXX">
+    </div>
+    <div class="form-group">
+      <label class="form-label">📲 ເບີ WhatsApp <span style="color:#f66;font-size:11px">(ຈຳເປັນ — ຮັບແຈ້ງເຕືອນອໍເດີ)</span></label>
+      <input class="form-input" type="tel" id="saWhatsApp" placeholder="856XXXXXXXXX" style="border-color:rgba(37,211,102,.4)">
+      <div style="font-size:11px;color:rgba(37,211,102,.8);margin-top:4px">📌 ໃສ່ລະຫັດປະເທດ ເຊັ່ນ: 85620XXXXXXX (ລາວ) ຫຼື 66XXXXXXXXX (ໄທ)</div>
     </div>
     <div class="form-group">
       <label class="form-label">ອີເມລ</label>
@@ -1808,7 +1917,19 @@ function showProductDetail(id){
     <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--gold);margin-bottom:12px;line-height:1.6">
       ⚠️ ແຄັບຮູບ ID #${p.id} ໄວ້ ຖ້າສິນຄ້າມີບັນຫາ ຕິດຕໍ່ Admin
     </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:14px">ຂາຍໂດຍ: ${p.seller}</div>
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:10px;margin-bottom:14px;cursor:pointer" onclick="closeModal('productModal');setTimeout(()=>openPublicProfile('${p.sellerId||'admin'}'),200)">
+      ${(()=>{
+        const su = JSON.parse(localStorage.getItem('kd_user')||'null');
+        const isSellerUser = su && su.id === p.sellerId;
+        const avImg = isSellerUser && su.avatarImg ? `<img src="${su.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">` : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏪</div>`;
+        return avImg;
+      })()}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--text2)">ຂາຍໂດຍ</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold)">🏪 ${p.seller}</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2)">ກົດດູໂປຣໄຟລ →</div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <button class="btn btn-outline" onclick="addToCart('${p.id}')" style="font-size:13px">🛒 ໃສ່ຕະກ້າ</button>
       <button class="btn btn-gold" onclick="startOrder('${p.id}')" style="font-size:13px">⚡ ສັ່ງຊື້ເລີຍ</button>
@@ -1944,6 +2065,8 @@ function submitGeneralOrder(){
   // Update product sold
   const idx = products.findIndex(x=>x.id===p.id);
   if(idx>=0){products[idx].sold=(products[idx].sold||0)+qty;saveProducts();}
+  waNewOrder(currentUser, order);
+  waNotifySeller(order);
   closeModal('orderModal');
   showBillPopup(order);
 }
@@ -2043,6 +2166,8 @@ function submitGameOrder(){
   };
   orders.push(order); saveOrders();
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
+  waNewGameOrder(currentUser, order);
+  waNotifySeller(order);
   closeModal('gameOrderModal');
   showGameBillPopup(order, p);
 }
@@ -2102,7 +2227,7 @@ function renderBillsPage(){
     <div class="bill-card" onclick="viewBillDetail('${o.id}')">
       <div class="bill-header">
         <span class="bill-id">#${o.id}</span>
-        <span class="bill-status ${o.status==='done'?'done':o.status==='sent'?'sent':'pending'}">${o.status==='done'?'ສຳເລັດ':o.status==='sent'?'ສົ່ງແລ້ວ':'ລໍຖ້າ'}</span>
+        <span class="bill-status ${getStatusClass(o.status)}" style="font-size:10px">${getStatusLabel(o.status)}</span>
       </div>
       <div class="bill-product">
         <div class="bill-product-img">${o.productEmoji||'📦'}</div>
@@ -2110,33 +2235,180 @@ function renderBillsPage(){
           <div class="bill-product-name">${o.productName}</div>
           <div class="bill-product-price">${fmtPrice(o.total)}</div>
           <div style="font-size:11px;color:var(--text2)">${o.date} • #${o.productId}</div>
+          ${o.trackingNum?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📮 ${o.trackingNum}</div>`:''}
         </div>
       </div>
     </div>
   `).join('');
 }
 
+function getStatusLabel(s){
+  return {pending:'⏳ ລໍຖ້າຜູ້ຂາຍ', packed:'📦 ຫຸ້ມຫໍ່ສຳເລັດ', sent:'🚚 ສົ່ງຂົນສ່ງແລ້ວ', delivering:'🏃 ກຳລັງສົ່ງ', done:'✅ ຮັບສຳເລັດ'}[s]||'⏳ ລໍຖ້າ';
+}
+function getStatusClass(s){
+  return {pending:'pending',packed:'packed',sent:'sent',delivering:'delivering',done:'done'}[s]||'pending';
+}
+
+function fallbackCopy(text){
+  const el = document.createElement('textarea');
+  el.value = text; el.style.cssText='position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(el); el.focus(); el.select();
+  try{ document.execCommand('copy'); } catch(e){}
+  document.body.removeChild(el);
+}
+
+function openCourierTracking(courier, trackingNum){
+  const urls  = { anousith:'https://app.anousith.express/login', hal:'https://hal-logistics.la/' };
+  const names = { anousith:'ອານຸສິດ Express', hal:'ຮຸ່ງອາລຸນ / HAL Logistics' };
+  const icons = { anousith:'📦', hal:'🚛' };
+  const colors= { anousith:'#ff8c00', hal:'#1eb464' };
+
+  // Copy to clipboard
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(trackingNum).catch(()=>fallbackCopy(trackingNum));
+  } else { fallbackCopy(trackingNum); }
+
+  // Remove any existing courier overlay
+  const old = document.getElementById('courierOverlay');
+  if(old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'courierOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease';
+  overlay.innerHTML = `
+    <div style="background:#141414;border:2px solid ${colors[courier]}40;border-radius:20px;padding:24px;max-width:300px;width:100%;text-align:center;animation:slideUp .25s ease">
+      <div style="font-size:48px;margin-bottom:6px">${icons[courier]}</div>
+      <div style="font-size:15px;font-weight:700;color:${colors[courier]};margin-bottom:2px">${names[courier]}</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:18px">${urls[courier].replace('https://','')}</div>
+
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;margin-bottom:6px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">📮 ເລກພັດສົ່ງ</div>
+        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:3px;word-break:break-all">${trackingNum}</div>
+      </div>
+      <div style="font-size:11px;color:#4c8;margin-bottom:18px">✅ ຄັດລອກໃສ່ Clipboard ແລ້ວ!</div>
+
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:18px;background:rgba(255,255,255,.03);border-radius:8px;padding:10px">
+        1️⃣ ກົດປຸ່ມ <strong style="color:#fff">ເປີດເວັບ</strong> ລຸ່ມນີ້<br>
+        2️⃣ ຫາຊ່ອງ <strong style="color:#fff">ຕິດຕາມ / ຄົ້ນຫາ</strong><br>
+        3️⃣ <strong style="color:#fff">ວາງ (Paste)</strong> ເລກພັດສົ່ງ → ກົດຄົ້ນຫາ
+      </div>
+
+      <button id="openWebBtn_${courier}"
+        style="background:${colors[courier]};color:#000;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px">
+        🌐 ເປີດ ${names[courier]}
+      </button>
+      <button onclick="document.getElementById('courierOverlay').remove()"
+        style="background:transparent;color:var(--text2);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;font-size:12px;cursor:pointer;width:100%">
+        ປິດ
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  // Attach open event after DOM insert
+  document.getElementById('openWebBtn_'+courier).addEventListener('click', ()=>{
+    window.open(urls[courier], '_blank');
+    overlay.remove();
+  });
+
+  // Tap backdrop to close
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
+}
+
 function viewBillDetail(id){
   const o = orders.find(x=>x.id===id);
   if(!o) return;
+
+  const steps = [
+    {key:'pending',   icon:'🛒', label:'ສັ່ງຊື້ສຳເລັດ',      sub:'ລໍຖ້າຜູ້ຂາຍຮັບອໍເດີ'},
+    {key:'packed',    icon:'📦', label:'ຜູ້ຂາຍຫຸ້ມຫໍ່ສຳເລັດ', sub:'ກຳລັງກຽມສົ່ງຂົນສ່ງ'},
+    {key:'sent',      icon:'🚚', label:'ຝາກຂົນສ່ງແລ້ວ',       sub:'ຢູ່ທີ່ສາງຂົນສ່ງ'},
+    {key:'delivering',icon:'🏃', label:'ກຳລັງຈັດສົ່ງ',        sub:'ຄົນສ່ງຂຶ້ນສົ່ງ'},
+    {key:'done',      icon:'✅', label:'ຮັບສຳເລັດ',           sub:'ສຳເລັດ'},
+  ];
+  const statusOrder = ['pending','packed','sent','delivering','done'];
+  const curIdx = statusOrder.indexOf(o.status||'pending');
+
+  const stepsHtml = steps.map((s,i)=>{
+    const isDone  = i < curIdx;
+    const isActive= i === curIdx;
+    const cls = isDone ? 'done-step' : isActive ? 'active' : '';
+    const subTxt = isDone && o.trackingLog ? (o.trackingLog[s.key]||s.sub) : s.sub;
+    return `<div class="tracking-step ${cls}">
+      <div class="tracking-icon">${s.icon}</div>
+      <div class="tracking-body">
+        <div class="tracking-title">${s.label}</div>
+        <div class="tracking-sub">${subTxt}${isDone && o.trackingDates && o.trackingDates[s.key] ? ' • '+o.trackingDates[s.key] : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const hasTracking = (o.status==='sent'||o.status==='delivering'||o.status==='done') && o.trackingNum;
+  const trackingBox = hasTracking ? `
+    <div class="tracking-num-box" style="flex-direction:column;align-items:stretch;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div class="tn-label">📮 ເລກພັດສົ່ງ / Tracking No.</div>
+          <div class="tn-val">${o.trackingNum}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">ຂົນສ່ງ: ${o.courier||o.shipping||'-'}</div>
+        </div>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText('${o.trackingNum}');showNotif('✅ ຄັດລອກເລກພັດສົ່ງແລ້ວ!')">📋 ຄັດລອກ</button>
+      </div>
+      <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">🔍 ກວດສອບສະຖານະພັດສົ່ງ:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="openCourierTracking('anousith','${o.trackingNum}')"
+          style="background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,100,0,.08));border:1.5px solid rgba(255,140,0,.5);border-radius:12px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:.2s"
+          onmouseover="this.style.borderColor='#ff8c00'" onmouseout="this.style.borderColor='rgba(255,140,0,.5)'">
+          <span style="font-size:24px">📦</span>
+          <span style="font-size:12px;font-weight:700;color:#ff8c00">ອານຸສິດ</span>
+          <span style="font-size:10px;color:var(--text2)">Anousith Express</span>
+          <span style="font-size:9px;background:rgba(255,140,0,.2);color:#ff8c00;border-radius:4px;padding:2px 6px">ກົດເພື່ອເປີດ →</span>
+        </button>
+        <button onclick="openCourierTracking('hal','${o.trackingNum}')"
+          style="background:linear-gradient(135deg,rgba(30,180,100,.12),rgba(0,150,80,.08));border:1.5px solid rgba(30,180,100,.5);border-radius:12px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:.2s"
+          onmouseover="this.style.borderColor='#1eb464'" onmouseout="this.style.borderColor='rgba(30,180,100,.5)'">
+          <span style="font-size:24px">🚛</span>
+          <span style="font-size:12px;font-weight:700;color:#1eb464">ຮຸ່ງອາລຸນ</span>
+          <span style="font-size:10px;color:var(--text2)">HAL Logistics</span>
+          <span style="font-size:9px;background:rgba(30,180,100,.2);color:#1eb464;border-radius:4px;padding:2px 6px">ກົດເພື່ອເປີດ →</span>
+        </button>
+      </div>
+      <div style="font-size:10px;color:var(--text2);text-align:center;line-height:1.6;margin-top:4px">
+        💡 ກົດປຸ່ມຂົນສ່ງ → <strong style="color:var(--gold)">ເລກພັດສົ່ງຖືກ copy ອັດຕະໂນມັດ</strong><br>→ ວາງໃນຊ່ອງ Search ຂອງເວັບໄດ້ເລີຍ
+      </div>
+    </div>` : '';
+
+  const proofHtml = o.sellerImg ? `
+    <div style="margin:10px 0">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">📸 ຫຼັກຖານການສົ່ງ</div>
+      <img src="${o.sellerImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover">
+    </div>` : '';
+
   const html = `
-    <div class="modal-title">🧾 ລາຍລະອຽດບິນ</div>
-    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:12px">
-      <div class="bill-detail-row"><span>ບິນ</span><span>#${o.id}</span></div>
-      <div class="bill-detail-row"><span>ສິນຄ້າ</span><span>${o.productName}</span></div>
-      <div class="bill-detail-row"><span>ID</span><span>#${o.productId}</span></div>
-      <div class="bill-detail-row"><span>ຈຳນວນ</span><span>${o.qty}</span></div>
-      <div class="bill-detail-row"><span>ລາຄາ</span><span>${fmtPrice(o.total)}</span></div>
-      ${o.name?`<div class="bill-detail-row"><span>ຊື່</span><span>${o.name}</span></div>`:''}
-      ${o.phone?`<div class="bill-detail-row"><span>ໂທ</span><span>${o.phone}</span></div>`:''}
-      ${o.ban?`<div class="bill-detail-row"><span>ທີ່ຢູ່</span><span>${o.ban}, ${o.muang}, ${o.khwaeng}</span></div>`:''}
-      ${o.shipping?`<div class="bill-detail-row"><span>ຂົນສ່ງ</span><span>${o.shipping}</span></div>`:''}
-      <div class="bill-detail-row"><span>ວັນທີ</span><span>${o.date}</span></div>
-      <div class="bill-detail-row"><span>ສະຖານະ</span><span>${o.status==='done'?'✅ ສຳເລັດ':o.status==='sent'?'📦 ສົ່ງແລ້ວ':'⏳ ລໍຖ້າ'}</span></div>
+    <div class="modal-title">📦 ຕິດຕາມອໍເດີ</div>
+    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--text2)">ບິນ #${o.id}</span>
+        <span class="bill-status ${getStatusClass(o.status)}">${getStatusLabel(o.status)}</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="font-size:36px">${o.productEmoji||'📦'}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700">${o.productName}</div>
+          <div style="font-size:13px;color:var(--gold)">${fmtPrice(o.total)} × ${o.qty||1}</div>
+          <div style="font-size:11px;color:var(--text2)">${o.date}</div>
+        </div>
+      </div>
     </div>
-    ${o.sellerImg?`<img src="${o.sellerImg}" style="width:100%;border-radius:10px;margin-bottom:8px">`:''}
-    ${o.sellerVideo?`<video src="${o.sellerVideo}" controls style="width:100%;border-radius:10px;margin-bottom:8px"></video>`:''}
-    <div class="bill-warning">⚠️ ກະລຸນາແຄັບຮູບພາບ ID #${o.productId} ໄວ້ ຖ້າສິນຄ້າມີບັນຫາ ໃຫ້ຕິດຕໍ່ Admin 020-549-66168</div>
+    ${trackingBox}
+    <div style="font-size:12px;color:var(--text2);margin:12px 0 8px;font-weight:600">📍 ສະຖານະການຈັດສົ່ງ</div>
+    <div class="tracking-wrap">${stepsHtml}</div>
+    ${proofHtml}
+    <div style="border-top:1px solid rgba(255,255,255,.06);margin:12px 0 8px;padding-top:8px">
+      <div class="bill-detail-row"><span>ທີ່ຢູ່ຈັດສົ່ງ</span><span>${[o.ban,o.muang,o.khwaeng].filter(Boolean).join(', ')||'-'}</span></div>
+      <div class="bill-detail-row"><span>ຂົນສ່ງ</span><span>${o.shipping||'-'}</span></div>
+      <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${o.date}</span></div>
+    </div>
+    <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:4px">ປິດ</button>
   `;
   document.getElementById('billDetailContent').innerHTML = html;
   openModal('billDetailModal');
@@ -2153,8 +2425,9 @@ function showSaleHistory(){
         <div style="font-size:12px;color:var(--gold)">${fmtPrice(o.total)}</div>
         <div style="font-size:11px;color:var(--text2)">${o.date} • #${o.id}</div>
         <div style="font-size:11px;color:var(--text2)">${o.name||''} ${o.phone||''}</div>
+        ${o.trackingNum?`<div style="font-size:11px;color:var(--accent)">📮 ${o.trackingNum}</div>`:''}
       </div>
-      <div class="bill-status ${o.status==='done'?'done':o.status==='sent'?'sent':'pending'}" style="font-size:11px">${o.status==='done'?'ສຳເລັດ':o.status==='sent'?'ສົ່ງ':'ລໍ'}</div>
+      <div class="bill-status ${getStatusClass(o.status)}" style="font-size:10px;text-align:center;max-width:60px">${getStatusLabel(o.status)}</div>
     </div>
   `).join('') : '<div style="text-align:center;color:var(--text2);padding:20px">ຍັງບໍ່ມີການຂາຍ</div>';
   document.getElementById('saleHistoryContent').innerHTML = html;
@@ -2164,44 +2437,115 @@ function showSaleHistory(){
 function sellerViewBill(id){
   const o = orders.find(x=>x.id===id);
   if(!o) return;
-  const html = `
-    <div class="modal-title">📦 ອັດໂຫລດຫຼັກຖານສົ່ງ</div>
-    <div class="info-box">ກະລຸນາສົ່ງຂອງພາຍໃນ 24 ຊົ່ວໂມງ ຖ້າທ່ານບໍ່ສົ່ງ ບິນນີ້ຈະໝົດອາຍຸໃນ 24 ຊົ່ວໂມງ</div>
-    <div class="bill-detail-row" style="margin-bottom:8px"><span>ລູກຄ້າ</span><span>${o.name||'-'}</span></div>
-    <div class="bill-detail-row" style="margin-bottom:8px"><span>ໂທ</span><span>${o.phone||'-'}</span></div>
-    <div class="bill-detail-row" style="margin-bottom:12px"><span>ທີ່ຢູ່</span><span>${o.ban||''}, ${o.muang||''}, ${o.khwaeng||''}</span></div>
+
+  const statusOrder = ['pending','packed','sent','delivering','done'];
+  const curIdx = statusOrder.indexOf(o.status||'pending');
+
+  const statusBtns = [
+    {key:'packed',    label:'📦 ຫຸ້ມຫໍ່ສຳເລັດ',   color:'#ffa040'},
+    {key:'sent',      label:'🚚 ຝາກຂົນສ່ງແລ້ວ',    color:'var(--accent)'},
+    {key:'delivering',label:'🏃 ກຳລັງຈັດສົ່ງ',     color:'#64b4ff'},
+    {key:'done',      label:'✅ ຮັບສຳເລັດ',        color:'#4c8'},
+  ].map(s=>{
+    const idx2 = statusOrder.indexOf(s.key);
+    const isCur = s.key === o.status;
+    const isDone2 = idx2 < curIdx;
+    const disabled = isDone2 ? 'disabled style="opacity:.4;cursor:default"' : '';
+    const style = isCur ? `style="border-color:${s.color};color:${s.color};opacity:1"` : `style="color:${s.color};border-color:${s.color}40"`;
+    return `<button class="btn btn-outline" ${style} ${disabled} onclick="sellerUpdateStatus('${o.id}','${s.key}')">${isCur?'◉ ':''} ${s.label}</button>`;
+  }).join('');
+
+  const trackSection = (curIdx >= 2) ? `
     <div class="form-group">
-      <label class="form-label">📷 ກະລຸນາໃສ່ຮູບພາບໃບບິນຂົນສ່ງ</label>
-      <div class="upload-box" onclick="document.getElementById('sellerBillImg_${o.id}').click()">📸 ອັດໂຫລດຮູບ</div>
+      <label class="form-label">📮 ໃສ່ເລກພັດສົ່ງ (Tracking No.)</label>
+      <input class="form-input" id="trackNum_${o.id}" placeholder="ເຊັ່ນ: LP123456789TH" value="${o.trackingNum||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">🚛 ຊື່ຂົນສ່ງ</label>
+      <input class="form-input" id="courierName_${o.id}" placeholder="ເຊັ່ນ: ຂົນສ່ງດ່ວນ, JNT, ໄປສະນີລາວ" value="${o.courier||''}">
+    </div>
+    <button class="btn btn-gold" onclick="saveTrackingNum('${o.id}')" style="margin-bottom:8px">💾 ບັນທຶກເລກພັດສົ່ງ</button>` : '';
+
+  const proofSection = `
+    <div class="form-group">
+      <label class="form-label">📷 ຮູບໃບບິນຂົນສ່ງ / ຫຼັກຖານ</label>
+      <div class="upload-box" onclick="document.getElementById('sellerBillImg_${o.id}').click()">${o.sellerImg?'✅ ມີຮູບແລ້ວ — ກົດເພື່ອປ່ຽນ':'📸 ອັດໂຫລດຮູບ'}</div>
       <input type="file" id="sellerBillImg_${o.id}" accept="image/*" style="display:none" onchange="previewSellerImg(this,'sellerImgPrev_${o.id}')">
-      <div id="sellerImgPrev_${o.id}" style="margin-top:8px"></div>
+      <div id="sellerImgPrev_${o.id}" style="margin-top:8px">${o.sellerImg?`<img src="${o.sellerImg}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`:''}</div>
+    </div>`;
+
+  const html = `
+    <div class="modal-title">🚚 ຈັດການການຈັດສົ່ງ</div>
+    <div class="seller-track-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--text2)">#${o.id}</span>
+        <span class="bill-status ${getStatusClass(o.status)}">${getStatusLabel(o.status)}</span>
+      </div>
+      <div style="font-size:14px;font-weight:700">${o.productName} × ${o.qty||1}</div>
+      <div style="font-size:13px;color:var(--gold);margin:2px 0">${fmtPrice(o.total)}</div>
+      <div style="font-size:11px;color:var(--text2)">${o.date}</div>
     </div>
-    <div class="form-group">
-      <label class="form-label">🎬 ກະລຸນາໃສ່ວິດີໂອເມື່ອທ່ານໄປສົ່ງຂອງ (ຖ່າຍວິດີໂອເປັນຫຼັກຖານ)</label>
-      <div class="upload-box" onclick="document.getElementById('sellerBillVid_${o.id}').click()">🎥 ອັດໂຫລດວິດີໂອ</div>
-      <input type="file" id="sellerBillVid_${o.id}" accept="video/*" style="display:none">
+    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">📍 ທີ່ຢູ່ຈັດສົ່ງ</div>
+      <div style="font-size:13px;font-weight:600">${o.name||'-'} | ${o.phone||'-'}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">${[o.ban,o.muang,o.khwaeng].filter(Boolean).join(', ')||'-'}</div>
+      <div style="font-size:12px;color:var(--text2)">ຂົນສ່ງ: ${o.shipping||'-'}</div>
     </div>
-    <button class="btn btn-gold" onclick="confirmSellerShip('${o.id}')" style="margin-bottom:8px">✅ ຢືນຢັນການສົ່ງ</button>
-    <button class="btn btn-outline" onclick="closeModal('sellerBillModal')">ຍົກເລີກ</button>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">🔄 ອັບເດດສະຖານະ</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${statusBtns}</div>
+    ${trackSection}
+    ${proofSection}
+    <button class="btn btn-outline" onclick="closeModal('sellerBillModal')" style="margin-top:4px">ປິດ</button>
   `;
   document.getElementById('sellerBillContent').innerHTML = html;
   closeModal('saleHistoryModal');
   openModal('sellerBillModal');
 }
 
+function sellerUpdateStatus(id, newStatus){
+  const idx = orders.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const statusOrder = ['pending','packed','sent','delivering','done'];
+  const curIdx = statusOrder.indexOf(orders[idx].status||'pending');
+  const newIdx  = statusOrder.indexOf(newStatus);
+  if(newIdx <= curIdx){ showNotif('⚠️ ບໍ່ສາມາດຖອຍກັບໄດ້'); return; }
+  if(!orders[idx].trackingDates) orders[idx].trackingDates = {};
+  orders[idx].status = newStatus;
+  orders[idx].trackingDates[newStatus] = new Date().toLocaleString('th-TH');
+  saveOrders();
+  showNotif('✅ ອັບເດດ: ' + getStatusLabel(newStatus));
+  sellerViewBill(id);
+  showSaleHistory();
+}
+
+function saveTrackingNum(id){
+  const idx = orders.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const num = (document.getElementById('trackNum_'+id)||{value:''}).value.trim();
+  const courier = (document.getElementById('courierName_'+id)||{value:''}).value.trim();
+  if(!num){ showNotif('ກະລຸນາໃສ່ເລກພັດສົ່ງ'); return; }
+  orders[idx].trackingNum = num;
+  if(courier) orders[idx].courier = courier;
+  saveOrders();
+  showNotif('✅ ບັນທຶກເລກພັດສົ່ງ: '+num);
+}
+
 function previewSellerImg(input, targetId){
   const file = input.files[0];
   if(!file) return;
-  const url = URL.createObjectURL(file);
-  document.getElementById(targetId).innerHTML = `<img src="${url}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover">`;
-}
-
-function confirmSellerShip(id){
-  const idx = orders.findIndex(x=>x.id===id);
-  if(idx>=0){orders[idx].status='sent';saveOrders();}
-  closeModal('sellerBillModal');
-  showNotif('✅ ຢືນຢັນການສົ່ງສຳເລັດ!');
-  renderBillsPage();
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    // Save to order
+    const ordId = targetId.replace('sellerImgPrev_','');
+    const idx = orders.findIndex(x=>x.id===ordId);
+    if(idx>=0){ orders[idx].sellerImg=url; saveOrders(); }
+    const el = document.getElementById(targetId);
+    if(el) el.innerHTML = `<img src="${url}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`;
+    showNotif('✅ ບັນທຶກຮູບຫຼັກຖານແລ້ວ');
+    renderBillsPage();
+  };
+  reader.readAsDataURL(file);
 }
 
 // ============ WALLET ============
@@ -2478,6 +2822,7 @@ function doRegister(){
   closeModal('registerModal');
   updateProfileUI();
   showNotif('✅ ສ້າງບັນຊີສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name);
+  waNewUser(currentUser);
 }
 
 function doLogin(){
@@ -2521,6 +2866,12 @@ function updateProfileUI(){
     const crown = currentUser.crown || '';
     document.getElementById('profileDisplayName').textContent=crown+' '+(currentUser.name||'ຜູ້ໃຊ້');
     document.getElementById('profileUserId').textContent='ID: '+currentUser.id;
+    // Cover photo
+    const coverImg = document.getElementById('profileCoverImg');
+    if(coverImg){
+      if(currentUser.coverImg){ coverImg.src=currentUser.coverImg; coverImg.style.display='block'; }
+      else { coverImg.style.display='none'; }
+    }
     // Avatar
     if(currentUser.avatarImg){
       document.getElementById('profileAvatarImg').src=currentUser.avatarImg;
@@ -2660,6 +3011,7 @@ function submitSellerApply(){
   const email = document.getElementById('saEmail').value.trim();
   const ban   = document.getElementById('saBan').value.trim();
   const idNum = document.getElementById('saIdNum').value.trim();
+  const waNum = document.getElementById('saWhatsApp').value.trim().replace(/[^0-9]/g,'');
   const idCardFile = document.getElementById('saIdCardOnly').files[0];
   const selfieFile = document.getElementById('saIdCard').files[0];
 
@@ -2667,6 +3019,7 @@ function submitSellerApply(){
   if(!ln)         { showNotif('ກະລຸນາໃສ່ນາມສະກຸນ'); return; }
   if(!phone)      { showNotif('ກະລຸນາໃສ່ເບີໂທ'); return; }
   if(!email)      { showNotif('ກະລຸນາໃສ່ອີເມລ'); return; }
+  if(!waNum)      { showNotif('ກະລຸນາໃສ່ເບີ WhatsApp'); return; }
   if(!idNum)      { showNotif('ກະລຸນາໃສ່ເລກບັດ'); return; }
   if(!idCardFile) { showNotif('ກະລຸນາອັດໂຫລດຮູບບັດປະຈຳຕົວ'); return; }
   if(!selfieFile) { showNotif('ກະລຸນາອັດໂຫລດຮູບຖ່າຍຄູ່ກັບບັດ'); return; }
@@ -2691,7 +3044,7 @@ function submitSellerApply(){
         id: 'SA-'+Date.now(),
         userId: currentUser.id,
         name: fn+' '+ln,
-        phone, email, ban, idNum,
+        phone, email, ban, idNum, waNum,
         idCardImg, selfieImg,
         date: new Date().toLocaleString(),
         status: 'pending'
@@ -2721,6 +3074,7 @@ function submitSellerApply(){
       currentUser.sellerName = fn+' '+ln;
       saveUser();
       addAdminNotification('seller', {user:currentUser.name, id:currentUser.id});
+      waNewSellerApply({name:fn+' '+ln, phone, email, ban, idNum, userId:currentUser.id});
       closeModal('sellerApplyModal');
       updateProfileUI();
     });
@@ -2955,15 +3309,24 @@ const ADMIN_PROFILES = [
   {name:'Tavanh992',id:'55555',rank:3,crown:'🪙'}
 ];
 
+function setChatRoomHeader(title, avatarHtml){
+  document.getElementById('chatRoomTitle').textContent = title;
+  const avEl = document.getElementById('chatRoomAvatar');
+  if(avEl) avEl.innerHTML = avatarHtml;
+}
+
 function openAdminChat(adminName, adminId){
   if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
   const roomId = 'admin_'+adminId;
   currentChat = roomId;
   document.getElementById('chatListView').style.display='none';
   document.getElementById('chatRoomView').style.display='flex';
-  document.getElementById('chatRoomTitle').textContent = '🔰 '+adminName+' (Admin)';
+  const ap = ADMIN_PROFILES.find(a=>a.id===adminId);
+  const crown = ap ? ap.crown : '👑';
+  setChatRoomHeader('🔰 '+adminName+' (Admin)',
+    `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-size:18px;color:#000">${crown}</div>`
+  );
   if(!chatMsgs[roomId]||!chatMsgs[roomId].length){
-    // Auto-reply
     if(!chatMsgs[roomId]) chatMsgs[roomId]=[];
     chatMsgs[roomId].push({
       uid:'admin',name:adminName,
@@ -2981,6 +3344,8 @@ function openChatRoom(id){
   document.getElementById('chatListView').style.display='none';
   document.getElementById('chatRoomView').style.display='flex';
   document.getElementById('chatRoomTitle').textContent = id==='general'?'🛒 ຫ້ອງສາທາລະນະ':'💬 ສົນທະນາ';
+  const avEl = document.getElementById('chatRoomAvatar');
+  if(avEl) avEl.innerHTML = id==='general'?'🛒':'💬';
   renderChatMsgs(id);
 }
 
@@ -2990,16 +3355,48 @@ function backToChatList(){
   document.getElementById('chatRoomView').style.display='none';
 }
 
+function getAvatarHtml(uid, name, size=32){
+  // Try to get avatar from saved user or admin
+  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
+  const adminP = ADMIN_PROFILES.find(a=>a.id===uid);
+  let avatarImg = null, crown = '', isAdmin = false;
+  if(u && u.id===uid){ avatarImg=u.avatarImg||null; crown=u.crown||''; }
+  if(adminP){ isAdmin=true; crown=adminP.crown||'👑'; }
+  if(avatarImg){
+    return `<img src="${avatarImg}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid ${isAdmin?'var(--gold)':'rgba(255,255,255,.2)'}">`;
+  }
+  const bg = isAdmin ? 'linear-gradient(135deg,#c9a84c,#f0d080)' : 'linear-gradient(135deg,var(--blue),var(--accent))';
+  const color = isAdmin ? '#000' : '#fff';
+  const letter = crown || (name||'?')[0].toUpperCase();
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:${size*0.44}px;flex-shrink:0;color:${color};border:1.5px solid ${isAdmin?'var(--gold)':'rgba(255,255,255,.15)'}">${letter}</div>`;
+}
+
 function renderChatMsgs(room){
   const msgs = (chatMsgs[room]||[]);
   const container = document.getElementById('chatMessages');
   if(!msgs.length){container.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px">ຍັງບໍ່ມີຂໍ້ຄວາມ ສົ່ງອັນທຳອິດ! 👋</div>';return;}
-  container.innerHTML = msgs.map(m=>`
-    <div>
-      <div class="msg-bubble ${m.uid===currentUser?.id?'msg-mine':'msg-other'}" style="white-space:pre-line">${m.text}</div>
-      <div class="msg-time" style="${m.uid===currentUser?.id?'text-align:right':'text-align:left'}">${m.name} • ${m.time}</div>
-    </div>
-  `).join('');
+  container.innerHTML = msgs.map(m=>{
+    const isMine = m.uid===currentUser?.id;
+    const av = getAvatarHtml(m.uid, m.name, 30);
+    if(isMine){
+      return `<div style="display:flex;flex-direction:row-reverse;align-items:flex-end;gap:6px;margin-bottom:8px">
+        ${av}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:72%">
+          <div class="msg-bubble msg-mine" style="white-space:pre-line">${m.text}</div>
+          <div class="msg-time">${m.time}</div>
+        </div>
+      </div>`;
+    } else {
+      return `<div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
+        ${av}
+        <div style="display:flex;flex-direction:column;align-items:flex-start;max-width:72%">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:2px;padding-left:2px">${m.name}</div>
+          <div class="msg-bubble msg-other" style="white-space:pre-line">${m.text}</div>
+          <div class="msg-time">${m.time}</div>
+        </div>
+      </div>`;
+    }
+  }).join('');
   container.scrollTop = container.scrollHeight;
 }
 
@@ -3036,22 +3433,28 @@ function searchFriendById(){
   const q = document.getElementById('friendSearchId').value.trim().toLowerCase();
   const res = document.getElementById('friendSearchResult');
   if(!q){res.innerHTML='';return;}
-  // Check admin profiles
   const admins = ADMIN_PROFILES.filter(a=>a.id.includes(q)||a.name.toLowerCase().includes(q));
   const u = JSON.parse(localStorage.getItem('kd_user')||'null');
   const users = u ? [u] : [];
   const matched = users.filter(u2=>u2.id?.toLowerCase().includes(q)||u2.name?.toLowerCase().includes(q));
-  const allResults = [...admins.map(a=>({name:a.name,id:a.id,isAdmin:true,crown:a.crown})), ...matched.map(u2=>({name:u2.name,id:u2.id,isAdmin:false}))];
-  if(!allResults.length){res.innerHTML='<div style="font-size:12px;color:var(--text2);padding:8px">ບໍ່ພົບຜູ້ໃຊ້</div>';return;}
-  res.innerHTML = allResults.map(r=>`
-    <div style="display:flex;align-items:center;gap:10px;background:var(--dark3);border-radius:10px;padding:10px;margin-bottom:6px;border:1px solid var(--gray2)">
-      <div class="chat-avatar" style="${r.isAdmin?'background:linear-gradient(135deg,#c9a84c,#f0d080);color:#000':''}">${r.isAdmin?r.crown:'👤'}</div>
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:13px;color:${r.isAdmin?'var(--gold)':'var(--text)'}">${r.name}${r.isAdmin?' 🔰':''}</div>
-        <div style="font-size:11px;color:var(--text2)">#${r.id}</div>
+  const allResults = [
+    ...admins.map(a=>({name:a.name,id:a.id,isAdmin:true,crown:a.crown,avatarImg:null})),
+    ...matched.map(u2=>({name:u2.name,id:u2.id,isAdmin:false,crown:'',avatarImg:u2.avatarImg||null,isSeller:u2.isSeller}))
+  ];
+  if(!allResults.length){res.innerHTML='<div style="font-size:12px;color:var(--text2);padding:8px 0">ບໍ່ພົບຜູ້ໃຊ້</div>';return;}
+  res.innerHTML = allResults.map(r=>{
+    const avatarHtml = r.avatarImg
+      ? `<img src="${r.avatarImg}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid ${r.isAdmin?'var(--gold)':'rgba(255,255,255,.2)'}; flex-shrink:0">`
+      : `<div style="width:44px;height:44px;border-radius:50%;background:${r.isAdmin?'linear-gradient(135deg,#c9a84c,#f0d080)':'var(--dark3)'};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:2px solid ${r.isAdmin?'var(--gold)':'rgba(255,255,255,.15)'}">${r.isAdmin?(r.crown||'👑'):'👤'}</div>`;
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--dark3);border-radius:12px;padding:10px;margin-bottom:6px;border:1px solid rgba(255,255,255,.07)">
+      ${avatarHtml}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px;color:${r.isAdmin?'var(--gold)':'var(--text)'}">${r.isAdmin?(r.crown+' '):''}${r.name}${r.isAdmin?' 🔰':r.isSeller?' ⭐':''}</div>
+        <div style="font-size:11px;color:var(--text2)">ID: #${r.id}</div>
       </div>
-      <button class="btn btn-gold" style="font-size:11px;padding:6px 10px" onclick="openChatWithUser('${r.id}','${r.name}','${r.isAdmin}')">💬 ແຊດ</button>
-    </div>`).join('');
+      <button style="background:var(--gold-dark);border:none;color:var(--black);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif" onclick="openChatWithUser('${r.id}','${r.name}','${r.isAdmin}')">💬 ແຊດ</button>
+    </div>`;
+  }).join('');
 }
 
 function openChatWithUser(uid, name, isAdmin){
@@ -3064,7 +3467,9 @@ function openChatWithUser(uid, name, isAdmin){
     currentChat = roomId;
     document.getElementById('chatListView').style.display='none';
     document.getElementById('chatRoomView').style.display='flex';
-    document.getElementById('chatRoomTitle').textContent = '💬 '+name;
+    // Avatar header
+    const partnerAv = getAvatarHtml(uid, name, 36);
+    setChatRoomHeader('💬 '+name, partnerAv);
     renderChatMsgs(roomId);
   }
   document.getElementById('friendSearchId').value='';
@@ -3124,7 +3529,152 @@ function showNotif(msg){
 }
 
 // ============ AVATAR ============
-function triggerAvatarUpload(){ document.getElementById('avatarFileInput').click(); }
+function triggerCoverUpload(){ document.getElementById('coverFileInput').click(); }
+function uploadCover(){
+  const f = document.getElementById('coverFileInput').files[0];
+  if(!f||!currentUser) return;
+  const r = new FileReader();
+  r.onload = e=>{
+    currentUser.coverImg = e.target.result;
+    saveUser(); updateProfileUI();
+    showNotif('✅ ປ່ຽນຮູບພື້ນຫຼັງສຳເລັດ');
+  };
+  r.readAsDataURL(f);
+}
+
+function openMyPublicProfile(){
+  if(!currentUser) return;
+  openPublicProfile(currentUser.id);
+}
+
+function openPublicProfile(userId){
+  // Load user
+  let u = null;
+  if(currentUser && currentUser.id === userId) u = currentUser;
+  else {
+    try { const raw = localStorage.getItem('kd_user'); if(raw){ const pu = JSON.parse(raw); if(pu.id===userId) u=pu; } } catch(e){}
+  }
+  if(!u) { showNotif('ບໍ່ພົບຂໍ້ມູນຜູ້ໃຊ້'); return; }
+
+  // Cover
+  const coverImg = document.getElementById('pubCoverImg');
+  if(u.coverImg){ coverImg.src=u.coverImg; coverImg.style.display='block'; }
+  else { coverImg.style.display='none'; }
+
+  // Avatar
+  const avImg = document.getElementById('pubAvatarImg');
+  const avEmoji = document.getElementById('pubAvatarEmoji');
+  if(u.avatarImg){ avImg.src=u.avatarImg; avImg.style.display='block'; avEmoji.style.display='none'; }
+  else { avImg.style.display='none'; avEmoji.style.display=''; avEmoji.textContent=u.crown||'👤'; }
+
+  // Info
+  document.getElementById('pubName').textContent = (u.crown||'')+' '+(u.name||'-');
+  document.getElementById('pubId').textContent = 'ID: '+u.id+(u.isSeller?' • ⭐ ຜູ້ຂາຍ':'');
+
+  // Products
+  const myProds = products.filter(p=>p.sellerId===userId && !p.hidden);
+  const totalSold = myProds.reduce((s,p)=>s+(p.sold||0),0);
+  document.getElementById('pubStatProducts').textContent = myProds.length;
+  document.getElementById('pubStatSold').textContent = totalSold;
+  document.getElementById('pubStatRating').textContent = u.isSeller ? '⭐' : '-';
+
+  // Bio
+  const bio = document.getElementById('pubBio');
+  if(u.isSeller){ bio.textContent='🏪 ຮ້ານ '+u.name; bio.style.display='block'; }
+  else { bio.style.display='none'; }
+
+  // Grid
+  renderPubProductsGrid(myProds, userId);
+
+  // Info tab
+  const info = document.getElementById('pubInfoContent');
+  info.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${u.isSeller?`<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:4px">⭐ ຮ້ານຂາຍ</div>
+        <div style="font-size:13px">${u.name}</div>
+      </div>`:''}
+      <div style="background:var(--dark2);border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">📦 ສິນຄ້າທັງໝົດ</div>
+        <div style="font-size:22px;font-weight:700;color:var(--gold)">${myProds.length} ລາຍການ</div>
+      </div>
+      <div style="background:var(--dark2);border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">🛒 ຂາຍໄດ້ທັງໝົດ</div>
+        <div style="font-size:22px;font-weight:700;color:var(--gold)">${totalSold} ຊິ້ນ</div>
+      </div>
+    </div>`;
+
+  // Show modal
+  const modal = document.getElementById('pubProfileModal');
+  modal.style.display='flex';
+  switchPubTab('products');
+  document.body.style.overflow='hidden';
+}
+
+function closePubProfile(){
+  document.getElementById('pubProfileModal').style.display='none';
+  document.body.style.overflow='';
+}
+
+function switchPubTab(tab){
+  document.getElementById('pubTabProducts').classList.toggle('active', tab==='products');
+  document.getElementById('pubTabInfo').classList.toggle('active', tab==='info');
+  document.getElementById('pubProductsGrid').style.display = tab==='products'?'grid':'none';
+  document.getElementById('pubInfoTab').style.display = tab==='info'?'block':'none';
+}
+
+function renderPubProductsGrid(prods, ownerId){
+  const grid = document.getElementById('pubProductsGrid');
+  if(!prods.length){
+    grid.innerHTML='<div class="tiktok-empty">ຍັງບໍ່ມີສິນຄ້າ</div>';
+    return;
+  }
+  grid.innerHTML = prods.map(p=>{
+    const imgHtml = p.images && p.images.length
+      ? `<img class="tiktok-cell-img" src="${p.images[0]}" loading="lazy">`
+      : `<div class="tiktok-cell-emoji">${p.emoji||'📦'}</div>`;
+    return `<div class="tiktok-cell" onclick="pubViewProduct('${p.id}','${ownerId}')">
+      ${imgHtml}
+      <div class="tiktok-cell-price">${fmtPrice(p.price)}</div>
+      ${p.sold?`<div class="tiktok-cell-sold">🛒${p.sold}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function pubViewProduct(productId, ownerId){
+  const p = products.find(x=>x.id===productId);
+  if(!p) return;
+  const isMine = currentUser && currentUser.id === ownerId;
+  // Set currentProduct and open product detail
+  currentProduct = p;
+  // Build a quick detail view inside billDetailModal
+  const imgs = p.images && p.images.length
+    ? p.images.map(i=>`<img src="${i}" style="width:100%;border-radius:10px;max-height:260px;object-fit:cover;margin-bottom:6px">`).join('')
+    : `<div style="font-size:80px;text-align:center;padding:20px">${p.emoji||'📦'}</div>`;
+  const buyBtn = isMine
+    ? `<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center;font-size:12px;color:var(--text2)">🚫 ບໍ່ສາມາດຊື້ສິນຄ້າຂອງຕົນເອງໄດ້</div>`
+    : `<button class="btn btn-gold" onclick="closePubViewModal();closePubProfile();viewProduct('${p.id}')">🛒 ສັ່ງຊື້ສິນຄ້ານີ້</button>`;
+  const html = `
+    <div style="max-height:80vh;overflow-y:auto">
+      ${imgs}
+      <div style="padding:4px 0">
+        <div style="font-size:18px;font-weight:700;margin-bottom:4px">${p.name}</div>
+        <div style="font-size:22px;font-weight:700;color:var(--gold);margin-bottom:8px">${fmtPrice(p.price)}</div>
+        ${p.desc?`<div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6">${p.desc}</div>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          ${p.category?`<span style="background:rgba(201,168,76,.1);color:var(--gold);border-radius:6px;padding:3px 10px;font-size:11px">${p.category}</span>`:''}
+          ${p.sold?`<span style="background:rgba(255,255,255,.05);color:var(--text2);border-radius:6px;padding:3px 10px;font-size:11px">🛒 ຂາຍໄດ້ ${p.sold} ຊິ້ນ</span>`:''}
+        </div>
+        ${buyBtn}
+        <button class="btn btn-outline" onclick="closePubViewModal()" style="margin-top:8px">ປິດ</button>
+      </div>
+    </div>`;
+  document.getElementById('billDetailContent').innerHTML = `<div class="modal-title">📦 ລາຍລະອຽດສິນຄ້າ</div>${html}`;
+  document.getElementById('billDetailModal').style.display='flex';
+}
+function closePubViewModal(){ document.getElementById('billDetailModal').style.display='none'; }
+
+
 function uploadAvatar(){
   const f = document.getElementById('avatarFileInput').files[0];
   if(!f||!currentUser) return;
@@ -3244,6 +3794,159 @@ function addAdminNotification(type, data){
   notifs.unshift({type, data, date:new Date().toLocaleString(), read:false});
   localStorage.setItem('kd_admin_notifs', JSON.stringify(notifs.slice(0,100)));
   updateAdminNotifBadge();
+}
+
+// ============================================================
+//  WHATSAPP NOTIFICATION SYSTEM — ຂາຍດີ-Shop
+// ============================================================
+const WA_ADMIN = '8562054966168';
+const WA_SITE  = 'tavanh903-byte.github.io/khaidee1';
+
+function sendWANotif(msg){
+  setTimeout(()=>{
+    window.open('https://wa.me/'+WA_ADMIN+'?text='+encodeURIComponent(msg),'_blank');
+  }, 300);
+}
+
+// 👤 ສະໝັກຜູ້ໃຊ້ໃໝ່
+function waNewUser(user){
+  sendWANotif([
+    '👤 *ຜູ້ໃຊ້ໃໝ່ສະໝັກ!*',
+    '─────────────────',
+    '📛 ຊື່: ' + user.name,
+    '📱 ເບີໂທ: ' + (user.phone||'-'),
+    '📧 ອີເມລ: ' + (user.email||'-'),
+    '🆔 User ID: ' + user.id,
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '🌐 '+WA_SITE,
+  ].join('\n'));
+}
+
+// 🏪 ສະໝັກຜູ້ຂາຍ
+function waNewSellerApply(data){
+  sendWANotif([
+    '🏪 *ຄຳຂໍສະໝັກຜູ້ຂາຍໃໝ່!*',
+    '─────────────────',
+    '📛 ຊື່: ' + data.name,
+    '📱 ເບີໂທ: ' + (data.phone||'-'),
+    '📧 ອີເມລ: ' + (data.email||'-'),
+    '🏘 ບ້ານ: ' + (data.ban||'-'),
+    '🪪 ເລກບັດ: ' + (data.idNum||'-'),
+    '👤 User ID: ' + (data.userId||'-'),
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '📋 ກວດ Admin Panel → ຜູ້ຂາຍ',
+    '🌐 '+WA_SITE,
+  ].join('\n'));
+}
+
+// 💳 ຝາກເງິນ
+function waDeposit(user, amt){
+  sendWANotif([
+    '💳 *ຄຳຂໍຝາກເງິນ!*',
+    '─────────────────',
+    '📛 ຊື່: ' + user.name,
+    '🆔 User ID: ' + user.id,
+    '📱 ເບີໂທ: ' + (user.phone||'-'),
+    '💰 ຈຳນວນ: ' + Number(amt).toLocaleString() + ' ກີບ',
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '🧾 ດູສລິບ: Admin Panel → ການເງິນ',
+    '✅ ກະລຸນາຢືນຢັນໃນ Admin Panel',
+    '🌐 '+WA_SITE,
+  ].join('\n'));
+}
+
+// 💸 ຖອນເງິນ
+function waWithdraw(user, amt, fee, net, feeRate){
+  sendWANotif([
+    '💸 *ຄຳຂໍຖອນເງິນ!*',
+    '─────────────────',
+    '📛 ຊື່: ' + user.name,
+    '🆔 User ID: ' + user.id,
+    '📱 ເບີໂທ: ' + (user.phone||'-'),
+    '💰 ຈຳນວນຖອນ: ' + Number(amt).toLocaleString() + ' ກີບ',
+    '📊 ຄ່າທຳນຽມ (' + (feeRate*100) + '%): -' + Number(fee).toLocaleString() + ' ກີບ',
+    '✅ ໂອນໃຫ້ລູກຄ້າ: ' + Number(net).toLocaleString() + ' ກີບ',
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '🏦 ດູ QR Code: Admin Panel → ການເງິນ',
+    '⚡ ກະລຸນາໂອນພາຍໃນ 30 ນາທີ',
+    '🌐 '+WA_SITE,
+  ].join('\n'));
+}
+
+// 📦 ສັ່ງຊື້ສິນຄ້າທົ່ວໄປ
+function waNewOrder(user, order){
+  sendWANotif([
+    '📦 *ສັ່ງຊື້ສິນຄ້າໃໝ່!*',
+    '─────────────────',
+    '🆔 ບິນ: #' + order.id,
+    '📦 ສິນຄ້າ: ' + order.productName + ' (#' + order.productId + ')',
+    '🔢 ຈຳນວນ: ' + order.qty + ' ອັນ',
+    '💰 ລາຄາ: ' + Number(order.total).toLocaleString() + ' ກີບ',
+    '─────────────────',
+    '👤 ລູກຄ້າ: ' + order.name,
+    '📱 ເບີໂທ: ' + (order.phone||'-'),
+    '📍 ທີ່ຢູ່: ' + [order.ban, order.muang, order.khwaeng].filter(Boolean).join(', '),
+    '🚚 ຂົນສ່ງ: ' + (order.shipping||'-'),
+    '👤 Buyer ID: ' + (user.id||'-'),
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '📋 ກວດ Admin Panel → ອໍເດີ',
+    '🌐 '+WA_SITE,
+  ].join('\n'));
+}
+
+// 🎮 ສັ່ງຊື້ ID ເກມ
+function waNewGameOrder(user, order){
+  sendWANotif([
+    '🎮 *ສັ່ງຊື້ ID ເກມໃໝ່!*',
+    '─────────────────',
+    '🆔 ບິນ: #' + order.id,
+    '🎮 ສິນຄ້າ: ' + order.productName + ' (#' + order.productId + ')',
+    '🔢 ຈຳນວນ: ' + order.qty + ' ອັນ',
+    '💰 ລາຄາ: ' + Number(order.total).toLocaleString() + ' ກີບ',
+    '─────────────────',
+    '📱 ເບີລູກຄ້າ: ' + (order.phone||'-'),
+    '📍 ທີ່ຢູ່: ' + [order.ban, order.muang, order.khwaeng].filter(Boolean).join(', '),
+    '👤 Buyer ID: ' + (user.id||'-'),
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '📋 ກວດ Admin Panel → ອໍເດີ',
+    '🌐 '+WA_SITE,
+  ].join('\n'));
+}
+
+// 🏪 ແຈ້ງເຕືອນຜູ້ຂາຍໂດຍກົງ — ສັ່ງຊື້ສິນຄ້າຂອງຕົນ
+function waNotifySeller(order){
+  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const app = apps.find(a => a.userId === order.sellerId && a.status === 'approved');
+  const sellerWA = app ? (app.waNum||'') : '';
+  if(!sellerWA) return; // ບໍ່ມີເບີ WA ຜູ້ຂາຍ
+
+  const msg = [
+    '🛒 *ມີຄຳສັ່ງຊື້ສິນຄ້າຂອງທ່ານ!*',
+    '─────────────────',
+    '🆔 ບິນ: #' + order.id,
+    '📦 ສິນຄ້າ: ' + order.productName,
+    '🔢 ຈຳນວນ: ' + (order.qty||1) + ' ອັນ',
+    '💰 ລາຄາ: ' + Number(order.total||0).toLocaleString() + ' ກີບ',
+    '─────────────────',
+    '👤 ລູກຄ້າ: ' + (order.name||'-'),
+    '📱 ເບີໂທ: ' + (order.phone||'-'),
+    '📍 ທີ່ຢູ່: ' + [order.ban, order.muang, order.khwaeng].filter(Boolean).join(', '),
+    '🚚 ຂົນສ່ງ: ' + (order.shipping||'-'),
+    '📅 ວັນທີ: ' + new Date().toLocaleString('th-TH'),
+    '─────────────────',
+    '✅ ກະລຸນາກຽມສິນຄ້າ ແລະ ສົ່ງພາຍໃນ 24 ຊົ່ວໂມງ',
+    '🌐 '+WA_SITE,
+  ].join('\n');
+
+  setTimeout(()=>{
+    window.open('https://wa.me/'+sellerWA+'?text='+encodeURIComponent(msg), '_blank');
+  }, 900);
 }
 
 // ============ ADMIN HISTORY TAB ============
@@ -3655,13 +4358,13 @@ function adminApproveSeller(userId){
   if(idx<0)return;
   apps[idx].status='approved';
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
-  // Update user's isSeller flag
+  // Update user's isSeller flag + save waNum
+  const waNum = apps[idx].waNum || '';
   const u = JSON.parse(localStorage.getItem('kd_user')||'null');
   if(u && u.id===userId){
-    u.isSeller=true;
-    u.sellerPending=false;
+    u.isSeller=true; u.sellerPending=false; u.sellerWA=waNum;
     localStorage.setItem('kd_user',JSON.stringify(u));
-    if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;updateProfileUI();}
+    if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;updateProfileUI();}
   }
   renderAdminTab('sellers');
   showNotif('✅ ອະນຸມັດຜູ້ຂາຍ '+apps[idx].name+' ສຳເລັດ');
@@ -4029,12 +4732,17 @@ function adminApproveSellerCard(userId){
   const idx = apps.findIndex(a=>a.userId===userId&&a.status==='pending');
   if(idx<0) return;
   apps[idx].status='approved';
+  const waNum = apps[idx].waNum || '';
   // FREE STORAGE: remove images after approval (no longer needed)
   delete apps[idx].idCardImg;
   delete apps[idx].selfieImg;
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
   const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===userId){ u.isSeller=true; u.sellerPending=false; localStorage.setItem('kd_user',JSON.stringify(u)); if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;updateProfileUI();} }
+  if(u && u.id===userId){
+    u.isSeller=true; u.sellerPending=false; u.sellerWA=waNum;
+    localStorage.setItem('kd_user',JSON.stringify(u));
+    if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;updateProfileUI();}
+  }
   const card = document.getElementById('seller_'+userId);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('✅ ອະນຸມັດຜູ້ຂາຍ '+apps[idx].name+' ສຳເລັດ!');
@@ -4068,6 +4776,7 @@ function doDeposit(){
     deps.push({id:'DEP-'+Date.now(),userId:currentUser.id,userName:currentUser.name,amount:amt,slipImg,date:new Date().toLocaleString(),status:'pending',type:'deposit'});
     localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
     addAdminNotification('deposit',{user:currentUser.name,amount:amt});
+    waDeposit(currentUser, amt);
     closeModal('depositModal');
     document.getElementById('depositAmt').value='';
     document.getElementById('depositSlipPreview').innerHTML='';
@@ -4108,6 +4817,7 @@ function doWithdraw(){
     withs.push({id:'WDR-'+Date.now(),userId:currentUser.id,userName:currentUser.name,amount:amt,fee,net,feeRate,qrImg,date:new Date().toLocaleString(),status:'pending',type:'withdraw'});
     localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
     addAdminNotification('withdraw',{user:currentUser.name,amount:amt});
+    waWithdraw(currentUser, amt, fee, net, feeRate);
     closeModal('withdrawModal');
     document.getElementById('withdrawAmt').value='';
     document.getElementById('withdrawQRPreview').innerHTML='';
@@ -4125,5 +4835,52 @@ window.addEventListener('load', ()=>{
   updateAdminNotifBadge();
 }, true);
 </script>
+<!-- PUBLIC PROFILE MODAL -->
+<div class="pub-profile-modal" id="pubProfileModal">
+  <!-- Cover -->
+  <div class="pub-cover" id="pubCover">
+    <img id="pubCoverImg" src="" alt="" style="display:none">
+    <div class="pub-cover-overlay"></div>
+    <div class="pub-back-btn" onclick="closePubProfile()">←</div>
+  </div>
+  <!-- Avatar outside cover -->
+  <div class="pub-avatar-outer">
+    <div class="pub-avatar" id="pubAvatar">
+      <img id="pubAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
+      <span id="pubAvatarEmoji" style="font-size:36px">👤</span>
+    </div>
+  </div>
+  <!-- Info -->
+  <div class="pub-info">
+    <div class="pub-name" id="pubName">-</div>
+    <div class="pub-id" id="pubId">-</div>
+    <div class="pub-bio" id="pubBio"></div>
+    <div class="pub-stats">
+      <div class="pub-stat">
+        <div class="pub-stat-num" id="pubStatProducts">0</div>
+        <div class="pub-stat-label">ສິນຄ້າ</div>
+      </div>
+      <div class="pub-stat">
+        <div class="pub-stat-num" id="pubStatSold">0</div>
+        <div class="pub-stat-label">ຂາຍໄດ້</div>
+      </div>
+      <div class="pub-stat" id="pubRatingWrap">
+        <div class="pub-stat-num" id="pubStatRating">⭐</div>
+        <div class="pub-stat-label">ຮ້ານ</div>
+      </div>
+    </div>
+  </div>
+  <!-- Tabs -->
+  <div class="tiktok-tabs">
+    <div class="tiktok-tab active" id="pubTabProducts" onclick="switchPubTab('products')">⊞ ສິນຄ້າ</div>
+    <div class="tiktok-tab" id="pubTabInfo" onclick="switchPubTab('info')">ℹ ຂໍ້ມູນ</div>
+  </div>
+  <!-- Products Grid -->
+  <div id="pubProductsGrid" class="tiktok-grid"></div>
+  <!-- Info Tab -->
+  <div id="pubInfoTab" style="display:none;padding:16px">
+    <div id="pubInfoContent"></div>
+  </div>
+</div>
 </body>
 </html>
