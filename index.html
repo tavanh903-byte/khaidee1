@@ -4213,7 +4213,10 @@ function doRegister(){
     if(dupPhone){showNotif('❌ ເບີໂທນີ້ຖືກໃຊ້ແລ້ວ ກະລຸນາ Login');return;}
   }
   const uid = 'USR-'+Date.now().toString().slice(-6);
+  const avatarEl = document.getElementById('regAvatar');
+  const avatarImg = avatarEl?.dataset?.compressed || null;
   currentUser = {id:uid,name,phone,email,pass,wallet:0,isSeller:false,orders:[],registeredAt:new Date().toISOString()};
+  if(avatarImg) currentUser.avatarImg = avatarImg;
   saveUser();
   closeModal('registerModal');
   updateProfileUI();
@@ -4323,7 +4326,58 @@ function updateProfileUI(){
 }
 
 function changeAvatar(){showNotif('ຄລິກທີ່ຮູບໂປຣໄຟລເພື່ອປ່ຽນ');}
-function previewAvatar(){showNotif('ຮູບໂປຣໄຟລຖືກອັດໂຫລດ');}
+function smartCompressImage(file, maxW, maxH, cb){
+  const reader = new FileReader();
+  reader.onerror = ()=> cb(null);
+  reader.onload = e => {
+    const img = new Image();
+    img.onerror = ()=> cb(e.target.result);
+    img.onload = ()=>{
+      // Scale down to fit maxW x maxH keeping aspect ratio
+      let w = img.width, h = img.height;
+      const scale = Math.min(maxW/w, maxH/h, 1);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // Try qualities until under 300KB
+      const qualities = [0.8, 0.65, 0.5, 0.35, 0.2];
+      let result = null;
+      for(const q of qualities){
+        result = canvas.toDataURL('image/jpeg', q);
+        if(result.length < 400000) break; // ~300KB base64
+      }
+      cb(result);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewAvatar(){
+  const f = document.getElementById('regAvatar').files[0];
+  if(!f) return;
+  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  smartCompressImage(f, 300, 300, (data)=>{
+    if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
+    // Store temporarily for register
+    document.getElementById('regAvatar').dataset.compressed = data;
+    // Show preview
+    let preview = document.getElementById('regAvatarPreview');
+    if(!preview){
+      preview = document.createElement('img');
+      preview.id = 'regAvatarPreview';
+      preview.style.cssText = 'width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);margin-top:8px;display:block';
+      document.getElementById('regAvatar').parentNode.appendChild(preview);
+    }
+    preview.src = data;
+    showNotif('✅ ຮູບໂປຣໄຟລພ້ອມແລ້ວ');
+  });
+}
 
 // ============ SELLER APPLY ============
 function showSellerApply(){
@@ -5684,18 +5738,7 @@ function showNotif(msg){
 
 // ============ AVATAR ============
 function triggerCoverUpload(){ document.getElementById('coverFileInput').click(); }
-function uploadCover(){
-  const f = document.getElementById('coverFileInput').files[0];
-  if(!f||!currentUser) return;
-  const r = new FileReader();
-  r.onload = e=>{
-    currentUser.coverImg = e.target.result;
-    saveUser(); updateProfileUI();
-    showNotif('✅ ປ່ຽນຮູບພື້ນຫຼັງສຳເລັດ');
-  };
-  r.readAsDataURL(f);
-}
-
+// uploadCover and uploadAvatar defined above (smartCompressImage)
 function openMyPublicProfile(){
   if(!currentUser) return;
   openPublicProfile(currentUser.id);
@@ -5836,17 +5879,38 @@ function triggerAvatarUpload(){
 function uploadAvatar(){
   const f = document.getElementById('avatarFileInput').files[0];
   if(!f||!currentUser) return;
-  const r = new FileReader();
-  r.onload = e=>{
-    currentUser.avatarImg = e.target.result;
-    saveUser();
-    updateProfileUI();
-    showNotif('✅ ປ່ຽນຮູບໂປຣໄຟລສຳເລັດ');
-  };
-  r.readAsDataURL(f);
+  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  smartCompressImage(f, 400, 400, (data)=>{
+    if(!data){ showNotif('❌ ບໍ່ສາມາດໂຫລດຮູບໄດ້'); return; }
+    try {
+      currentUser.avatarImg = data;
+      saveUser();
+      updateProfileUI();
+      showNotif('✅ ປ່ຽນຮູບໂປຣໄຟລສຳເລັດ');
+    } catch(e){
+      showNotif('❌ ພື້ນທີ່ບໍ່ພໍ ລອງຮູບນ້ອຍກວ່ານີ້');
+    }
+  });
 }
 
-// ============ CART ============
+function uploadCover(){
+  const f = document.getElementById('coverFileInput').files[0];
+  if(!f||!currentUser) return;
+  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  smartCompressImage(f, 900, 400, (data)=>{
+    if(!data){ showNotif('❌ ບໍ່ສາມາດໂຫລດຮູບໄດ້'); return; }
+    try {
+      currentUser.coverImg = data;
+      saveUser();
+      updateProfileUI();
+      showNotif('✅ ປ່ຽນຮູບພື້ນຫຼັງສຳເລັດ');
+    } catch(e){
+      showNotif('❌ ພື້ນທີ່ບໍ່ພໍ ລອງຮູບນ້ອຍກວ່ານີ້');
+    }
+  });
+}
+
+// Smart compress: tries quality 0.7 → 0.5 → 0.3 until size fits
 let cart = JSON.parse(localStorage.getItem('kd_cart')||'[]');
 function saveCart(){ localStorage.setItem('kd_cart',JSON.stringify(cart)); updateCartBadge(); }
 function updateCartBadge(){
