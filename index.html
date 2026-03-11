@@ -417,8 +417,42 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .wallet-balance{font-size:36px;font-weight:700;color:var(--gold);font-family:'Cinzel Decorative',serif}
 .wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 /* NOTIFICATION */
-.notif{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--dark3);border:1px solid var(--gold-dark);border-radius:12px;padding:12px 20px;z-index:1000;font-size:13px;color:var(--gold);text-align:center;animation:notifAnim .3s ease;max-width:340px;width:90%}
-@keyframes notifAnim{from{top:60px;opacity:0}to{top:80px;opacity:1}}
+/* ═══ NOTIFICATION SYSTEM ═══ */
+.notif-container{position:fixed;top:76px;left:0;right:0;z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 16px}
+.notif{pointer-events:auto;width:100%;max-width:380px;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.5);animation:notifSlide .3s cubic-bezier(.34,1.56,.64,1);backdrop-filter:blur(12px)}
+.notif-icon{font-size:22px;flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:13px;font-weight:700;line-height:1.3}
+.notif-sub{font-size:11px;opacity:.8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notif-close{font-size:16px;color:rgba(255,255,255,.5);cursor:pointer;flex-shrink:0;padding:4px;line-height:1}
+
+/* ประเภท success — ทอง */
+.notif-success{background:linear-gradient(135deg,rgba(15,10,0,.97),rgba(30,20,0,.97));border:1px solid rgba(201,168,76,.5)}
+.notif-success .notif-icon{background:rgba(201,168,76,.15)}
+.notif-success .notif-title{color:var(--gold)}
+
+/* ประเภท error — แดง */
+.notif-error{background:linear-gradient(135deg,rgba(15,0,0,.97),rgba(30,5,5,.97));border:1px solid rgba(255,60,60,.5)}
+.notif-error .notif-icon{background:rgba(255,60,60,.15)}
+.notif-error .notif-title{color:#ff6666}
+
+/* ประเภท info — น้ำเงิน */
+.notif-info{background:linear-gradient(135deg,rgba(0,5,20,.97),rgba(5,15,35,.97));border:1px solid rgba(60,130,255,.5)}
+.notif-info .notif-icon{background:rgba(60,130,255,.15)}
+.notif-info .notif-title{color:#7ab4ff}
+
+/* ประเภท order — Diamond/สำคัญ */
+.notif-order{background:linear-gradient(135deg,rgba(0,0,30,.97),rgba(10,5,50,.97));border:1px solid rgba(120,100,255,.6);border-left:3px solid #a080ff}
+.notif-order .notif-icon{background:rgba(120,100,255,.2)}
+.notif-order .notif-title{color:#c0a0ff}
+
+/* ประเภท msg — ข้อความ/แชท */
+.notif-msg{background:linear-gradient(135deg,rgba(0,15,20,.97),rgba(5,25,30,.97));border:1px solid rgba(0,200,180,.4);border-left:3px solid #00c8b4}
+.notif-msg .notif-icon{background:rgba(0,200,180,.15)}
+.notif-msg .notif-title{color:#4eeedd}
+
+@keyframes notifSlide{from{opacity:0;transform:translateY(-16px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes notifFadeOut{to{opacity:0;transform:translateY(-8px) scale(.97)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* UPLOAD BOX */
@@ -601,6 +635,12 @@ select.form-input{-webkit-appearance:none;appearance:none}
 /* QR box */
 .qr-box{text-align:center;padding:20px;border:2px solid rgba(201,168,76,.3);border-radius:16px;background:var(--dark3);margin:12px 0}
 .slip-preview{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-top:8px}
+
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+.pin-box{width:42px;height:52px;text-align:center;font-size:22px;font-weight:700;background:var(--dark3);border:2px solid var(--gray2);border-radius:12px;color:var(--text);outline:none;font-family:'Sarabun',sans-serif;transition:border-color .2s}
+.pin-box:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.2)}
+.pin-box.filled{border-color:var(--gold)}
 </style>
 <script>
 // ── Auto-update checker ──
@@ -619,6 +659,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
 </script>
 </head>
 <body>
+<div class="notif-container" id="notifContainer"></div>
 
 <!-- SPLASH -->
 <div id="splash">
@@ -1301,6 +1342,12 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <div style="font-size:16px;font-weight:700;color:var(--gold)">💬 ຫ້ອງສົນທະນາ</div>
     </div>
     <div id="chatListView" style="display:flex;flex-direction:column;flex:1;overflow-y:auto">
+      <!-- ปุ่มลบประวัติแชททั้งหมด -->
+      <div id="clearAllChatsBtn" style="display:none;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <button onclick="clearAllChats()" style="width:100%;background:rgba(255,60,60,.08);border:1px solid rgba(255,60,60,.2);color:#ff6666;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+          🗑️ ລຶບປະຫວັດການແຊດທັງໝົດ
+        </button>
+      </div>
 
       <!-- 🔍 Friend search — ຢູ່ດ້ານເທິງ -->
       <div style="padding:12px 16px 10px;background:var(--dark2);border-bottom:1px solid rgba(255,255,255,.07);position:sticky;top:0;z-index:10">
@@ -1376,10 +1423,22 @@ select.form-input{-webkit-appearance:none;appearance:none}
         <button class="back-btn" onclick="backToChatList()">←</button>
         <div id="chatRoomAvatar" style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--blue),var(--accent));font-size:18px"></div>
         <div id="chatRoomTitle" style="font-size:15px;font-weight:700;flex:1"></div>
+        <!-- Chat menu button -->
+        <div style="position:relative">
+          <button onclick="toggleChatMenu()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">⋮</button>
+          <div id="chatMenuDropdown" style="display:none;position:absolute;right:0;top:42px;background:var(--dark3);border:1px solid rgba(255,255,255,.12);border-radius:14px;min-width:200px;z-index:100;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+            <div onclick="clearChatRoom()" style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">
+              🧹 <span>ລ້າງຂໍ້ຄວາມທັງໝົດໃນຫ້ອງ</span>
+            </div>
+            <div onclick="deleteChatRoom()" style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;color:#ff6666;border-top:1px solid rgba(255,255,255,.07)" onmouseover="this.style.background='rgba(255,60,60,.08)'" onmouseout="this.style.background='transparent'">
+              🗑️ <span>ລຶບຫ້ອງແຊດນີ້</span>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
       <div class="chat-input-bar">
-        <input class="chat-input" id="chatMsgInput" placeholder="ພິມຂໍ້ຄວາມ...">
+        <input class="chat-input" id="chatMsgInput" placeholder="ພິມຂໍ້ຄວາມ..." onkeydown="if(event.key==='Enter')sendChatMsg()">
         <button class="chat-send" onclick="sendChatMsg()">➤</button>
       </div>
     </div>
@@ -2081,7 +2140,39 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <label class="form-label">ລະຫັດຜ່ານ <span style="color:#e74c3c">*</span> <span style="color:var(--text2);font-size:10px">(ຢ່າງໜ້ອຍ 4 ຕົວ)</span></label>
       <input class="form-input" type="password" id="regPass" placeholder="ລະຫັດຜ່ານ" autocomplete="new-password">
     </div>
-    <button class="btn btn-gold" onclick="doRegister()" style="margin-bottom:8px">✅ ສ້າງບັນຊີ</button>
+    <!-- PIN verify section (hidden until requestPIN) -->
+    <div id="pinVerifySection" style="display:none;margin-bottom:12px">
+      <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:12px;margin-bottom:10px;text-align:center">
+        <div style="font-size:20px;margin-bottom:4px">🔐</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold)">ຢືນຢັນດ້ວຍ PIN 6 ຕົວ</div>
+        <div id="pinSentTo" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">⏰ PIN ໃຊ້ໄດ້ 10 ນາທີ</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px" id="pinBoxes">
+        <input type="tel" maxlength="1" class="pin-box" oninput="pinBoxInput(this,1)" onkeydown="pinBoxKey(event,this,1)">
+        <input type="tel" maxlength="1" class="pin-box" oninput="pinBoxInput(this,2)" onkeydown="pinBoxKey(event,this,2)">
+        <input type="tel" maxlength="1" class="pin-box" oninput="pinBoxInput(this,3)" onkeydown="pinBoxKey(event,this,3)">
+        <input type="tel" maxlength="1" class="pin-box" oninput="pinBoxInput(this,4)" onkeydown="pinBoxKey(event,this,4)">
+        <input type="tel" maxlength="1" class="pin-box" oninput="pinBoxInput(this,5)" onkeydown="pinBoxKey(event,this,5)">
+        <input type="tel" maxlength="1" class="pin-box" oninput="pinBoxInput(this,6)" onkeydown="pinBoxKey(event,this,6)">
+      </div>
+      <button class="btn btn-gold" onclick="submitPIN()" style="margin-bottom:6px">✅ ຢືນຢັນ PIN</button>
+      <button class="btn btn-outline" onclick="resendPIN()" style="font-size:12px;padding:7px">🔄 ຂໍ PIN ໃໝ່</button>
+    </div>
+    <div id="pinRequestSection">
+      <!-- ปุ่มสร้างบัญชี + เลือกช่องทาง PIN -->
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;text-align:center">🔐 ເລືອກຊ່ອງທາງຮັບ PIN ຢືນຢັນ</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="doRegisterWithPIN('whatsapp')" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:10px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+            📱 WhatsApp<br><span style="font-size:10px;opacity:.8">ຮັບ PIN ທາງ WA</span>
+          </button>
+          <button onclick="doRegisterWithPIN('skip')" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);color:var(--gold);border-radius:10px;padding:10px 6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+            ⚡ ຂ້າມການຢືນຢັນ<br><span style="font-size:10px;opacity:.8">ສ້າງບັນຊີທັນທີ</span>
+          </button>
+        </div>
+      </div>
+    </div>
     <button class="btn btn-outline" onclick="closeModal('registerModal')">ຍົກເລີກ</button>
   </div>
 </div>
@@ -4362,32 +4453,146 @@ function restoreSession(){
 }
 currentUser = restoreSession();
 
-function doRegister(){
+// ── pending register data (before PIN confirm) ──
+let _pendingReg = null;
+
+function validateRegFields(){
   const name  = document.getElementById('regName').value.trim();
   const phone = document.getElementById('regPhone').value.trim();
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('regPass').value.trim();
-  if(!name||!email||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ');return;}
-  if(pass.length<4){showNotif('ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 4 ຕົວ');return;}
+  if(!name||!email||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ','error');return null;}
+  if(pass.length<4){showNotif('ລະຫັດຜ່ານ 4 ຕົວຂຶ້ນໄປ','error');return null;}
   const db = getUsersDB();
-  // Duplicate email check
-  const dupEmail = Object.values(db).find(u=>(u.email||'').toLowerCase()===email);
-  if(dupEmail){showNotif('❌ ອີເມລນີ້ຖືກໃຊ້ແລ້ວ ກະລຸນາ Login');return;}
-  // Duplicate phone check
-  if(phone){
-    const dupPhone = Object.values(db).find(u=>(u.phone||'').trim()===phone);
-    if(dupPhone){showNotif('❌ ເບີໂທນີ້ຖືກໃຊ້ແລ້ວ ກະລຸນາ Login');return;}
-  }
+  if(Object.values(db).find(u=>(u.email||'').toLowerCase()===email)){showNotif('❌ ອີເມລຖືກໃຊ້ແລ້ວ','error');return null;}
+  if(phone && Object.values(db).find(u=>(u.phone||'').trim()===phone)){showNotif('❌ ເບີໂທຖືກໃຊ້ແລ້ວ','error');return null;}
+  return {name,phone,email,pass};
+}
+
+function doRegister(){ /* legacy — redirect */ doRegisterWithPIN('skip'); }
+
+function doRegisterWithPIN(method){
+  const fields = validateRegFields();
+  if(!fields) return;
   const uid = 'USR-'+Date.now().toString().slice(-6);
   const avatarEl = document.getElementById('regAvatar');
   const avatarImg = avatarEl?.dataset?.compressed || null;
-  currentUser = {id:uid,name,phone,email,pass,wallet:0,isSeller:false,orders:[],registeredAt:new Date().toISOString()};
-  if(avatarImg) currentUser.avatarImg = avatarImg;
+  _pendingReg = {uid, avatarImg, ...fields, method};
+
+  if(method==='skip'){
+    finishRegister(false);
+    return;
+  }
+  // WhatsApp PIN
+  if(!fields.phone){ showNotif('❌ ໃສ່ເບີໂທເພື່ອຮັບ PIN ທາງ WA','error'); return; }
+  const pin = generatePIN();
+  _pendingReg.pin = pin;
+  _pendingReg.pinExp = Date.now() + 10*60*1000;
+
+  // ส่ง WA
+  const waNum = fields.phone.replace(/[^0-9]/g,'');
+  const fullWA = waNum.startsWith('856') ? waNum : '856'+waNum.replace(/^0/,'');
+  const msg = [
+    '\ud83d\udd10 *ຂາຍດີ — ຢືນຢັນບັນຊີ*',
+    '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    '\ud83d\udc64 ຊື່: '+fields.name,
+    '',
+    'ລະຫັດ PIN ຂອງທ່ານ:',
+    '',
+    '\u2b50  *'+pin+'*  \u2b50',
+    '',
+    '\u23f0 ໃຊ້ໄດ້ 10 ນາທີ',
+    '\u26a0\ufe0f ຢ່າແຊຣ໌ລະຫັດນີ້ໃຫ້ໃຜ',
+    '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    'ຖ້າທ່ານບໍ່ໄດ້ສ້າງບັນຊີ ໂປຣດຕິດຕໍ່ Admin',
+  ].join('\n');
+  window.open('https://wa.me/'+fullWA+'?text='+encodeURIComponent(msg),'_blank');
+
+  // แสดง PIN section
+  document.getElementById('pinRequestSection').style.display='none';
+  document.getElementById('pinVerifySection').style.display='block';
+  document.getElementById('pinSentTo').textContent = 'ສົ່ງ PIN ໄປ WhatsApp: '+fields.phone;
+  // focus กล่องแรก
+  setTimeout(()=>{ const b=document.querySelector('.pin-box'); if(b) b.focus(); },200);
+  showNotif('📱 ສົ່ງ PIN ໄປ WhatsApp ແລ້ວ!','success');
+}
+
+function pinBoxInput(el, idx){
+  el.classList.toggle('filled', el.value!=='');
+  if(el.value && idx<6){
+    const next = document.querySelectorAll('.pin-box')[idx];
+    if(next) next.focus();
+  }
+  // auto-submit when all 6 filled
+  const all = [...document.querySelectorAll('.pin-box')].map(b=>b.value);
+  if(all.every(v=>v) && all.length===6) submitPIN();
+}
+function pinBoxKey(e,el,idx){
+  if(e.key==='Backspace'&&!el.value&&idx>1){
+    const prev = document.querySelectorAll('.pin-box')[idx-2];
+    if(prev){prev.value='';prev.classList.remove('filled');prev.focus();}
+  }
+}
+function getPINValue(){
+  return [...document.querySelectorAll('.pin-box')].map(b=>b.value).join('');
+}
+function clearPINBoxes(){
+  document.querySelectorAll('.pin-box').forEach(b=>{b.value='';b.classList.remove('filled');});
+}
+
+function submitPIN(){
+  const entered = getPINValue();
+  if(entered.length!==6){showNotif('ກະລຸນາໃສ່ PIN 6 ຕົວ','error');return;}
+  if(!_pendingReg){showNotif('❌ ຂໍ້ມູນໝົດອາຍຸ ກະລຸນາລອງໃໝ່','error');resetPINSection();return;}
+  if(Date.now()>_pendingReg.pinExp){showNotif('⏰ PIN ໝົດອາຍຸ ກະລຸນາຂໍ PIN ໃໝ່','error');clearPINBoxes();return;}
+  if(entered!==_pendingReg.pin){
+    showNotif('❌ PIN ບໍ່ຖືກ ກະລຸນາລອງໃໝ່','error');
+    clearPINBoxes();
+    document.querySelectorAll('.pin-box')[0]?.focus();
+    // flash red
+    document.querySelectorAll('.pin-box').forEach(b=>{ b.style.borderColor='#ff4444'; setTimeout(()=>b.style.borderColor='',600); });
+    return;
+  }
+  finishRegister(true);
+}
+
+function resendPIN(){
+  if(!_pendingReg){resetPINSection();return;}
+  _pendingReg.pin = generatePIN();
+  _pendingReg.pinExp = Date.now()+10*60*1000;
+  const waNum = _pendingReg.phone.replace(/[^0-9]/g,'');
+  const fullWA = waNum.startsWith('856')?waNum:'856'+waNum.replace(/^0/,'');
+  const msg = '\ud83d\udd10 PIN ໃໝ່ຂອງທ່ານ: *'+_pendingReg.pin+'*\n\u23f0 ໃຊ້ໄດ້ 10 ນາທີ\n\u26a0\ufe0f ຢ່າແຊຣ໌ລະຫັດນີ້ໃຫ້ໃຜ';
+  window.open('https://wa.me/'+fullWA+'?text='+encodeURIComponent(msg),'_blank');
+  clearPINBoxes();
+  showNotif('📱 ສົ່ງ PIN ໃໝ່ແລ້ວ','success');
+}
+
+function resetPINSection(){
+  document.getElementById('pinVerifySection').style.display='none';
+  document.getElementById('pinRequestSection').style.display='block';
+  clearPINBoxes();
+  _pendingReg=null;
+}
+
+function finishRegister(verified){
+  if(!_pendingReg) return;
+  const {uid,name,phone,email,pass,avatarImg} = _pendingReg;
+  const user = {id:uid,name,phone,email,pass,wallet:0,isSeller:false,orders:[],
+    registeredAt:new Date().toISOString(), verified: verified};
+  if(avatarImg) user.avatarImg = avatarImg;
+  currentUser = user;
   saveUser();
   closeModal('registerModal');
+  resetPINSection();
   updateProfileUI();
-  showNotif('✅ ສ້າງບັນຊີສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name);
+  if(verified){
+    showNotif('\u2705 ສ້າງບັນຊີ + ຢືນຢັນສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name, 'success');
+  } else {
+    showNotif('\u2705 ສ້າງບັນຊີສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name, 'success');
+  }
   waNewUser(currentUser);
+  _pendingReg=null;
 }
 
 // ─── Saved credentials helpers ───
@@ -5478,8 +5683,185 @@ function openChatRoom(id){
 
 function backToChatList(){
   currentChat = null;
+  hideChatMenu();
   document.getElementById('chatListView').style.display='flex';
   document.getElementById('chatRoomView').style.display='none';
+  updateClearAllChatsBtn();
+}
+
+function updateClearAllChatsBtn(){
+  const btn = document.getElementById('clearAllChatsBtn');
+  if(!btn) return;
+  const hasChats = Object.keys(chatMsgs||{}).some(k=>(chatMsgs[k]||[]).length>0);
+  btn.style.display = hasChats ? 'block' : 'none';
+}
+
+function clearAllChats(){
+  if(!confirm('ລຶບປະຫວັດການແຊດທັງໝົດ?')) return;
+  // เคลียร์เฉพาะห้องที่ user นี้มีส่วนร่วม
+  Object.keys(chatMsgs).forEach(room=>{
+    const msgs = chatMsgs[room]||[];
+    const mine = msgs.some(m=>m.uid===currentUser?.id);
+    if(mine) chatMsgs[room]=[];
+  });
+  saveChat();
+  updateClearAllChatsBtn();
+  showNotif('🗑️ ລຶບປະຫວັດທັງໝົດແລ້ວ','success');
+}
+
+// ══════════════════════════════════════════════
+// 💬 CHAT MANAGEMENT FUNCTIONS
+// ══════════════════════════════════════════════
+function toggleChatMenu(){
+  const d = document.getElementById('chatMenuDropdown');
+  if(d) d.style.display = d.style.display==='none'?'block':'none';
+}
+function hideChatMenu(){
+  const d = document.getElementById('chatMenuDropdown');
+  if(d) d.style.display='none';
+}
+// ปิด menu เมื่อคลิกที่อื่น
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#chatMenuDropdown') && !e.target.closest('[onclick="toggleChatMenu()"]')){
+    hideChatMenu();
+  }
+});
+
+// 🧹 ล้างข้อความทั้งหมดในห้อง (ฝั่งตัวเอง)
+function clearChatRoom(){
+  if(!currentChat){return;}
+  if(!confirm('ລ້າງຂໍ້ຄວາມທັງໝົດໃນຫ້ອງນີ້?')) return;
+  chatMsgs[currentChat] = [];
+  saveChat();
+  renderChatMsgs(currentChat);
+  hideChatMenu();
+  showNotif('🧹 ລ້າງຂໍ້ຄວາມແລ້ວ', 'success');
+}
+
+// 🗑️ ลบห้องแชทออกจากรายการ
+function deleteChatRoom(){
+  if(!currentChat) return;
+  if(!confirm('ລຶບຫ້ອງແຊດນີ້ທັງໝົດ?')) return;
+  delete chatMsgs[currentChat];
+  saveChat();
+  hideChatMenu();
+  backToChatList();
+  showNotif('🗑️ ລຶບຫ້ອງແຊດແລ້ວ', 'success');
+}
+
+// 📋 Message long-press / context menu
+let _msgHoldTimer = null;
+function startMsgHold(idx, room){
+  _msgHoldTimer = setTimeout(()=>{ showMsgMenu(null, idx, room); }, 600);
+}
+function cancelMsgHold(){ if(_msgHoldTimer){ clearTimeout(_msgHoldTimer); _msgHoldTimer=null; } }
+
+function showMsgMenu(e, idx, room){
+  if(e) e.preventDefault();
+  cancelMsgHold();
+  const msgs = chatMsgs[room]||[];
+  const m = msgs[idx];
+  if(!m) return;
+  const isMine = m.uid===currentUser?.id;
+  const isAdmin = currentUser?.isAdmin;
+
+  // ลบ popup เก่า
+  const old = document.getElementById('msgMenuPopup');
+  if(old) old.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'msgMenuPopup';
+  popup.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)';
+  popup.innerHTML = `
+    <div style="background:var(--dark3);border:1px solid rgba(255,255,255,.12);border-radius:18px;min-width:240px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.6)">
+      <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:var(--text2)">"${(m.text||'').slice(0,40)}${m.text?.length>40?'...':''}"</div>
+      ${(isMine||isAdmin)&&!m.deleted?`
+      <div onclick="deleteSingleMsg(${idx},'${room}')" style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:13px;color:#ff6666;border-bottom:1px solid rgba(255,255,255,.06)" onmouseover="this.style.background='rgba(255,60,60,.08)'" onmouseout="this.style.background=''">
+        🗑️ <span>ລຶບຂໍ້ຄວາມນີ້</span>
+      </div>
+      ${isMine&&!m.deleted?`<div onclick="editSingleMsg(${idx},'${room}')" style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text)" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">
+        ✏️ <span>ແກ້ໄຂຂໍ້ຄວາມ</span>
+      </div>`:''}
+      `:''}
+      <div onclick="copyMsg('${(m.text||'').replace(/'/g,"\\'")}') " style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text)" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">
+        📋 <span>ສຳເນົາຂໍ້ຄວາມ</span>
+      </div>
+      <div onclick="document.getElementById('msgMenuPopup').remove()" style="padding:14px 16px;cursor:pointer;text-align:center;font-size:13px;color:var(--text2);border-top:1px solid rgba(255,255,255,.08)">ຍົກເລີກ</div>
+    </div>`;
+  popup.addEventListener('click', ev=>{ if(ev.target===popup) popup.remove(); });
+  document.body.appendChild(popup);
+}
+
+function deleteSingleMsg(idx, room){
+  const popup = document.getElementById('msgMenuPopup');
+  if(popup) popup.remove();
+  if(!chatMsgs[room]||!chatMsgs[room][idx]) return;
+  chatMsgs[room][idx].deleted = true;
+  chatMsgs[room][idx].text = '';
+  saveChat();
+  renderChatMsgs(room);
+  showNotif('🗑️ ລຶບຂໍ້ຄວາມແລ້ວ', 'success');
+}
+
+function editSingleMsg(idx, room){
+  const popup = document.getElementById('msgMenuPopup');
+  if(popup) popup.remove();
+  if(!chatMsgs[room]||!chatMsgs[room][idx]) return;
+  const m = chatMsgs[room][idx];
+  const newText = prompt('ແກ້ໄຂຂໍ້ຄວາມ:', m.text);
+  if(newText===null||newText===m.text) return;
+  if(!newText.trim()){showNotif('❌ ຂໍ້ຄວາມຫວ່າງ','error');return;}
+  m.text = newText.trim();
+  m.edited = true;
+  saveChat();
+  renderChatMsgs(room);
+  showNotif('✅ ແກ້ໄຂແລ້ວ', 'success');
+}
+
+function copyMsg(text){
+  const popup = document.getElementById('msgMenuPopup');
+  if(popup) popup.remove();
+  navigator.clipboard?.writeText(text).then(()=>showNotif('📋 ສຳເນົາແລ້ວ','success')).catch(()=>showNotif('❌ ສຳເນົາບໍ່ໄດ້','error'));
+}
+
+// ══════════════════════════════════════════════
+// 🔐 PIN 6 หลัก สำหรับยืนยันบัญชีใหม่
+// ══════════════════════════════════════════════
+function generatePIN(){ return Math.floor(100000+Math.random()*900000).toString(); }
+
+function sendVerifyPIN(userId, phone){
+  const pin = generatePIN();
+  // เก็บ PIN ชั่วคราว (หมดอายุ 10 นาที)
+  const pins = JSON.parse(localStorage.getItem('kd_verify_pins')||'{}');
+  pins[userId] = {pin, exp: Date.now()+10*60*1000, phone};
+  localStorage.setItem('kd_verify_pins', JSON.stringify(pins));
+
+  // ส่ง WA พร้อม PIN
+  const msg = [
+    '🔐 *ຂາຍດີ — ຢືນຢັນບັນຊີ*',
+    '─────────────────',
+    'ລະຫັດຢືນຢັນຂອງທ່ານ:',
+    '',
+    '  *' + pin + '*',
+    '',
+    '⏰ ໃຊ້ໄດ້ 10 ນາທີເທົ່ານັ້ນ',
+    '⚠️ ຢ່າແຊຣ໌ລະຫັດນີ້ໃຫ້ໃຜ',
+    '─────────────────',
+    'ຖ້າທ່ານບໍ່ໄດ້ສ້າງບັນຊີ ໂປຣດຕິດຕໍ່: '+WA_ADMIN,
+  ].join('\n');
+  window.open('https://wa.me/'+phone.replace(/[^0-9]/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  return pin;
+}
+
+function verifyPIN(userId, inputPin){
+  const pins = JSON.parse(localStorage.getItem('kd_verify_pins')||'{}');
+  const entry = pins[userId];
+  if(!entry) return false;
+  if(Date.now() > entry.exp){ delete pins[userId]; localStorage.setItem('kd_verify_pins',JSON.stringify(pins)); return false; }
+  if(entry.pin !== inputPin) return false;
+  delete pins[userId];
+  localStorage.setItem('kd_verify_pins', JSON.stringify(pins));
+  return true;
 }
 
 function getAvatarHtml(uid, name, size=32){
@@ -5504,23 +5886,27 @@ function renderChatMsgs(room){
   const msgs = (chatMsgs[room]||[]);
   const container = document.getElementById('chatMessages');
   if(!msgs.length){container.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px">ຍັງບໍ່ມີຂໍ້ຄວາມ ສົ່ງອັນທຳອິດ! 👋</div>';return;}
-  container.innerHTML = msgs.map(m=>{
+  container.innerHTML = msgs.map((m,idx)=>{
     const isMine = m.uid===currentUser?.id;
     const av = getAvatarHtml(m.uid, m.name, 30);
+    const deleted = m.deleted;
+    const msgContent = deleted
+      ? `<div style="font-style:italic;color:rgba(255,255,255,.3);font-size:12px">🚫 ຂໍ້ຄວາມຖືກລຶບແລ້ວ</div>`
+      : `<div class="msg-bubble ${isMine?'msg-mine':'msg-other'}" style="white-space:pre-line" oncontextmenu="showMsgMenu(event,${idx},'${room}')" ontouchstart="startMsgHold(${idx},'${room}')" ontouchend="cancelMsgHold()">${m.text}${m.edited?'<span style="font-size:9px;opacity:.5;margin-left:4px">(ແກ້ໄຂ)</span>':''}</div>`;
     if(isMine){
-      return `<div style="display:flex;flex-direction:row-reverse;align-items:flex-end;gap:6px;margin-bottom:8px">
+      return `<div id="msg_${idx}" style="display:flex;flex-direction:row-reverse;align-items:flex-end;gap:6px;margin-bottom:8px">
         ${av}
         <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:72%">
-          <div class="msg-bubble msg-mine" style="white-space:pre-line">${m.text}</div>
+          ${msgContent}
           <div class="msg-time">${m.time}</div>
         </div>
       </div>`;
     } else {
-      return `<div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
+      return `<div id="msg_${idx}" style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
         ${av}
         <div style="display:flex;flex-direction:column;align-items:flex-start;max-width:72%">
           <div style="font-size:10px;color:var(--text2);margin-bottom:2px;padding-left:2px">${m.name}</div>
-          <div class="msg-bubble msg-other" style="white-space:pre-line">${m.text}</div>
+          ${msgContent}
           <div class="msg-time">${m.time}</div>
         </div>
       </div>`;
@@ -5832,6 +6218,7 @@ function submitDiamondOrder(){
   const icon=isMLBB?'💎':'💠';
   const gameName=isMLBB?'Mobile Legends':'Free Fire';
   const orderId='DIA-'+Date.now().toString().slice(-6);
+  const _deadlineMs = Date.now() + 30*60*1000; // 30 minutes
   const order={
     id:orderId, game:currentDiamondGame, gameName, pkgId:selectedDiamondPkg.id,
     amount:selectedDiamondPkg.amount, bonus:selectedDiamondPkg.bonus||0,
@@ -5842,6 +6229,8 @@ function submitDiamondOrder(){
     status:'pending', date:new Date().toLocaleDateString('lo-LA'), isGame:true,
     productName:`${icon} ${selectedDiamondPkg.amount.toLocaleString()} Diamond ${gameName}`,
     productEmoji:icon, qty:1, total,
+    deadlineMs: _deadlineMs, // 30-min deadline
+    createdMs: Date.now(),
   };
   currentUser.wallet-=total; saveUser(); updateWalletDisplay();
   const dorders=getDiamondOrders(); dorders.push(order); saveDiamondOrders(dorders);
@@ -5849,7 +6238,12 @@ function submitDiamondOrder(){
   const ds=getDiamondSellers();
   const s=ds[currentDiamondGame]?.find(x=>x.userId===order.sellerId);
   if(s){s.sold=(s.sold||0)+1;saveDiamondSellers(ds);}
+  // แจ้ง admin ทาง WA
   waNewOrder(currentUser,order);
+  // แจ้ง Diamond seller ทาง WA
+  waNotifyDiamondSeller(order);
+  // In-app notification badge + sound
+  addDiamondOrderNotif(order);
   closeModal('diamondOrderModal');
   showDiamondBill(order);
 }
@@ -6139,7 +6533,7 @@ function renderDssOrders(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:13px;font-weight:700;color:${color}">${icon} ${o.gameName||o.game} — ${Number(o.amount).toLocaleString()} 💎</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">#${o.id} · ${o.date}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">#${o.id} · ${o.date} ${o.status==='pending'?renderDeadlineCountdown(o.id,o.deadlineMs):''}</div>
         </div>
         <div style="font-size:11px;font-weight:700;color:${statusColor}">${statusText}</div>
       </div>
@@ -6197,15 +6591,58 @@ document.querySelectorAll('.popup-overlay').forEach(o=>{
 });
 
 // ============ NOTIFICATIONS ============
-function showNotif(msg){
-  let n = document.querySelector('.notif');
-  if(n) n.remove();
-  n = document.createElement('div');
-  n.className='notif';
-  n.textContent=msg;
-  document.body.appendChild(n);
-  setTimeout(()=>n.remove(),3000);
+// NOTIFICATION SYSTEM v2
+function detectNotifType(msg){
+  const m=(msg||'').toString();
+  if(m.includes('\u274c')||m.includes('\u26a0\ufe0f')||m.includes('ບໍ່ຖືກ')||m.includes('ບໍ່ພໍ')||m.includes('ບໍ່ພົບ')||m.includes('ຜິດ')) return 'error';
+  if(m.includes('\u{1f48e}')||m.includes('\ud83d\udd25')||m.includes('Diamond')||m.includes('ສັ່ງ')||m.includes('ອໍເດີ')) return 'order';
+  if(m.includes('\ud83d\udcac')||m.includes('ຂໍ້ຄວາມ')||m.includes('Chat')) return 'msg';
+  if(m.includes('\u2705')||m.includes('\ud83c\udf89')||m.includes('ສຳເລັດ')||m.includes('ບັນທຶກ')) return 'success';
+  return 'info';
 }
+function playNotifSound(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const cfgs={
+      success:[{f:880,d:0,dur:.15},{f:1100,d:.12,dur:.2}],
+      error:[{f:300,d:0,dur:.15,t:'square'},{f:250,d:.18,dur:.2,t:'square'}],
+      order:[{f:880,d:0,dur:.12},{f:1100,d:.1,dur:.12},{f:1320,d:.2,dur:.2}],
+      msg:[{f:1200,d:0,dur:.1},{f:1000,d:.12,dur:.15}],
+      info:[{f:800,d:0,dur:.18}]
+    };
+    (cfgs[type]||cfgs.info).forEach(({f,d,dur,t='sine'})=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=f;osc.type=t;
+      gain.gain.setValueAtTime(.25,ctx.currentTime+d);
+      gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+dur);
+      osc.start(ctx.currentTime+d);osc.stop(ctx.currentTime+d+dur+.05);
+    });
+  }catch(e){}
+}
+function showNotif(msg,typeOverride){
+  const type=typeOverride||detectNotifType(msg);
+  const container=document.getElementById('notifContainer')||document.body;
+  const n=document.createElement('div');
+  n.className='notif notif-'+type;
+  const msgStr=(msg||'').toString();
+  const emojiMap={success:'\u2705',error:'\u274c',order:'\ud83d\uded2',msg:'\ud83d\udcac',info:'\u2139\ufe0f'};
+  const iconEmoji=msgStr.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u)?.[0]||emojiMap[type];
+  const cleanMsg=msgStr.replace(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u,'').trim();
+  n.innerHTML='<div class="notif-icon">'+iconEmoji+'</div><div class="notif-body"><div class="notif-title">'+cleanMsg+'</div></div><div class="notif-close" onclick="this.parentNode.remove()">\u2715</div>';
+  container.appendChild(n);
+  playNotifSound(type);
+  const dur=type==='order'?6000:type==='error'?4000:3000;
+  setTimeout(()=>{
+    if(!n.parentNode)return;
+    n.style.animation='notifFadeOut .3s ease forwards';
+    setTimeout(()=>n.remove(),300);
+  },dur);
+}
+function showNotifSuccess(msg){showNotif(msg,'success');}
+function showNotifError(msg){showNotif(msg,'error');}
+function showNotifOrder(msg){showNotif(msg,'order');}
+function showNotifMsg(msg){showNotif(msg,'msg');}
 
 // ============ AVATAR ============
 function triggerCoverUpload(){ document.getElementById('coverFileInput').click(); }
@@ -6472,14 +6909,47 @@ function adminResetSysWallet(){
   showNotif('✅ ຕັ້ງ Admin Wallet ໃໝ່ 100,000,000 ກີບ');
 }
 
+function getDiamondPendingCount(){
+  if(!currentUser) return 0;
+  const all = getDiamondOrders().filter(o=>o.status==='pending');
+  if(currentUser.isAdmin) return all.length;
+  return all.filter(o=>o.sellerId===currentUser.id).length;
+}
+
 function updateAdminNotifBadge(){
-  if(!currentUser?.isAdmin) return;
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]').filter(r=>r.status==='pending');
-  const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]').filter(r=>r.status==='pending');
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]').filter(a=>a.status==='pending');
-  const total = deps.length + withs.length + apps.length;
+  if(!currentUser) return;
+  let total = 0;
+  if(currentUser.isAdmin){
+    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]').filter(r=>r.status==='pending');
+    const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]').filter(r=>r.status==='pending');
+    const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]').filter(a=>a.status==='pending');
+    total = deps.length + withs.length + apps.length;
+  }
+  // Diamond pending orders (admin + sellers)
+  const diaPending = getDiamondPendingCount();
+  total += diaPending;
+
   const badge = document.getElementById('adminNotifBadge');
   if(badge){ badge.style.display = total>0?'inline':'none'; badge.textContent=total; }
+
+  // Nav profile badge for sellers
+  updateNavDiamondBadge(diaPending);
+}
+
+function updateNavDiamondBadge(count){
+  let b = document.getElementById('navDiaBadge');
+  if(!b){
+    const nav = document.getElementById('navProfileIcon');
+    if(!nav) return;
+    b = document.createElement('span');
+    b.id = 'navDiaBadge';
+    b.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#e53;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;pointer-events:none';
+    nav.style.position = 'relative';
+    nav.parentElement.style.position = 'relative';
+    nav.parentElement.appendChild(b);
+  }
+  b.style.display = count>0 ? 'flex' : 'none';
+  b.textContent = count > 9 ? '9+' : count;
 }
 
 function addAdminNotification(type, data){
@@ -6640,6 +7110,167 @@ function waNotifySeller(order){
   setTimeout(()=>{
     window.open('https://wa.me/'+sellerWA+'?text='+encodeURIComponent(msg), '_blank');
   }, 900);
+}
+
+// ══════════════════════════════════════════════
+// 💎 WA แจ้งเตือน Diamond Seller โดยตรง
+// ══════════════════════════════════════════════
+function waNotifyDiamondSeller(order){
+  if(!order.sellerId || order.sellerId==='admin') return;
+  // หาเบอร์ WA ของ seller จาก kd_seller_apps
+  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const db = getUsersDB();
+  const sellerUser = db[order.sellerId];
+  const sellerApp = apps.find(a=>a.userId===order.sellerId && a.status==='approved');
+  const sellerWA = sellerApp?.waNum || sellerUser?.phone || '';
+  if(!sellerWA) return;
+
+  const icon = order.game==='mlbb'?'💎':'🔥';
+  const msg = [
+    icon+' *ມີການສັ່ງເຕີມ Diamond ໃໝ່!*',
+    '─────────────────',
+    '🆔 ລະຫັດ: #'+order.id,
+    '🎮 ເກມ: '+order.gameName,
+    icon+' ຈຳນວນ: '+Number(order.amount).toLocaleString()+' Diamond'+(order.bonus?' (+'+order.bonus+' ໂບນັດ)':''),
+    '💰 ລາຄາ: '+Number(order.total).toLocaleString()+' ກີບ',
+    '─────────────────',
+    '👤 ລູກຄ້າ: '+(order.userName||'-'),
+    '🆔 Game ID: '+(order.gameId||'-'),
+    order.server ? '🖥 Server: '+order.server : '',
+    '📱 ເບີໂທ: '+(order.phone||'-'),
+    '─────────────────',
+    '⏰ ກະລຸນາເຕີມພາຍໃນ 30 ນາທີ',
+    '✅ ເຂົ້າ App → ໂປຣໄຟລ → ຕັ້ງຄ່າຮ້ານ Diamond → ອໍເດີ',
+  ].filter(Boolean).join('\n');
+
+  setTimeout(()=>{
+    window.open('https://wa.me/'+sellerWA.replace(/[^0-9]/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  }, 1800);
+}
+
+// ══════════════════════════════════════════════
+// 🔔 In-app notification + เสียง สำหรับ Diamond order
+// ══════════════════════════════════════════════
+function playOrderSound(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    // เสียงแจ้งเตือน 3 โน้ต
+    [[880,0],[1100,0.15],[1320,0.3]].forEach(([freq,delay])=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+delay+0.3);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+0.35);
+    });
+  }catch(e){}
+}
+
+function addDiamondOrderNotif(order){
+  // เพิ่ม badge แจ้งเตือนที่ admin notif
+  const notifs = JSON.parse(localStorage.getItem('kd_admin_notifs')||'[]');
+  notifs.unshift({
+    id: 'dia_'+order.id,
+    type: 'diamond',
+    title: (order.game==='mlbb'?'💎':'🔥')+' ມີການສັ່ງ Diamond!',
+    msg: order.gameName+' '+Number(order.amount).toLocaleString()+'💎 — '+order.userName,
+    subMsg: '🆔 Game ID: '+order.gameId+' | 💰 '+Number(order.total).toLocaleString()+' ກີບ',
+    date: new Date().toLocaleString('th-TH'),
+    read: false,
+    orderId: order.id,
+  });
+  localStorage.setItem('kd_admin_notifs', JSON.stringify(notifs));
+  updateAdminNotifBadge();
+  // เล่นเสียง
+  playOrderSound();
+  // แสดง banner แจ้งเตือนชั่วคราว
+  showDiamondOrderBanner(order);
+}
+
+function showDiamondOrderBanner(order){
+  // ลบ banner เก่า
+  const old = document.getElementById('diaOrderBanner');
+  if(old) old.remove();
+  const icon = order.game==='mlbb'?'💎':'🔥';
+  const color = order.game==='mlbb'?'rgba(100,80,255,.95)':'rgba(220,50,0,.95)';
+  const banner = document.createElement('div');
+  banner.id = 'diaOrderBanner';
+  banner.style.cssText = `position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;
+    background:${color};border-radius:16px;padding:14px 20px;min-width:280px;max-width:340px;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;align-items:center;gap:12px;
+    animation:slideDown .3s ease;`;
+  banner.innerHTML = `
+    <div style="font-size:32px">${icon}</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700;color:#fff">ມີການສັ່ງ Diamond ໃໝ່!</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:2px">${order.gameName} ${Number(order.amount).toLocaleString()}💎 — ${order.userName}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px">🆔 ${order.gameId}</div>
+    </div>
+    <div id="diaDeadlineTimer_${order.id}" style="font-size:11px;font-weight:700;color:#fff;text-align:center;min-width:44px">30:00</div>`;
+  document.body.appendChild(banner);
+  // ลบ banner หลัง 8 วินาที
+  setTimeout(()=>{ if(banner.parentNode) banner.remove(); }, 8000);
+  // เริ่ม countdown timer
+  startDeadlineTimer(order.id, order.deadlineMs||Date.now()+30*60*1000);
+}
+
+// ══════════════════════════════════════════════
+// ⏱ Deadline countdown timer
+// ══════════════════════════════════════════════
+const _deadlineTimers = {};
+
+function startDeadlineTimer(orderId, deadlineMs){
+  if(_deadlineTimers[orderId]) clearInterval(_deadlineTimers[orderId]);
+  function tick(){
+    const left = deadlineMs - Date.now();
+    const el = document.getElementById('diaDeadlineTimer_'+orderId);
+    if(!el){ clearInterval(_deadlineTimers[orderId]); return; }
+    if(left<=0){
+      el.textContent='⚠️ หมดเวลา';
+      el.style.color='#ff4444';
+      clearInterval(_deadlineTimers[orderId]);
+      playWarningSound();
+      return;
+    }
+    const m = Math.floor(left/60000);
+    const s = Math.floor((left%60000)/1000);
+    el.textContent = m+':'+(s<10?'0':'')+s;
+    el.style.color = left<5*60*1000 ? '#ff6644' : '#fff';
+  }
+  tick();
+  _deadlineTimers[orderId] = setInterval(tick, 1000);
+}
+
+function playWarningSound(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.4,0.8].forEach(delay=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 440;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.2, ctx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+delay+0.3);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+0.35);
+    });
+  }catch(e){}
+}
+
+// เพิ่ม timer countdown ใน DSS orders tab
+function renderDeadlineCountdown(orderId, deadlineMs){
+  if(!deadlineMs) return '';
+  const left = deadlineMs - Date.now();
+  if(left<=0) return `<span style="color:#ff4444;font-size:11px;font-weight:700">⚠️ ເກີນເວລາ</span>`;
+  const m = Math.floor(left/60000);
+  const s = Math.floor((left%60000)/1000);
+  const color = left<5*60*1000?'#ff6644':left<15*60*1000?'#ffa500':'#4eff88';
+  setTimeout(()=>startDeadlineTimer(orderId, deadlineMs), 100);
+  return `<span id="diaDeadlineTimer_${orderId}" style="color:${color};font-size:11px;font-weight:700">⏱ ${m}:${s<10?'0':''}${s}</span>`;
 }
 
 // ============ ADMIN HISTORY TAB ============
