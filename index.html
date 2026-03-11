@@ -369,15 +369,15 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .avatar{width:80px;height:80px;border-radius:50%;border:3px solid var(--gold);object-fit:cover;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;cursor:pointer}
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 /* COVER PHOTO */
-.profile-cover{position:relative;width:100%;height:160px;background:linear-gradient(135deg,#1a1200,#2a1f00,#1a1200);overflow:hidden;cursor:pointer}
+.profile-cover{position:relative;width:100%;height:160px;background:linear-gradient(135deg,#1a1200,#2a1f00,#1a1200);overflow:hidden}
 .profile-cover img{width:100%;height:100%;object-fit:cover}
 .profile-cover-edit{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px)}
 .profile-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.7))}
 /* Avatar floats outside cover using negative margin-top */
-.profile-avatar-outer{position:relative;height:52px;display:flex;align-items:flex-start;padding-left:20px;pointer-events:none}
-.profile-avatar-over{position:relative;top:-44px;width:88px;height:88px;border-radius:50%;border:3px solid var(--gold);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);flex-shrink:0;z-index:5;pointer-events:all}
-.profile-avatar-over img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.profile-avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--black);border:2px solid var(--black);z-index:6;pointer-events:none}
+.profile-avatar-outer{position:relative;height:52px;padding-left:20px}
+.profile-avatar-over{position:absolute;top:-44px;left:20px;width:88px;height:88px;border-radius:50%;border:3px solid var(--gold);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:30}
+.profile-avatar-over img{width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none}
+.profile-avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--black);border:2px solid var(--black);pointer-events:none;z-index:31}
 /* PUBLIC PROFILE MODAL */
 .pub-profile-modal{position:fixed;inset:0;z-index:900;background:var(--black);overflow-y:auto;display:none;flex-direction:column}
 .pub-cover{position:relative;width:100%;height:200px;background:linear-gradient(135deg,#1a1200,#2a1f00);overflow:hidden;flex-shrink:0}
@@ -512,6 +512,41 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .back-btn{width:32px;height:32px;background:var(--dark3);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px}
 /* TAG */
 .tag{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:8px;margin-right:4px}
+/* SELL FORM DYNAMIC */
+.sell-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:14px}
+.sell-section-title{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.color-option-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;align-items:center}
+.color-add-btn{background:rgba(201,168,76,.15);border:1px dashed rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.2s}
+.color-add-btn:hover{background:rgba(201,168,76,.25)}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;background:var(--dark3);border:1px solid var(--gray2);border-radius:10px;padding:8px;min-height:42px;cursor:text}
+.tag-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.35);color:var(--gold);border-radius:20px;padding:3px 10px;font-size:12px}
+.tag-pill button{background:none;border:none;color:var(--gold);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.tag-input-box{border:none;background:transparent;color:var(--text);font-size:13px;font-family:'Sarabun',sans-serif;outline:none;min-width:80px;flex:1}
+.size-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.size-toggle{padding:8px 4px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-size:12px;color:var(--text2);cursor:pointer;text-align:center;transition:.18s;font-family:'Sarabun',sans-serif}
+.size-toggle.on{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold);font-weight:700}
+.color-dot-sel{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.2);transition:.18s;position:relative;flex-shrink:0}
+.color-dot-sel.on{border-color:var(--gold);transform:scale(1.15);box-shadow:0 0 0 2px rgba(201,168,76,.4)}
+.color-dot-sel.on::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.cond-row{display:flex;gap:8px;flex-wrap:wrap}
+.cond-chip{padding:7px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-size:12px;color:var(--text2);cursor:pointer;transition:.18s;font-family:'Sarabun',sans-serif}
+.cond-chip.on{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold);font-weight:700}
+.variant-section{margin-bottom:14px}
+.variant-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:.5px}
+.variant-chips{display:flex;flex-wrap:wrap;gap:7px}
+.variant-chip{padding:7px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);font-size:13px;color:var(--text);cursor:pointer;transition:all .18s;font-family:'Sarabun',sans-serif}
+.variant-chip:hover{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.08)}
+.variant-chip.selected{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold);font-weight:700}
+.variant-chip.disabled{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+.color-chip{width:34px;height:34px;border-radius:50%;border:2.5px solid rgba(255,255,255,.12);cursor:pointer;transition:transform .18s,border-color .18s;position:relative;flex-shrink:0}
+.color-chip:hover{transform:scale(1.12)}
+.color-chip.selected{border-color:var(--gold);transform:scale(1.15);box-shadow:0 0 0 2px rgba(201,168,76,.4)}
+.color-chip.selected::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+/* SPEC TABLE */
+.spec-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+.spec-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.spec-table td:first-child{color:var(--text2);width:42%;font-weight:600}
+.spec-table td:last-child{color:var(--text)}
 /* STARS */
 .stars{color:var(--gold);font-size:12px}
 /* DIVIDER */
@@ -831,23 +866,26 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <!-- Logged in -->
     <div id="profileLoggedIn" style="display:none">
       <!-- Cover Photo -->
-      <div class="profile-cover" id="profileCover" onclick="triggerCoverUpload()">
+      <div class="profile-cover" id="profileCover">
         <img id="profileCoverImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover">
         <div class="profile-cover-overlay"></div>
-        <div class="profile-cover-edit">📷 ປ່ຽນຮູບພື້ນຫຼັງ</div>
+        <label for="coverFileInput" style="position:absolute;inset:0;cursor:pointer;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px">
+          <span style="background:rgba(0,0,0,.6);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;pointer-events:none">📷 ປ່ຽນຮູບພື້ນຫຼັງ</span>
+        </label>
       </div>
       <!-- Avatar — อยู่นอก cover ไม่ถูกตัด -->
       <div class="profile-avatar-outer">
-        <div class="profile-avatar-over" id="profileAvatarOver" onclick="triggerAvatarUpload()">
-          <img id="profileAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%">
-          <span id="profileAvatarEmoji">👤</span>
+        <label for="avatarFileInput" class="profile-avatar-over" id="profileAvatarOver">
+          <img id="profileAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none">
+          <span id="profileAvatarEmoji" style="pointer-events:none">👤</span>
           <div class="profile-avatar-edit-btn">📷</div>
-        </div>
+        </label>
       </div>
-      <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadAvatar()">
-      <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="uploadCover()">
+      <!-- File inputs ต้องอยู่ใน DOM ปกติ ไม่ hidden ด้วย display:none บน iOS -->
+      <input type="file" id="avatarFileInput" accept="image/*" style="opacity:0;width:0;height:0;position:absolute;overflow:hidden" onchange="uploadAvatar()">
+      <input type="file" id="coverFileInput" accept="image/*" style="opacity:0;width:0;height:0;position:absolute;overflow:hidden" onchange="uploadCover()">
       <!-- Profile info row -->
-      <div style="padding:50px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
+      <div style="padding:54px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
         <div style="display:flex;justify-content:space-between;align-items:flex-end">
           <div>
             <div class="profile-name" id="profileDisplayName">ຜູ້ໃຊ້</div>
@@ -1157,42 +1195,61 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <div class="modal-title">➕ ລົງຂາຍສິນຄ້າ</div>
     <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:10px;font-size:11px;color:var(--gold);line-height:1.8;margin-bottom:14px">
       ⚠️ ເມື່ອລູກຄ້າກົດສັ່ງຊື້ ທ່ານຕ້ອງຖ່າຍຮູບ/ວິດີໂອຕອນສົ່ງໄປຂົນສ່ງເພື່ອເປັນຫຼັກຖານ<br>
-      ✅ ຫຼັງລູກຄ້າຮັບຂອງ ພາຍໃນ 1-2 ຊົ່ວໂມງ ເງິນຈະເຂົ້າ Wallet ຂອງທ່ານ ແລະ ຖອນໄດ້ພາຍໃນ 5 ນາທີ
+      ✅ ຫຼັງລູກຄ້າຮັບຂອງ ພາຍໃນ 1-2 ຊົ່ວໂມງ ເງິນຈະເຂົ້າ Wallet ຂອງທ່ານ
     </div>
+
+    <!-- ── ຮູບພາບ ── -->
     <div class="form-group">
-      <label class="form-label">ຮູບພາບ/ວິດີໂອ (ສູງສຸດ 10)</label>
+      <label class="form-label">📸 ຮູບພາບ (ສູງສຸດ 5)</label>
       <div class="upload-box" onclick="document.getElementById('sellImgInput').click()">
-        📸 ອັດໂຫລດຮູບ/ວິດີໂອ
+        📸 ອັດໂຫລດຮູບສິນຄ້າ
         <div id="sellImgPreview" class="upload-preview"></div>
       </div>
-      <input type="file" id="sellImgInput" multiple accept="image/*,video/*" style="display:none" onchange="previewFiles('sellImgInput','sellImgPreview')">
+      <input type="file" id="sellImgInput" multiple accept="image/*" style="display:none" onchange="previewFiles('sellImgInput','sellImgPreview')">
     </div>
+
+    <!-- ── ຊື່ & ລາຍລະອຽດ ── -->
     <div class="form-group">
-      <label class="form-label">ຊື່ສິນຄ້າ</label>
+      <label class="form-label">ຊື່ສິນຄ້າ <span style="color:#f66">*</span></label>
       <input class="form-input" id="sellName" placeholder="ຊື່ສິນຄ້າ">
     </div>
     <div class="form-group">
-      <label class="form-label">ລາຍລະອຽດ</label>
-      <textarea class="form-input" id="sellDesc" rows="3" placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
+      <label class="form-label">ລາຍລະອຽດ <span style="color:#f66">*</span></label>
+      <textarea class="form-input" id="sellDesc" rows="3" placeholder="ລາຍລະອຽດສິນຄ້າ ເຊັ່ນ ວັດສະດຸ ຄຸນສົມບັດ ຂໍ້ມູນເພີ່ມເຕີມ..."></textarea>
     </div>
+
+    <!-- ── ໝວດໝູ່ ── -->
     <div class="form-group">
-      <label class="form-label">ໝວດໝູ່</label>
-      <select class="form-input" id="sellCat">
-        <option value="clothes">ເສື້ອຜ້າ&ເຄື່ອງສໍາອາງ</option>
-        <option value="electronics">ອິເລັກໂທຣນິກ</option>
-        <option value="home">ເຄື່ອງໃຊ້ໃນບ້ານ</option>
+      <label class="form-label">ໝວດໝູ່ <span style="color:#f66">*</span></label>
+      <select class="form-input" id="sellCat" onchange="onSellCatChange()">
+        <option value="">— ເລືອກໝວດໝູ່ —</option>
+        <option value="clothes">👗 ເສື້ອຜ້າ</option>
+        <option value="shoes">👟 ເກີບ</option>
+        <option value="bags">👜 ກະເປົາ & ເຄື່ອງສຳອາງ</option>
+        <option value="electronics_phone">📱 ໂທລະສັບ (ໃໝ່)</option>
+        <option value="electronics_used">📲 ໂທລະສັບ (ມືສອງ)</option>
+        <option value="electronics_other">💻 ອຸປະກອນ ອິເລັກໂທຣນິກ</option>
+        <option value="home">🏠 ເຄື່ອງໃຊ້ໃນບ້ານ</option>
+        <option value="food">🍜 ອາຫານ & ເຄື່ອງດື່ມ</option>
+        <option value="other">📦 ອື່ນໆ</option>
       </select>
     </div>
+
+    <!-- ── Dynamic fields ── -->
+    <div id="sellDynamicFields"></div>
+
+    <!-- ── ລາຄາ & ຈຳນວນ ── -->
     <div class="form-row2">
       <div class="form-group">
-        <label class="form-label">ລາຄາ (ກີບ)</label>
+        <label class="form-label">ລາຄາ (ກີບ) <span style="color:#f66">*</span></label>
         <input class="form-input" type="number" id="sellPrice" placeholder="50000">
       </div>
       <div class="form-group">
-        <label class="form-label">ຈຳນວນ</label>
-        <input class="form-input" type="number" id="sellQty" placeholder="10">
+        <label class="form-label">ຈຳນວນ <span style="color:#f66">*</span></label>
+        <input class="form-input" type="number" id="sellQty" placeholder="10" value="1">
       </div>
     </div>
+
     <button class="btn btn-gold" onclick="submitSellProduct()" style="margin-bottom:8px">📤 ລົງຂາຍ</button>
     <button class="btn btn-outline" onclick="closeModal('sellProductModal')">ຍົກເລີກ</button>
   </div>
@@ -1848,6 +1905,118 @@ function filterProducts(){
 
 function fmtPrice(n){return Number(n).toLocaleString()+' ກີບ';}
 
+// ============ VARIANT / SPEC HELPERS ============
+// ข้อมูล variant ตามประเภทสินค้า
+function getVariants(p){
+  const cat = p.cat||''; const sub = p.subcat||cat;
+  const v = {sizes:[], colors:[], storages:[], specs:{}};
+  // Use saved data from seller form
+  if(p.colors && p.colors.length) v.colors = p.colors;
+  if(p.sizes && p.sizes.length) v.sizes = p.sizes;
+  if(p.storages && p.storages.length) v.storages = p.storages;
+  if(p.isPhone) v.isPhone = true;
+  // Build spec table from saved seller fields
+  const sp = {};
+  if(p.brand) sp['ຍີ່ຫໍ້'] = p.brand;
+  if(p.model) sp['ລຸ້ນ'] = p.model;
+  if(p.material) sp['ວັດສະດຸ'] = p.material;
+  if(p.style) sp['ຮູບແບບ'] = p.style;
+  if(p.origin) sp['ຕົ້ນກຳເນີດ'] = p.origin;
+  if(p.condition) sp['ສະພາບ'] = p.condition;
+  if(p.ram) sp['RAM'] = p.ram;
+  if(p.battery) sp['Battery'] = p.battery;
+  if(p.network) sp['ເຄືອຂ່າຍ'] = p.network;
+  if(p.warranty) sp['ການຮັບປະກັນ'] = p.warranty;
+  if(p.type) sp['ປະເພດ'] = p.type;
+  if(p.size) sp['ຂະໜາດ'] = p.size;
+  if(p.weight) sp['ນ້ຳໜັກ/ປະລິມານ'] = p.weight;
+  if(p.exp) sp['EXP'] = p.exp;
+  if(p.includes && p.includes.length) sp['ສິ່ງທີ່ໄດ້ຮັບ'] = p.includes.join(', ');
+  if(Object.keys(sp).length){ v.specs=sp; return v; }
+  // Fallback defaults
+  const name=(p.name||'').toLowerCase();
+  if(cat==='clothes'||sub==='clothes'){
+    if(!v.colors.length) v.colors=[{name:'ດຳ',hex:'#1a1a1a'},{name:'ຂາວ',hex:'#f5f5f5'},{name:'ຟ້າ',hex:'#4a90d9'},{name:'ແດງ',hex:'#e74c3c'}];
+    if(!v.sizes.length) v.sizes=['XS','S','M','L','XL','2XL','3XL'];
+    v.specs={'ເນື້ອຜ້າ':'Cotton 100%','ຮູບແບບ':'Regular Fit','ຕົ້ນກຳເນີດ':'ລາວ / ໄທ'};
+  } else if(cat==='electronics'||sub.startsWith('electronics')){
+    const isPhone=name.includes('iphone')||name.includes('samsung')||name.includes('xiaomi')||name.includes('oppo')||name.includes('vivo')||p.isPhone||sub==='electronics_phone'||sub==='electronics_used';
+    if(isPhone){ if(!v.storages.length) v.storages=['64GB','128GB','256GB','512GB']; if(!v.colors.length) v.colors=[{name:'ດຳ',hex:'#1a1a1a'},{name:'ຂາວ',hex:'#f0f0f0'},{name:'ໄຊ',hex:'#c0c0c0'},{name:'ທອງ',hex:'#c9a84c'}]; v.isPhone=true; }
+    else { if(!v.colors.length) v.colors=[{name:'ດຳ',hex:'#1a1a1a'},{name:'ຂາວ',hex:'#f5f5f5'},{name:'ໄຊ',hex:'#c0c0c0'}]; }
+    v.specs={'ສະພາບ':'ໃໝ່ 100%','ການຮັບປະກັນ':'1 ປີ'};
+  } else if(cat==='home'){
+    if(!v.colors.length) v.colors=[{name:'ດຳ',hex:'#1a1a1a'},{name:'ຂາວ',hex:'#f5f5f5'},{name:'ນ້ຳຕານ',hex:'#8b6914'}];
+    v.specs={'ສະພາບ':'ໃໝ່ 100%','ການຮັບປະກັນ':'6 ເດືອນ'};
+  } else {
+    v.specs={'ສະພາບ':'ໃໝ່ 100%'};
+  }
+  return v;
+}
+
+function buildVariantUI(p){
+  const v = getVariants(p);
+  let html = '';
+
+  // Colors
+  if(v.colors && v.colors.length){
+    html += `<div class="variant-section">
+      <div class="variant-label">🎨 ເລືອກສີ <span id="selColorLbl" style="color:var(--gold);margin-left:6px;font-weight:700"></span></div>
+      <div class="variant-chips" style="align-items:center">
+        ${v.colors.map((c,i)=>`<div class="color-chip" style="background:${c.hex}" title="${c.name}" onclick="selectVariant('color',${i},'${c.name}',this)" data-name="${c.name}"></div>`).join('')}
+      </div>
+    </div>`;
+  }
+  // Sizes (clothes/shoes)
+  if(v.sizes && v.sizes.length){
+    html += `<div class="variant-section">
+      <div class="variant-label">📏 ເລືອກໄຊ <span id="selSizeLbl" style="color:var(--gold);margin-left:6px;font-weight:700"></span></div>
+      <div class="variant-chips">
+        ${v.sizes.map((s,i)=>`<div class="variant-chip" onclick="selectVariant('size',${i},'${s}',this)">${s}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+  // Storage (phones)
+  if(v.storages && v.storages.length){
+    html += `<div class="variant-section">
+      <div class="variant-label">💾 ຫນ່ວຍຄວາມຈຳ <span id="selStorageLbl" style="color:var(--gold);margin-left:6px;font-weight:700"></span></div>
+      <div class="variant-chips">
+        ${v.storages.map((s,i)=>`<div class="variant-chip" onclick="selectVariant('storage',${i},'${s}',this)">${s}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+  // Specs table
+  if(v.specs && Object.keys(v.specs).length){
+    html += `<div style="margin-bottom:14px">
+      <div class="variant-label" style="margin-bottom:8px">📋 ຂໍ້ມູນສິນຄ້າ</div>
+      <table class="spec-table">
+        ${Object.entries(v.specs).map(([k,val])=>`<tr><td>${k}</td><td>${val}</td></tr>`).join('')}
+      </table>
+    </div>`;
+  }
+  return html;
+}
+
+let selectedVariants = {};
+function selectVariant(type, idx, val, el){
+  selectedVariants[type] = val;
+  // Update label
+  const lblMap = {color:'selColorLbl', size:'selSizeLbl', storage:'selStorageLbl'};
+  const lbl = document.getElementById(lblMap[type]);
+  if(lbl) lbl.textContent = '— '+val;
+  // Highlight selected
+  const parent = el.parentElement;
+  parent.querySelectorAll(type==='color'?'.color-chip':'.variant-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getVariantSummary(){
+  const parts = [];
+  if(selectedVariants.color) parts.push('ສີ: '+selectedVariants.color);
+  if(selectedVariants.size) parts.push('ໄຊ: '+selectedVariants.size);
+  if(selectedVariants.storage) parts.push('ຄວາມຈຳ: '+selectedVariants.storage);
+  return parts.join(' | ');
+}
+
 // ============ PRODUCT DETAIL ============
 function showProductDetail(id){
   carouselIdx = 0;
@@ -1913,6 +2082,7 @@ function showProductDetail(id){
       ${p.isGame?`<span class="tag">${p.gameType?.toUpperCase()||'GAME'}</span>`:''}
     </div>
     <div class="info-box" style="margin-bottom:12px">${p.desc}</div>
+    ${buildVariantUI(p)}
     <div class="guaranteed-badge" style="display:inline-flex;margin-bottom:10px">✅ ຮັບປະກັນ 24 ຊົ່ວໂມງ</div>
     <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--gold);margin-bottom:12px;line-height:1.6">
       ⚠️ ແຄັບຮູບ ID #${p.id} ໄວ້ ຖ້າສິນຄ້າມີບັນຫາ ຕິດຕໍ່ Admin
@@ -1987,7 +2157,37 @@ function startOrder(id){
 }
 
 function showGeneralOrder(p){
+  selectedVariants = {}; // reset
   const saved = currentUser.personalInfo || {};
+  const v = getVariants(p);
+  // Build variant summary chips for order form
+  let variantOrderHtml = '';
+  if(v.colors&&v.colors.length || v.sizes&&v.sizes.length || v.storages&&v.storages.length){
+    variantOrderHtml = `<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">🎛 ຕົວເລືອກສິນຄ້າ</div>`;
+    if(v.colors&&v.colors.length){
+      variantOrderHtml += `<div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">🎨 ສີ <span id="oColorLbl" style="color:var(--gold)"></span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
+          ${v.colors.map((c,i)=>`<div class="color-chip" style="background:${c.hex}" title="${c.name}" onclick="selectOrderVariant('color',${i},'${c.name}',this,'oColorLbl')" data-name="${c.name}"></div>`).join('')}
+        </div></div>`;
+    }
+    if(v.sizes&&v.sizes.length){
+      variantOrderHtml += `<div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">📏 ໄຊ <span id="oSizeLbl" style="color:var(--gold)"></span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${v.sizes.map((s,i)=>`<div class="variant-chip" style="font-size:12px;padding:5px 12px" onclick="selectOrderVariant('size',${i},'${s}',this,'oSizeLbl')">${s}</div>`).join('')}
+        </div></div>`;
+    }
+    if(v.storages&&v.storages.length){
+      variantOrderHtml += `<div style="margin-bottom:6px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">💾 ຄວາມຈຳ <span id="oStorageLbl" style="color:var(--gold)"></span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${v.storages.map((s,i)=>`<div class="variant-chip" style="font-size:12px;padding:5px 12px" onclick="selectOrderVariant('storage',${i},'${s}',this,'oStorageLbl')">${s}</div>`).join('')}
+        </div></div>`;
+    }
+    variantOrderHtml += `</div>`;
+  }
   const html = `
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
       <div style="font-size:40px">${p.emoji}</div>
@@ -1997,6 +2197,7 @@ function showGeneralOrder(p){
         <div style="font-size:11px;color:var(--text2)">ID: #${p.id}</div>
       </div>
     </div>
+    ${variantOrderHtml}
     <div class="form-group">
       <label class="form-label">ຈຳນວນ</label>
       <input class="form-input" type="number" id="orderQty" value="1" min="1" max="${p.qty}">
@@ -2039,6 +2240,15 @@ function showGeneralOrder(p){
   openModal('orderModal');
 }
 
+function selectOrderVariant(type, idx, val, el, lblId){
+  selectedVariants[type] = val;
+  const lbl = document.getElementById(lblId);
+  if(lbl) lbl.textContent = '— '+val;
+  const parent = el.parentElement;
+  parent.querySelectorAll(type==='color'?'.color-chip':'.variant-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
 function submitGeneralOrder(){
   const p = currentProduct;
   const qty = parseInt(document.getElementById('orderQty').value)||1;
@@ -2058,7 +2268,8 @@ function submitGeneralOrder(){
     id: orderId, productId: p.id, productName: p.name, productEmoji: p.emoji,
     price: p.price, qty, total, name, phone, ban, muang, khwaeng, shipping,
     status: 'pending', date: new Date().toLocaleDateString('lo-LA'), isGame: false,
-    sellerId: p.sellerId||'admin'
+    sellerId: p.sellerId||'admin',
+    variant: getVariantSummary() || null,
   };
   orders.push(order); saveOrders();
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
@@ -2078,6 +2289,7 @@ function showBillPopup(order){
       <div class="bill-detail-row"><span>ລະຫັດບິນ</span><span>#${order.id}</span></div>
       <div class="bill-detail-row"><span>ສິນຄ້າ</span><span>${order.productName}</span></div>
       <div class="bill-detail-row"><span>ລະຫັດສິນຄ້າ</span><span>#${order.productId}</span></div>
+      ${order.variant?`<div class="bill-detail-row"><span>ຕົວເລືອກ</span><span style="color:var(--gold)">${order.variant}</span></div>`:''}
       <div class="bill-detail-row"><span>ຈຳນວນ</span><span>${order.qty}</span></div>
       <div class="bill-detail-row"><span>ລາຄາລວມ</span><span style="color:var(--gold)">${fmtPrice(order.total)}</span></div>
       <div class="bill-detail-row"><span>ຊື່ລູກຄ້າ</span><span>${order.name}</span></div>
@@ -3084,38 +3296,484 @@ function submitSellerApply(){
 // ============ SELL PRODUCT ============
 function showSellProduct(){
   if(!currentUser?.isSeller){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
+  // Reset all fields
+  ['sellName','sellDesc','sellPrice','sellQty'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const catEl=document.getElementById('sellCat');if(catEl)catEl.value='';
+  const dynEl=document.getElementById('sellDynamicFields');if(dynEl)dynEl.innerHTML='';
+  const prev=document.getElementById('sellImgPreview');if(prev)prev.innerHTML='';
+  sellSelectedColors=[]; sellSelectedSizes=[]; sellSelectedStorages=[]; sellCondition='';
   openModal('sellProductModal');
 }
 
+// ============ SELL PRODUCT — DYNAMIC FORM ============
+const SELL_COLORS = [
+  {name:'ດຳ',hex:'#1a1a1a'},{name:'ຂາວ',hex:'#f5f5f5'},{name:'ໄຊ',hex:'#b0b0b0'},
+  {name:'ທອງ',hex:'#c9a84c'},{name:'ຟ້າ',hex:'#4a90d9'},{name:'ແດງ',hex:'#e74c3c'},
+  {name:'ຂຽວ',hex:'#27ae60'},{name:'ສົ້ມ',hex:'#e67e22'},{name:'ມ່ວງ',hex:'#9b59b6'},
+  {name:'ຊົມພູ',hex:'#e91e8c'},{name:'ນ້ຳຕານ',hex:'#795548'},{name:'ຟ້າຄາມ',hex:'#006064'}
+];
+let sellSelectedColors = [];
+let sellSelectedSizes = [];
+let sellSelectedStorages = [];
+let sellCondition = '';
+let sellCustomTags = [];
+
+function onSellCatChange(){
+  const cat = document.getElementById('sellCat').value;
+  const container = document.getElementById('sellDynamicFields');
+  sellSelectedColors=[]; sellSelectedSizes=[]; sellSelectedStorages=[]; sellCondition=''; sellCustomTags=[];
+  if(!cat){ container.innerHTML=''; return; }
+
+  let html = '';
+
+  // ─── เสื้อผ้า ───
+  if(cat==='clothes'){
+    html += buildSellColorPicker('เสื้อผ้า');
+    html += buildSellSizePicker(['XS','S','M','L','XL','2XL','3XL','4XL']);
+    html += `<div class="sell-section">
+      <div class="sell-section-title">📋 ຂໍ້ມູນເພີ່ມເຕີມ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ເນື້ອຜ້າ / Material</label>
+        <input class="form-input" id="sf_material" placeholder="ເຊັ່ນ Cotton 100%, Polyester, Linen...">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຮູບແບບ / Style</label>
+        <select class="form-input" id="sf_style">
+          <option value="">— ເລືອກ —</option>
+          <option>Regular Fit</option><option>Slim Fit</option><option>Oversize</option>
+          <option>Loose Fit</option><option>Crop Top</option><option>Maxi</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ຕົ້ນກຳເນີດ / Origin</label>
+        <select class="form-input" id="sf_origin">
+          <option value="">— ເລືອກ —</option>
+          <option>ລາວ</option><option>ໄທ</option><option>ຈີນ</option>
+          <option>ຍີ່ປຸ່ນ</option><option>ເກົາຫຼີ</option><option>ອື່ນໆ</option>
+        </select>
+      </div>
+    </div>`;
+  }
+
+  // ─── ເກີບ ───
+  else if(cat==='shoes'){
+    html += buildSellColorPicker('ເກີບ');
+    html += buildSellSizePicker(['36','37','38','39','40','41','42','43','44','45']);
+    html += `<div class="sell-section">
+      <div class="sell-section-title">📋 ຂໍ້ມູນເກີບ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ວັດສະດຸ / Material</label>
+        <select class="form-input" id="sf_material">
+          <option value="">— ເລືອກ —</option>
+          <option>ໜັງແທ້ (Genuine Leather)</option><option>ໜັງ PU</option>
+          <option>ຜ້າ Canvas</option><option>ຢາງ/Rubber</option><option>Mesh</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ຮູບແບບ / Type</label>
+        <select class="form-input" id="sf_style">
+          <option value="">— ເລືອກ —</option>
+          <option>Sneakers</option><option>Sport</option><option>Casual</option>
+          <option>Formal</option><option>Sandal</option><option>Boot</option><option>Heel</option>
+        </select>
+      </div>
+    </div>`;
+  }
+
+  // ─── ກະເປົາ & ສຳອາງ ───
+  else if(cat==='bags'){
+    html += buildSellColorPicker('ກະເປົາ/ສຳອາງ');
+    html += `<div class="sell-section">
+      <div class="sell-section-title">📋 ຂໍ້ມູນສິນຄ້າ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ປະເພດ</label>
+        <select class="form-input" id="sf_bagtype">
+          <option value="">— ເລືອກ —</option>
+          <option>ກະເປົາຖື (Handbag)</option><option>ກະເປົາສະພາຍ (Backpack)</option>
+          <option>ກະເປົາສາຍຍາວ (Shoulder Bag)</option><option>ກະເປົາ Tote</option>
+          <option>ເຄື່ອງສຳອາງ (Cosmetics)</option><option>ນ້ຳຫອມ (Perfume)</option>
+          <option>ສິນຄ້າດູແລຜິວ (Skincare)</option><option>ອື່ນໆ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຍີ່ຫໍ້ / Brand</label>
+        <input class="form-input" id="sf_brand" placeholder="ເຊັ່ນ Gucci, Zara, Local Brand...">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ຂະໜາດ / Size (ຖ້າມີ)</label>
+        <input class="form-input" id="sf_size" placeholder="ເຊັ່ນ 30x20x10 cm, Small, Medium, Large">
+      </div>
+    </div>`;
+  }
+
+  // ─── ໂທລະສັບໃໝ່ ───
+  else if(cat==='electronics_phone'){
+    html += buildSellStoragePicker();
+    html += buildSellColorPicker('ໂທລະສັບ');
+    html += `<div class="sell-section">
+      <div class="sell-section-title">📱 ຂໍ້ມູນໂທລະສັບ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຍີ່ຫໍ້ <span style="color:#f66">*</span></label>
+        <select class="form-input" id="sf_brand">
+          <option value="">— ເລືອກ —</option>
+          <option>Apple (iPhone)</option><option>Samsung</option><option>Xiaomi</option>
+          <option>OPPO</option><option>VIVO</option><option>Huawei</option>
+          <option>Realme</option><option>OnePlus</option><option>Google Pixel</option><option>ອື່ນໆ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ລຸ້ນ / Model <span style="color:#f66">*</span></label>
+        <input class="form-input" id="sf_model" placeholder="ເຊັ່ນ iPhone 15 Pro, Galaxy S24 Ultra">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">RAM</label>
+        <select class="form-input" id="sf_ram">
+          <option value="">— ເລືອກ —</option>
+          <option>4GB</option><option>6GB</option><option>8GB</option>
+          <option>12GB</option><option>16GB</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ເຄືອຂ່າຍ</label>
+        <select class="form-input" id="sf_network">
+          <option value="">— ເລືອກ —</option>
+          <option>4G LTE</option><option>5G</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ການຮັບປະກັນ</label>
+        <select class="form-input" id="sf_warranty">
+          <option>1 ປີ (ສາກໍ)</option><option>1 ປີ (ລາວ)</option>
+          <option>6 ເດືອນ</option><option>ບໍ່ມີ</option>
+        </select>
+      </div>
+    </div>
+    <div class="sell-section">
+      <div class="sell-section-title">📦 ສິ່ງທີ່ໄດ້ຮັບ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${['ກ່ອງ (Box)','ສາຍສາກ','ຫູຟັງ','ຟິລ໌ໂທ','ຄູ່ມື','ກ້ອງຮູບ','ແທ່ນສາກ','ນ້ຳຍາເຊັດ'].map(it=>`
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="sf_incl_${it}" style="accent-color:var(--gold);width:16px;height:16px">
+          <span style="color:var(--text2)">${it}</span>
+        </label>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // ─── ໂທລະສັບ ມືສອງ ───
+  else if(cat==='electronics_used'){
+    html += buildSellStoragePicker();
+    html += buildSellColorPicker('ໂທລະສັບ');
+    html += `<div class="sell-section">
+      <div class="sell-section-title">📱 ຂໍ້ມູນໂທລະສັບ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຍີ່ຫໍ້</label>
+        <select class="form-input" id="sf_brand">
+          <option value="">— ເລືອກ —</option>
+          <option>Apple (iPhone)</option><option>Samsung</option><option>Xiaomi</option>
+          <option>OPPO</option><option>VIVO</option><option>Huawei</option>
+          <option>Realme</option><option>ອື່ນໆ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ລຸ້ນ / Model</label>
+        <input class="form-input" id="sf_model" placeholder="ເຊັ່ນ iPhone 13, Galaxy A54">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ສຸຂະພາບ Battery (%)</label>
+        <input class="form-input" type="number" id="sf_battery" placeholder="ເຊັ່ນ 85" min="1" max="100">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" style="margin-bottom:8px">ສະພາບໂທລະສັບ</label>
+        <div class="cond-row" id="sf_cond_row">
+          ${['ຄື 99%','ດີ 90%','ປານກາງ 80%','ສ້ອມແລ້ວ'].map(c=>`
+          <div class="cond-chip" onclick="toggleCond(this,'${c}')">${c}</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ─── ອຸປະກອນ Electronics ອື່ນໆ ───
+  else if(cat==='electronics_other'){
+    html += buildSellColorPicker('ອຸປະກອນ');
+    html += `<div class="sell-section">
+      <div class="sell-section-title">💻 ຂໍ້ມູນອຸປະກອນ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ປະເພດ</label>
+        <select class="form-input" id="sf_electype">
+          <option value="">— ເລືອກ —</option>
+          <option>ໂນດບຸ໊ກ (Laptop)</option><option>ແທັບເລັດ (Tablet)</option>
+          <option>ໂທລະທັດ (TV)</option><option>ກ້ອງຖ່າຍຮູບ</option>
+          <option>ຫູຟັງ / ລຳໂພງ</option><option>Smart Watch</option>
+          <option>Power Bank</option><option>Router / ອຸປະກອນເນັດ</option><option>ອື່ນໆ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຍີ່ຫໍ້ & ລຸ້ນ</label>
+        <input class="form-input" id="sf_model" placeholder="ເຊັ່ນ Apple MacBook Air M2, Sony WH-1000XM5">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ສະພາບ</label>
+        <div class="cond-row" style="margin-top:6px" id="sf_cond_row">
+          ${['ໃໝ່ 100%','ຄືໃໝ່','ມືສອງດີ','ໃຊ້ແລ້ວ'].map(c=>`
+          <div class="cond-chip" onclick="toggleCond(this,'${c}')">${c}</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ─── ເຄື່ອງໃຊ້ໃນບ້ານ ───
+  else if(cat==='home'){
+    html += buildSellColorPicker('ສິນຄ້າ');
+    html += `<div class="sell-section">
+      <div class="sell-section-title">🏠 ຂໍ້ມູນສິນຄ້າ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ປະເພດ</label>
+        <select class="form-input" id="sf_hometype">
+          <option value="">— ເລືອກ —</option>
+          <option>ເຄື່ອງຄົວ</option><option>ເຄື່ອງຟອກ/ດູດຝຸ່ນ</option>
+          <option>ໂຕະ / ຕູ້ / ເຟີນີເຈີ</option><option>ເຄື່ອງນອນ / ໝອນ / ຜ້າຫົ່ມ</option>
+          <option>ໄຟ / ໂຄມ</option><option>ຂອງຕົກແຕ່ງ</option><option>ສວນ / ນອກ</option><option>ອື່ນໆ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ວັດສະດຸ / Material</label>
+        <input class="form-input" id="sf_material" placeholder="ເຊັ່ນ Stainless, Plastic, Wood, Ceramic">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ຂະໜາດ / Size</label>
+        <input class="form-input" id="sf_size" placeholder="ເຊັ່ນ 30x20x15 cm">
+      </div>
+    </div>`;
+  }
+
+  // ─── ອາຫານ ───
+  else if(cat==='food'){
+    html += `<div class="sell-section">
+      <div class="sell-section-title">🍜 ຂໍ້ມູນອາຫານ/ເຄື່ອງດື່ມ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ປະເພດ</label>
+        <select class="form-input" id="sf_foodtype">
+          <option value="">— ເລືອກ —</option>
+          <option>ອາຫານ (Food)</option><option>ເຄື່ອງດື່ມ (Drink)</option>
+          <option>ຂອງຫວານ / ຂອງຫວ່ານ</option><option>ໝາກໄມ້ / ຜັກ</option>
+          <option>ເຄື່ອງປຸງ / Sauce</option><option>ອາຫານແຫ້ງ</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ນ້ຳໜັກ / ປະລິມານ</label>
+        <input class="form-input" id="sf_weight" placeholder="ເຊັ່ນ 500g, 1kg, 1L, 330ml">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ວັນໝົດອາຍຸ (EXP)</label>
+        <input class="form-input" type="date" id="sf_exp">
+      </div>
+    </div>`;
+  }
+
+  // ─── ອື່ນໆ ───
+  else if(cat==='other'){
+    html += buildSellColorPicker('ສິນຄ້າ');
+    html += `<div class="sell-section">
+      <div class="sell-section-title">📦 ຂໍ້ມູນເພີ່ມເຕີມ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຍີ່ຫໍ້ / Brand</label>
+        <input class="form-input" id="sf_brand" placeholder="ຍີ່ຫໍ້ (ຖ້າມີ)">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຂະໜາດ / Size</label>
+        <input class="form-input" id="sf_size" placeholder="ຂະໜາດ (ຖ້າມີ)">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ສະພາບ</label>
+        <div class="cond-row" style="margin-top:6px" id="sf_cond_row">
+          ${['ໃໝ່ 100%','ຄືໃໝ່','ມືສອງ'].map(c=>`
+          <div class="cond-chip" onclick="toggleCond(this,'${c}')">${c}</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function buildSellColorPicker(label){
+  return `<div class="sell-section">
+    <div class="sell-section-title">🎨 ສີທີ່ມີ <span style="font-size:11px;color:var(--text2);font-weight:400">(ເລືອກໄດ້ຫຼາຍສີ)</span></div>
+    <div class="color-option-row">
+      ${SELL_COLORS.map((c,i)=>`<div class="color-dot-sel" style="background:${c.hex}" title="${c.name}" onclick="toggleSellColor(${i},this)" data-cidx="${i}"></div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px" id="selColorSummary">ຍັງບໍ່ໄດ້ເລືອກ</div>
+  </div>`;
+}
+
+function buildSellSizePicker(sizes){
+  return `<div class="sell-section">
+    <div class="sell-section-title">📏 ໄຊທີ່ມີ <span style="font-size:11px;color:var(--text2);font-weight:400">(ເລືອກໄດ້ຫຼາຍ)</span></div>
+    <div class="size-grid">
+      ${sizes.map(s=>`<div class="size-toggle" onclick="toggleSellSize('${s}',this)">${s}</div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px" id="selSizeSummary">ຍັງບໍ່ໄດ້ເລືອກ</div>
+  </div>`;
+}
+
+function buildSellStoragePicker(){
+  return `<div class="sell-section">
+    <div class="sell-section-title">💾 ຫນ່ວຍຄວາມຈຳທີ່ມີ <span style="font-size:11px;color:var(--text2);font-weight:400">(ເລືອກໄດ້ຫຼາຍ)</span></div>
+    <div class="size-grid">
+      ${['64GB','128GB','256GB','512GB','1TB'].map(s=>`<div class="size-toggle" onclick="toggleSellStorage('${s}',this)">${s}</div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px" id="selStorageSummary">ຍັງບໍ່ໄດ້ເລືອກ</div>
+  </div>`;
+}
+
+function toggleSellColor(idx, el){
+  if(el.classList.toggle('on')){
+    if(!sellSelectedColors.includes(idx)) sellSelectedColors.push(idx);
+  } else {
+    sellSelectedColors = sellSelectedColors.filter(i=>i!==idx);
+  }
+  const s = document.getElementById('selColorSummary');
+  if(s) s.textContent = sellSelectedColors.length ? '✅ ສີທີ່ເລືອກ: '+sellSelectedColors.map(i=>SELL_COLORS[i].name).join(', ') : 'ຍັງບໍ່ໄດ້ເລືອກ';
+}
+
+function toggleSellSize(val, el){
+  if(el.classList.toggle('on')){
+    if(!sellSelectedSizes.includes(val)) sellSelectedSizes.push(val);
+  } else {
+    sellSelectedSizes = sellSelectedSizes.filter(s=>s!==val);
+  }
+  const s = document.getElementById('selSizeSummary');
+  if(s) s.textContent = sellSelectedSizes.length ? '✅ ໄຊທີ່ເລືອກ: '+sellSelectedSizes.join(', ') : 'ຍັງບໍ່ໄດ້ເລືອກ';
+}
+
+function toggleSellStorage(val, el){
+  if(el.classList.toggle('on')){
+    if(!sellSelectedStorages.includes(val)) sellSelectedStorages.push(val);
+  } else {
+    sellSelectedStorages = sellSelectedStorages.filter(s=>s!==val);
+  }
+  const s = document.getElementById('selStorageSummary');
+  if(s) s.textContent = sellSelectedStorages.length ? '✅ ເລືອກ: '+sellSelectedStorages.join(', ') : 'ຍັງບໍ່ໄດ້ເລືອກ';
+}
+
+function toggleCond(el, val){
+  document.querySelectorAll('#sf_cond_row .cond-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  sellCondition = val;
+}
+
+function getSellExtraData(){
+  const get = id => document.getElementById(id)?.value?.trim()||'';
+  const cat = document.getElementById('sellCat').value;
+  const extra = {};
+  if(sellSelectedColors.length) extra.colors = sellSelectedColors.map(i=>SELL_COLORS[i]);
+  if(sellSelectedSizes.length) extra.sizes = sellSelectedSizes;
+  if(sellSelectedStorages.length) extra.storages = sellSelectedStorages;
+  if(sellCondition) extra.condition = sellCondition;
+
+  // Per-category fields
+  if(cat==='clothes'){
+    if(get('sf_material')) extra.material = get('sf_material');
+    if(get('sf_style')) extra.style = get('sf_style');
+    if(get('sf_origin')) extra.origin = get('sf_origin');
+  } else if(cat==='shoes'){
+    if(get('sf_material')) extra.material = get('sf_material');
+    if(get('sf_style')) extra.style = get('sf_style');
+  } else if(cat==='bags'){
+    if(get('sf_bagtype')) extra.type = get('sf_bagtype');
+    if(get('sf_brand')) extra.brand = get('sf_brand');
+    if(get('sf_size')) extra.size = get('sf_size');
+  } else if(cat==='electronics_phone'||cat==='electronics_used'){
+    if(get('sf_brand')) extra.brand = get('sf_brand');
+    if(get('sf_model')) extra.model = get('sf_model');
+    if(get('sf_ram')) extra.ram = get('sf_ram');
+    if(get('sf_battery')) extra.battery = get('sf_battery')+'%';
+    if(get('sf_network')) extra.network = get('sf_network');
+    if(get('sf_warranty')) extra.warranty = get('sf_warranty');
+    // Included items
+    const incl = ['ກ່ອງ (Box)','ສາຍສາກ','ຫູຟັງ','ຟິລ໌ໂທ','ຄູ່ມື','ກ້ອງຮູບ','ແທ່ນສາກ','ນ້ຳຍາເຊັດ']
+      .filter(it=>document.getElementById('sf_incl_'+it)?.checked);
+    if(incl.length) extra.includes = incl;
+    extra.isPhone = true;
+  } else if(cat==='electronics_other'){
+    if(get('sf_electype')) extra.type = get('sf_electype');
+    if(get('sf_model')) extra.model = get('sf_model');
+  } else if(cat==='home'){
+    if(get('sf_hometype')) extra.type = get('sf_hometype');
+    if(get('sf_material')) extra.material = get('sf_material');
+    if(get('sf_size')) extra.size = get('sf_size');
+  } else if(cat==='food'){
+    if(get('sf_foodtype')) extra.type = get('sf_foodtype');
+    if(get('sf_weight')) extra.weight = get('sf_weight');
+    if(get('sf_exp')) extra.exp = get('sf_exp');
+  } else if(cat==='other'){
+    if(get('sf_brand')) extra.brand = get('sf_brand');
+    if(get('sf_size')) extra.size = get('sf_size');
+  }
+  return extra;
+}
+
+function catToMain(cat){
+  if(cat==='clothes') return 'clothes';
+  if(cat==='shoes'||cat==='bags') return 'clothes';
+  if(cat.startsWith('electronics')) return 'electronics';
+  if(cat==='home') return 'home';
+  if(cat==='food') return 'food';
+  return 'other';
+}
+function catToEmoji(cat){
+  const m={clothes:'👗',shoes:'👟',bags:'👜',electronics_phone:'📱',electronics_used:'📲',electronics_other:'💻',home:'🏠',food:'🍜',other:'📦'};
+  return m[cat]||'📦';
+}
+
 function submitSellProduct(){
-  const name = document.getElementById('sellName').value;
-  const desc = document.getElementById('sellDesc').value;
+  const name = document.getElementById('sellName').value.trim();
+  const desc = document.getElementById('sellDesc').value.trim();
   const cat = document.getElementById('sellCat').value;
   const price = parseInt(document.getElementById('sellPrice').value)||0;
   const qty = parseInt(document.getElementById('sellQty').value)||1;
-  if(!name||!price){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນ');return;}
-  const cats={clothes:'👕',electronics:'📱',home:'🏠'};
+  if(!name||!price){ showNotif('ກະລຸນາໃສ່ຊື່ສິນຄ້າ ແລະ ລາຄາ'); return; }
+  if(!cat){ showNotif('ກະລຸນາເລືອກໝວດໝູ່'); return; }
+  if(!desc){ showNotif('ກະລຸນາໃສ່ລາຍລະອຽດສິນຄ້າ'); return; }
+
+  const extra = getSellExtraData();
+  const mainCat = catToMain(cat);
+  const emoji = catToEmoji(cat);
   const id = 'PRD-'+Date.now().toString().slice(-6);
   const imgFiles = document.getElementById('sellImgInput').files;
 
   const readImgsCompressed = (files, cb) => {
-    const imgs=[], total=Math.min(files.length,5); // max 5 imgs to save space
+    const imgs=[], total=Math.min(files.length,5);
     if(!total){cb(imgs);return;}
     let done=0;
     Array.from(files).slice(0,5).forEach(f=>{
-      compressImage(f, 600, 600, 0.6, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+      compressImage(f,600,600,0.6,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
   readImgsCompressed(imgFiles, imgs=>{
-    const p = {id,name,desc,cat,price,qty,emoji:cats[cat]||'📦',sold:0,seller:currentUser.name,sellerId:currentUser.id,images:imgs};
+    const p = {
+      id, name, desc,
+      cat: mainCat, subcat: cat,
+      price, qty, emoji, sold: 0,
+      seller: currentUser.name, sellerId: currentUser.id,
+      images: imgs,
+      ...extra
+    };
     try{
       products.push(p); saveProducts();
       closeModal('sellProductModal');
       renderProducts(products);
+      // reset
+      sellSelectedColors=[]; sellSelectedSizes=[]; sellSelectedStorages=[]; sellCondition=''; sellCustomTags=[];
+      document.getElementById('sellDynamicFields').innerHTML='';
       showNotif('✅ ລົງຂາຍ '+name+' ສຳເລັດ!');
     }catch(e){
-      if(e.name==='QuotaExceededError'){ p.images=[]; products.push(p); saveProducts(); closeModal('sellProductModal'); renderProducts(products); showNotif('⚠️ ລົງຂາຍສຳເລັດ (ບໍ່ໄດ້ບັນທຶກຮູບ ພື້ນທີ່ເຕັມ)'); }
-      else showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+e.message);
+      if(e.name==='QuotaExceededError'){
+        p.images=[]; products.push(p); saveProducts();
+        closeModal('sellProductModal'); renderProducts(products);
+        showNotif('⚠️ ລົງຂາຍສຳເລັດ (ບໍ່ໄດ້ບັນທຶກຮູບ ພື້ນທີ່ເຕັມ)');
+      } else showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+e.message);
     }
   });
 }
@@ -3675,6 +4333,10 @@ function pubViewProduct(productId, ownerId){
 function closePubViewModal(){ document.getElementById('billDetailModal').style.display='none'; }
 
 
+function triggerAvatarUpload(){ 
+  const input = document.getElementById('avatarFileInput');
+  if(input) input.click(); 
+}
 function uploadAvatar(){
   const f = document.getElementById('avatarFileInput').files[0];
   if(!f||!currentUser) return;
