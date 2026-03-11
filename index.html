@@ -6330,6 +6330,16 @@ function renderAdminTab(tab){
   updateAdminNotifBadge();
 }
 
+// ── getAllUsers: combines owner accounts + all registered users ──
+function getAllUsers(){
+  const db = getUsersDB();
+  const owners = OWNER_ACCOUNTS.map(o=>
+    db[o.id] ? {...o,...db[o.id],isAdmin:true} : {...o}
+  );
+  const regulars = Object.values(db).filter(u=>!OWNER_ACCOUNTS.find(o=>o.id===u.id));
+  return [...owners, ...regulars];
+}
+
 function renderAdminOverview(){
   const allUsers = getAllUsers();
   const sellers = allUsers.filter(u=>u.isSeller);
