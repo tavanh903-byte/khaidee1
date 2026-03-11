@@ -1423,6 +1423,24 @@ select.form-input{-webkit-appearance:none;appearance:none}
             </div>
           </div>
         </div>
+        <!-- ALL SELLERS: Diamond shop manage (if authorized) -->
+        <div id="sellerDiamondSection" style="display:none;margin-top:4px">
+          <div class="section-title" style="padding:12px 0 8px;font-size:12px">💎 ຮ້ານ Diamond ຂອງຂ້ອຍ</div>
+          <div class="profile-icons-seller">
+            <div class="profile-icon-btn" onclick="openSellerDiamondShop('mlbb')" style="background:linear-gradient(135deg,rgba(34,0,170,.3),rgba(100,80,255,.15));border:1px solid rgba(100,80,255,.3)">
+              <div class="icon">💎</div>
+              <div style="font-size:9px">MLBB Shop</div>
+            </div>
+            <div class="profile-icon-btn" onclick="openSellerDiamondShop('ff')" style="background:linear-gradient(135deg,rgba(153,0,0,.3),rgba(255,68,0,.15));border:1px solid rgba(255,68,0,.3)">
+              <div class="icon">💠</div>
+              <div style="font-size:9px">FreeFire Shop</div>
+            </div>
+            <div class="profile-icon-btn" onclick="showSellerDiamondOrders()" style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3)">
+              <div class="icon">📋</div>
+              <div style="font-size:9px">ອໍເດີ Diamond</div>
+            </div>
+          </div>
+        </div>
       </div>
       <div style="padding:12px 16px">
         <button class="btn btn-danger" onclick="logoutUser()" style="font-size:13px;padding:8px">ອອກຈາກລະບົບ</button>
@@ -1921,9 +1939,12 @@ select.form-input{-webkit-appearance:none;appearance:none}
 <div class="popup-overlay" id="registerModal" style="display:none">
   <div class="popup-box">
     <div class="modal-title">📝 ສ້າງບັນຊີ ຂາຍດີ</div>
+    <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:12px;line-height:1.7;background:rgba(201,168,76,.06);border-radius:10px;padding:8px">
+      ໃຊ້ <strong style="color:var(--gold)">ອີເມລ</strong> ຫຼື <strong style="color:var(--gold)">ເບີໂທ</strong> ຂອງທ່ານ — ຈົດຈຳໄວ້ Login ຄັ້ງຕໍ່ໄປ
+    </div>
     <div class="form-group">
-      <label class="form-label">ຊື່</label>
-      <input class="form-input" id="regName" placeholder="ຊື່ຂອງທ່ານ">
+      <label class="form-label">ຊື່ <span style="color:#e74c3c">*</span></label>
+      <input class="form-input" id="regName" placeholder="ຊື່ຂອງທ່ານ" autocomplete="name">
     </div>
     <div class="form-group">
       <label class="form-label">ຮູບໂປຣໄຟລ</label>
@@ -1931,16 +1952,16 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <input type="file" id="regAvatar" accept="image/*" style="display:none" onchange="previewAvatar()">
     </div>
     <div class="form-group">
-      <label class="form-label">ໂທລະສັບ</label>
-      <input class="form-input" type="tel" id="regPhone" placeholder="020-XXXXXXXX">
+      <label class="form-label">ເບີໂທລະສັບ <span style="color:var(--text2);font-size:10px">(ໃຊ້ Login ໄດ້)</span></label>
+      <input class="form-input" type="tel" id="regPhone" placeholder="020-XXXXXXXX" autocomplete="tel">
     </div>
     <div class="form-group">
-      <label class="form-label">ອີເມລ</label>
-      <input class="form-input" type="email" id="regEmail" placeholder="email@example.com">
+      <label class="form-label">ອີເມລ <span style="color:#e74c3c">*</span> <span style="color:var(--text2);font-size:10px">(ໃຊ້ Login ໄດ້)</span></label>
+      <input class="form-input" type="email" id="regEmail" placeholder="email@example.com" autocomplete="email">
     </div>
     <div class="form-group">
-      <label class="form-label">ລະຫັດຜ່ານ</label>
-      <input class="form-input" type="password" id="regPass" placeholder="ລະຫັດຜ່ານ">
+      <label class="form-label">ລະຫັດຜ່ານ <span style="color:#e74c3c">*</span> <span style="color:var(--text2);font-size:10px">(ຢ່າງໜ້ອຍ 4 ຕົວ)</span></label>
+      <input class="form-input" type="password" id="regPass" placeholder="ລະຫັດຜ່ານ" autocomplete="new-password">
     </div>
     <button class="btn btn-gold" onclick="doRegister()" style="margin-bottom:8px">✅ ສ້າງບັນຊີ</button>
     <button class="btn btn-outline" onclick="closeModal('registerModal')">ຍົກເລີກ</button>
@@ -1951,13 +1972,16 @@ select.form-input{-webkit-appearance:none;appearance:none}
 <div class="popup-overlay" id="loginModal" style="display:none">
   <div class="popup-box">
     <div class="modal-title">🔑 ເຂົ້າລະບົບ</div>
+    <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:12px;line-height:1.7;background:rgba(201,168,76,.06);border-radius:10px;padding:8px">
+      ໃຊ້ <strong style="color:var(--gold)">ອີເມລ</strong> ຫຼື <strong style="color:var(--gold)">ເບີໂທ</strong> + ລະຫັດຜ່ານ ເພື່ອເຂົ້າລະບົບ
+    </div>
     <div class="form-group">
-      <label class="form-label">ອີເມລ ຫຼື ຊື່ຜູ້ໃຊ້</label>
-      <input class="form-input" type="text" id="loginEmail" placeholder="email@example.com">
+      <label class="form-label">ອີເມລ ຫຼື ເບີໂທລະສັບ</label>
+      <input class="form-input" type="text" id="loginEmail" placeholder="email@example.com ຫຼື 02xxxxxxxx" autocomplete="username">
     </div>
     <div class="form-group">
       <label class="form-label">ລະຫັດຜ່ານ</label>
-      <input class="form-input" type="password" id="loginPass" placeholder="ລະຫັດຜ່ານ">
+      <input class="form-input" type="password" id="loginPass" placeholder="ລະຫັດຜ່ານ" autocomplete="current-password">
     </div>
     <button class="btn btn-gold" onclick="doLogin()" style="margin-bottom:8px">✅ ເຂົ້າລະບົບ</button>
     <button class="btn btn-outline" onclick="showRegister();closeModal('loginModal')" style="margin-bottom:8px">ສ້າງບັນຊີໃໝ່</button>
@@ -1977,7 +2001,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <div id="fpStep1">
       <div class="form-group">
         <label class="form-label">📧 ອີເມລທີ່ສະໝັກ</label>
-        <input class="form-input" type="email" id="fpEmail" placeholder="email@example.com">
+        <input class="form-input" type="text" id="fpEmail" placeholder="email@example.com ຫຼື 02xxxxxxxx">
       </div>
       <button class="btn btn-gold" onclick="fpCheckEmail()" style="width:100%;margin-bottom:8px">🔍 ຄົ້ນຫາບັນຊີ</button>
       <button class="btn btn-outline" onclick="closeModal('forgotPassModal');openModal('loginModal')" style="width:100%">← ກັບໄປ Login</button>
@@ -2218,6 +2242,10 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <button class="admin-side-btn" id="aside-diamond" onclick="switchAdminTab('diamond')" title="💎 Diamond Topup" style="position:relative">
       <span>💎</span>
     </button>
+    <button class="admin-side-btn" id="aside-social" onclick="switchAdminTab('social')" title="👥 Online Users" style="position:relative">
+      <span>🌐</span>
+      <span id="onlineBadge" style="position:absolute;top:3px;right:3px;background:#0c6;color:#fff;border-radius:8px;padding:1px 4px;font-size:9px;min-width:14px;text-align:center;display:none">0</span>
+    </button>
     <div style="flex:1"></div>
     <button class="admin-side-btn" onclick="closeAdminPanel()" title="ອອກ" style="color:#f66;border-color:rgba(255,100,100,.3)"><span>🚪</span></button>
   </div>
@@ -2255,6 +2283,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <button class="admin-tab" id="atab-sellers" onclick="switchAdminTab('sellers')">🏪 ຜູ້ຂາຍ</button>
       <button class="admin-tab" id="atab-history" onclick="switchAdminTab('history')">📋 ປະຫວັດ</button>
       <button class="admin-tab" id="atab-diamond" onclick="switchAdminTab('diamond')">💎 Diamond</button>
+      <button class="admin-tab" id="atab-social" onclick="switchAdminTab('social')">🌐 Online</button>
     </div>
     <!-- CONTENT -->
     <div id="adminContent" style="flex:1;overflow-y:auto;padding:18px"></div>
@@ -2366,7 +2395,91 @@ select.form-input{-webkit-appearance:none;appearance:none}
 
 <script>
 // ============ STATE ============
-let currentUser = JSON.parse(localStorage.getItem('kd_user') || 'null');
+// ════════════════════════════════════════════════════════
+//  USER DATABASE SYSTEM v2
+//  kd_users_db = { [id]: userObject, ... }  — all registered users
+//  kd_session  = userId of currently logged-in user
+//  kd_user     = kept for backward-compat (current user snapshot)
+// ════════════════════════════════════════════════════════
+
+function getUsersDB(){
+  try{ return JSON.parse(localStorage.getItem('kd_users_db')||'{}'); }
+  catch(e){ return {}; }
+}
+function saveUsersDB(db){
+  localStorage.setItem('kd_users_db', JSON.stringify(db));
+}
+function getUserById(id){
+  if(!id) return null;
+  // Check owner accounts first
+  const owner = OWNER_ACCOUNTS.find(o=>o.id===id);
+  if(owner){
+    const db = getUsersDB();
+    return db[id] ? {...owner,...db[id],isAdmin:true} : {...owner};
+  }
+  const db = getUsersDB();
+  return db[id] || null;
+}
+function findUserByEmailOrPhone(val){
+  const v = val.trim().toLowerCase();
+  const db = getUsersDB();
+  for(const id in db){
+    const u = db[id];
+    if((u.email||'').toLowerCase()===v || (u.phone||'').trim()===v) return u;
+  }
+  return null;
+}
+function findUserByEmailAndPass(val, pass){
+  const v = val.trim().toLowerCase();
+  const db = getUsersDB();
+  for(const id in db){
+    const u = db[id];
+    const matchId = (u.email||'').toLowerCase()===v
+      || (u.phone||'').trim()===v
+      || (u.name||'').toLowerCase()===v;
+    if(matchId && u.pass===pass) return u;
+  }
+  return null;
+}
+
+function saveUser(){
+  if(!currentUser) return;
+  // Save to indexed DB
+  const db = getUsersDB();
+  db[currentUser.id] = {...currentUser};
+  saveUsersDB(db);
+  // Keep kd_user snapshot (backward compat)
+  localStorage.setItem('kd_user', JSON.stringify(currentUser));
+  // Session pointer
+  localStorage.setItem('kd_session', currentUser.id);
+}
+
+// Restore session on load
+let currentUser = (function(){
+  try{
+    const sid = localStorage.getItem('kd_session');
+    if(sid){
+      // Try owner accounts
+      const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
+      if(owner){
+        const db = getUsersDB();
+        return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
+      }
+      const db = getUsersDB();
+      if(db[sid]) return db[sid];
+    }
+    // Fallback: old kd_user
+    const old = JSON.parse(localStorage.getItem('kd_user')||'null');
+    if(old && old.id){
+      // Migrate to new DB
+      const db = getUsersDB();
+      if(!db[old.id]){ db[old.id] = old; saveUsersDB(db); }
+      localStorage.setItem('kd_session', old.id);
+      return old;
+    }
+  }catch(e){}
+  return null;
+})();
 let products = JSON.parse(localStorage.getItem('kd_products') || '[]');
 let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
 let chatMsgs = JSON.parse(localStorage.getItem('kd_chat') || '{}');
@@ -2418,12 +2531,8 @@ function initApp() {
 
 function saveProducts(){localStorage.setItem('kd_products',JSON.stringify(products));}
 function saveOrders(){localStorage.setItem('kd_orders',JSON.stringify(orders));}
-function saveUser(){
-  if(!currentUser) return;
-  localStorage.setItem('kd_user',JSON.stringify(currentUser));
-  // Also persist owner data separately
-  if(currentUser.isAdmin) localStorage.setItem('kd_user_'+currentUser.id, JSON.stringify(currentUser));
-}
+// saveUser is defined above in USER DATABASE SYSTEM
+function _saveUserCompat(){ saveUser(); } // alias for any legacy calls
 function saveChat(){localStorage.setItem('kd_chat',JSON.stringify(chatMsgs));}
 
 // ============ PRODUCTS RENDER ============
@@ -4038,45 +4147,43 @@ function showLogin(){openModal('loginModal');}
 
 // ============ FORGOT PASSWORD ============
 function fpCheckEmail(){
-  const email = document.getElementById('fpEmail').value.trim().toLowerCase();
-  if(!email){ showNotif('ກະລຸນາໃສ່ອີເມລ'); return; }
-
-  // Check owner accounts (they can't reset)
-  const isOwner = OWNER_ACCOUNTS.find(a => a.user.toLowerCase()===email || (a.name+'@').toLowerCase().startsWith(email));
-  if(isOwner){ showNotif('❌ ບັນຊີ Admin ບໍ່ສາມາດຣີເຊັດຜ່ານທາງນີ້ ຕິດຕໍ່ Admin ໂດຍກົງ'); return; }
-
-  // Check localStorage user
-  const stored = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(stored && stored.email && stored.email.toLowerCase()===email){
+  const val = document.getElementById('fpEmail').value.trim().toLowerCase();
+  if(!val){ showNotif('ກະລຸນາໃສ່ອີເມລ ຫຼື ເບີໂທ'); return; }
+  const isOwner = OWNER_ACCOUNTS.find(a=>a.user.toLowerCase()===val||(a.phone||'')===val);
+  if(isOwner){ showNotif('❌ ບັນຊີ Admin ຕິດຕໍ່ Admin ໂດຍກົງ'); return; }
+  // Search DB by email or phone
+  const db = getUsersDB();
+  const found = Object.values(db).find(u=>
+    (u.email||'').toLowerCase()===val || (u.phone||'').trim()===val
+  );
+  if(found){
     document.getElementById('fpFoundInfo').innerHTML =
-      `👤 ${stored.name}<br>📧 ${stored.email}<br>🆔 ${stored.id}`;
+      `👤 ${found.name}<br>📧 ${found.email||'-'}<br>📱 ${found.phone||'-'}<br>🆔 ${found.id}`;
     document.getElementById('fpStep1').style.display='none';
     document.getElementById('fpStep2').style.display='block';
     document.getElementById('fpNewPass').value='';
     document.getElementById('fpConfirmPass').value='';
-    // Store target user temporarily
-    document.getElementById('fpStep2').dataset.uid = stored.id;
+    document.getElementById('fpStep2').dataset.uid = found.id;
     return;
   }
-  // Not found
-  showNotif('❌ ບໍ່ພົບອີເມລນີ້ ກວດສອບໃຫ້ດີ ຫຼື ສ້າງບັນຊີໃໝ່');
+  showNotif('❌ ບໍ່ພົບຂໍ້ມູນ ກວດສອບໃຫ້ດີ ຫຼື ສ້າງບັນຊີໃໝ່');
 }
 
 function fpResetPassword(){
-  const newPass    = document.getElementById('fpNewPass').value.trim();
-  const confirmPass= document.getElementById('fpConfirmPass').value.trim();
+  const newPass     = document.getElementById('fpNewPass').value.trim();
+  const confirmPass = document.getElementById('fpConfirmPass').value.trim();
   if(!newPass){ showNotif('ກະລຸນາໃສ່ລະຫັດຜ່ານໃໝ່'); return; }
-  if(newPass.length < 6){ showNotif('ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 6 ຕົວ'); return; }
+  if(newPass.length < 4){ showNotif('ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 4 ຕົວ'); return; }
   if(newPass !== confirmPass){ showNotif('❌ ລະຫັດຜ່ານທັງສອງບໍ່ຕົງກັນ'); return; }
-
-  const stored = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(!stored){ showNotif('❌ ເກີດຂໍ້ຜິດພາດ ກະລຸນາລອງໃໝ່'); return; }
-
-  stored.pass = newPass;
-  localStorage.setItem('kd_user', JSON.stringify(stored));
-  // If currently logged in as this user, update
-  if(currentUser && currentUser.id===stored.id){ currentUser.pass=newPass; }
-
+  const uid = document.getElementById('fpStep2').dataset.uid;
+  if(!uid){ showNotif('❌ ເກີດຂໍ້ຜິດພາດ'); return; }
+  // Update in DB
+  const db = getUsersDB();
+  if(!db[uid]){ showNotif('❌ ບໍ່ພົບຜູ້ໃຊ້'); return; }
+  db[uid].pass = newPass;
+  saveUsersDB(db);
+  // Sync if current user
+  if(currentUser && currentUser.id===uid){ currentUser.pass=newPass; saveUser(); }
   document.getElementById('fpStep2').style.display='none';
   document.getElementById('fpStep3').style.display='block';
   showNotif('✅ ຕັ້ງລະຫັດຜ່ານໃໝ່ສຳເລັດ!');
@@ -4090,13 +4197,23 @@ const OWNER_ACCOUNTS = [
 ];
 
 function doRegister(){
-  const name = document.getElementById('regName').value;
-  const phone = document.getElementById('regPhone').value;
-  const email = document.getElementById('regEmail').value;
-  const pass = document.getElementById('regPass').value;
+  const name  = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('regPass').value.trim();
   if(!name||!email||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ');return;}
+  if(pass.length<4){showNotif('ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 4 ຕົວ');return;}
+  const db = getUsersDB();
+  // Duplicate email check
+  const dupEmail = Object.values(db).find(u=>(u.email||'').toLowerCase()===email);
+  if(dupEmail){showNotif('❌ ອີເມລນີ້ຖືກໃຊ້ແລ້ວ ກະລຸນາ Login');return;}
+  // Duplicate phone check
+  if(phone){
+    const dupPhone = Object.values(db).find(u=>(u.phone||'').trim()===phone);
+    if(dupPhone){showNotif('❌ ເບີໂທນີ້ຖືກໃຊ້ແລ້ວ ກະລຸນາ Login');return;}
+  }
   const uid = 'USR-'+Date.now().toString().slice(-6);
-  currentUser = {id:uid,name,phone,email,pass,wallet:0,isSeller:false,orders:[]};
+  currentUser = {id:uid,name,phone,email,pass,wallet:0,isSeller:false,orders:[],registeredAt:new Date().toISOString()};
   saveUser();
   closeModal('registerModal');
   updateProfileUI();
@@ -4105,34 +4222,40 @@ function doRegister(){
 }
 
 function doLogin(){
-  const emailOrUser = document.getElementById('loginEmail').value.trim();
+  const val  = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
-  if(!emailOrUser||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນ');return;}
-  // Check owner accounts first
-  const owner = OWNER_ACCOUNTS.find(a=>(a.user===emailOrUser||a.id===emailOrUser||a.name===emailOrUser)&&a.pass===pass);
+  if(!val||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນ');return;}
+  // Owner accounts (case-insensitive)
+  const owner = OWNER_ACCOUNTS.find(a=>
+    (a.user.toLowerCase()===val.toLowerCase()||a.id===val||a.name.toLowerCase()===val.toLowerCase())&&a.pass===pass
+  );
   if(owner){
-    // Load persisted owner wallet/data if exists
-    const stored = JSON.parse(localStorage.getItem('kd_user_'+owner.id)||'null');
-    currentUser = stored ? {...owner,...stored,isAdmin:true} : {...owner};
+    const db = getUsersDB();
+    currentUser = db[owner.id] ? {...owner,...db[owner.id],isAdmin:true} : {...owner};
     saveUser();
+    heartbeat();
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ຍິນດີຕ້ອນຮັບ '+owner.crown+' '+owner.name);
     return;
   }
-  const stored = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(stored && (stored.email===emailOrUser||stored.name===emailOrUser) && stored.pass===pass){
-    currentUser = stored;
+  // Regular users — email, phone, or name
+  const user = findUserByEmailAndPass(val, pass);
+  if(user){
+    currentUser = user;
+    saveUser();
+    heartbeat();
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ເຂົ້າລະບົບສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+currentUser.name);
   } else {
-    showNotif('ອີເມລ/ຊື່ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ');
+    showNotif('❌ ອີເມລ/ເບີໂທ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ');
   }
 }
 
 function logoutUser(){
   currentUser = null;
+  localStorage.removeItem('kd_session');
   localStorage.removeItem('kd_user');
   updateProfileUI();
   showNotif('ອອກຈາກລະບົບແລ້ວ');
@@ -5233,7 +5356,7 @@ function switchPage(name){
   const nav  = document.getElementById('nav-'+name);
   if(page) page.classList.add('active');
   if(nav)  nav.classList.add('active');
-  if(name==='profile'){ updateProfileUI(); updateAdminDiamondUI(); }
+  if(name==='profile'){ updateProfileUI(); updateAdminDiamondUI(); updateSellerDiamondUI(); }
   if(name==='bills')        renderBillsPage();
   if(name==='cart')         renderCartPage();
   if(name==='topup-mlbb')   renderTopupPage('mlbb');
@@ -5273,13 +5396,14 @@ let currentDiamondSeller = null;
 let selectedDiamondPkg = null;
 
 function getAllUsersMap(){
-  const map={};
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(k&&k.startsWith('kd_user_')){
-      try{const u=JSON.parse(localStorage.getItem(k));if(u&&u.id)map[u.id]=u;}catch(e){}
-    }
-  }
+  const map = {};
+  const db = getUsersDB();
+  // Add all registered users
+  for(const id in db){ map[id] = db[id]; }
+  // Add owner accounts (with merged stored data)
+  OWNER_ACCOUNTS.forEach(o=>{
+    map[o.id] = db[o.id] ? {...o,...db[o.id],isAdmin:true} : {...o};
+  });
   return map;
 }
 
@@ -5485,8 +5609,57 @@ function showDiamondBill(order){
 }
 
 function updateAdminDiamondUI(){
-  const el=document.getElementById('adminDiamondIcons');
-  if(el) el.style.display=currentUser?.isAdmin?'block':'none';
+  const el = document.getElementById('adminDiamondIcons');
+  if(el) el.style.display = currentUser?.isAdmin ? 'block' : 'none';
+  // Show diamond section for sellers (authorized in diamond sellers list)
+  updateSellerDiamondUI();
+}
+
+function updateSellerDiamondUI(){
+  const sec = document.getElementById('sellerDiamondSection');
+  if(!sec || !currentUser) return;
+  if(currentUser.isAdmin){ sec.style.display='none'; return; } // admin uses adminDiamondIcons
+  const ds = getDiamondSellers();
+  const isMLBBseller = (ds.mlbb||[]).find(s=>s.userId===currentUser.id);
+  const isFFseller   = (ds.ff||[]).find(s=>s.userId===currentUser.id);
+  sec.style.display = (isMLBBseller||isFFseller) ? 'block' : 'none';
+}
+
+// Open seller's own diamond shop management page
+function openSellerDiamondShop(game){
+  if(!currentUser || currentUser.isAdmin){ switchPage('topup-'+game); return; }
+  const ds = getDiamondSellers();
+  const seller = (ds[game]||[]).find(s=>s.userId===currentUser.id);
+  if(!seller){ showNotif('❌ ທ່ານຍັງບໍ່ໄດ້ຮັບອະນຸຍາດຂາຍ Diamond '+game.toUpperCase()); return; }
+  // Open the topup page so they can see their shop
+  switchPage('topup-'+game);
+  showNotif('💎 ຮ້ານ '+game.toUpperCase()+' ຂອງທ່ານ');
+}
+
+function showSellerDiamondOrders(){
+  if(!currentUser) return;
+  const orders = getDiamondOrders().filter(o=>o.sellerId===currentUser.id);
+  if(!orders.length){ showNotif('ຍັງບໍ່ມີອໍເດີ Diamond'); return; }
+  // Show in a modal
+  const html = orders.slice().reverse().map(o=>`
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <div style="font-weight:700;font-size:13px">${o.gameName||o.game} — ${o.amount}💎</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:700">${Number(o.total||0).toLocaleString()} ກີບ</div>
+      </div>
+      <div style="font-size:11px;color:var(--text2)">👤 ${o.userName||'?'} · 🆔 ${o.gameId||'-'}</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:2px">${new Date(o.date).toLocaleString('lo')}</div>
+    </div>`).join('');
+  const modal = document.getElementById('diamondOrderModal');
+  if(modal){
+    const box = modal.querySelector('.popup-box') || modal;
+    box.innerHTML = `<div class="modal-title">💎 ອໍເດີ Diamond ຂອງຂ້ອຍ</div>
+    <div style="max-height:60vh;overflow-y:auto">${html}</div>
+    <button class="btn btn-outline" onclick="closeModal('diamondOrderModal')" style="margin-top:12px">ປິດ</button>`;
+    openModal('diamondOrderModal');
+  } else {
+    showNotif('💎 ທ່ານມີ '+orders.length+' ອໍເດີ Diamond');
+  }
 }
 
 // ============ MODALS ============
@@ -6153,18 +6326,24 @@ function renderAdminTab(tab){
   else if(tab==='sellers') c.innerHTML = renderAdminSellers();
   else if(tab==='history') c.innerHTML = renderAdminHistory();
   else if(tab==='diamond') c.innerHTML = renderAdminDiamond();
+  else if(tab==='social') c.innerHTML = renderAdminSocial();
   updateAdminNotifBadge();
 }
 
 function renderAdminOverview(){
   const allUsers = getAllUsers();
   const sellers = allUsers.filter(u=>u.isSeller);
+  const onlineCnt = allUsers.filter(u=>isOnline(u.id)).length;
+  const db = getUsersDB();
+  const registeredCnt = Object.keys(db).filter(id=>!OWNER_ACCOUNTS.find(o=>o.id===id)).length;
   const totalWallet = allUsers.reduce((s,u)=>s+(u.wallet||0),0);
   const totalSales = orders.reduce((s,o)=>s+(o.total||0),0);
   const sysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
   return `
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-    <div class="admin-stat"><div class="num">${allUsers.length}</div><div class="lbl">👥 ຜູ້ໃຊ້ທັງໝົດ</div></div>
+    <div class="admin-stat" style="cursor:pointer" onclick="switchAdminTab('social')"><div class="num" style="color:#0c6">${onlineCnt}</div><div class="lbl">🟢 ອອນລາຍ</div></div>
+    <div class="admin-stat" style="cursor:pointer" onclick="switchAdminTab('social')"><div class="num">${allUsers.length}</div><div class="lbl">👥 ຜູ້ໃຊ້ທັງໝົດ</div></div>
+    <div class="admin-stat"><div class="num" style="color:var(--gold)">${registeredCnt}</div><div class="lbl">📝 ສະໝັກໃໝ່</div></div>
     <div class="admin-stat"><div class="num">${sellers.length}</div><div class="lbl">🏪 ຜູ້ຂາຍ</div></div>
     <div class="admin-stat"><div class="num">${products.length}</div><div class="lbl">📦 ສິນຄ້າ</div></div>
     <div class="admin-stat"><div class="num">${orders.length}</div><div class="lbl">🧾 ອໍເດີ</div></div>
@@ -6201,20 +6380,157 @@ function renderAdminOverview(){
   </div>`;
 }
 
-function getAllUsers(){
-  // Include owner accounts + registered user from localStorage
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  // Load persisted owner wallets
-  const owners = OWNER_ACCOUNTS.map(o=>{
-    const stored = JSON.parse(localStorage.getItem('kd_user_'+o.id)||'null');
-    return stored ? {...o,...stored,isAdmin:true} : {...o};
-  });
-  const all = [...owners];
-  if(u && !OWNER_ACCOUNTS.find(o=>o.id===u.id)){
-    all.push(u);
-  }
-  return all;
+// ════════════════════════════════════════════════
+//  ONLINE PRESENCE SYSTEM
+//  kd_online = { userId: lastSeenTimestamp }
+// ════════════════════════════════════════════════
+const ONLINE_THRESHOLD = 5 * 60 * 1000; // 5 min = online
+
+function getOnlineMap(){ try{ return JSON.parse(localStorage.getItem('kd_online')||'{}'); }catch(e){return{};} }
+function saveOnlineMap(m){ localStorage.setItem('kd_online', JSON.stringify(m)); }
+
+function heartbeat(){
+  if(!currentUser) return;
+  const m = getOnlineMap();
+  m[currentUser.id] = Date.now();
+  saveOnlineMap(m);
+  // Update online badge in admin panel if open
+  updateOnlineBadge();
 }
+// Heartbeat every 60s
+setInterval(heartbeat, 60000);
+// Also on any user activity
+['click','touchstart','keydown'].forEach(e=>document.addEventListener(e, ()=>{
+  if(currentUser){
+    const m = getOnlineMap();
+    m[currentUser.id] = Date.now();
+    saveOnlineMap(m);
+  }
+}, {passive:true}));
+
+function isOnline(uid){
+  const m = getOnlineMap();
+  return m[uid] && (Date.now() - m[uid]) < ONLINE_THRESHOLD;
+}
+function getLastSeen(uid){
+  const m = getOnlineMap();
+  if(!m[uid]) return 'ບໍ່ເຄີຍ';
+  const diff = Date.now() - m[uid];
+  if(diff < 60000) return 'ຫາກໍ';
+  if(diff < 3600000) return Math.floor(diff/60000)+'ນ ກ່ອນ';
+  if(diff < 86400000) return Math.floor(diff/3600000)+'ຊມ ກ່ອນ';
+  return Math.floor(diff/86400000)+'ວ ກ່ອນ';
+}
+function updateOnlineBadge(){
+  const badge = document.getElementById('onlineBadge');
+  if(!badge) return;
+  const allUsers = getAllUsers();
+  const cnt = allUsers.filter(u=>isOnline(u.id)).length;
+  badge.style.display = cnt>0 ? 'block' : 'none';
+  badge.textContent = cnt;
+}
+
+// ── SOCIAL TAB RENDERER ──
+function renderAdminSocial(){
+  const allUsers = getAllUsers();
+  const online = allUsers.filter(u=>isOnline(u.id)).sort((a,b)=>{
+    const m=getOnlineMap(); return (m[b.id]||0)-(m[a.id]||0);
+  });
+  const offline = allUsers.filter(u=>!isOnline(u.id)).sort((a,b)=>{
+    const m=getOnlineMap(); return (m[b.id]||0)-(m[a.id]||0);
+  });
+  const db = getUsersDB();
+  const registered = Object.keys(db).filter(id=>!OWNER_ACCOUNTS.find(o=>o.id===id)).length;
+
+  function userCard(u, online){
+    const crown = u.crown||'';
+    const role = u.isAdmin?'👑 Admin':u.isSeller?'🏪 Seller':'👤 ລູກຄ້າ';
+    const badge = u.isAdmin?'badge-gold':u.isSeller?'badge-blue':'';
+    const avatarHtml = u.avatarImg
+      ? `<img src="${u.avatarImg}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid ${online?'#0c6':'rgba(255,255,255,.15)'}">`
+      : `<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#2a2000,#1a1200);border:2px solid ${online?'#0c6':'rgba(255,255,255,.15)'};display:flex;align-items:center;justify-content:center;font-size:18px">${crown||u.name[0]||'?'}</div>`;
+    return `<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px 12px;margin-bottom:8px">
+      <div style="position:relative;flex-shrink:0">
+        ${avatarHtml}
+        <div style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:${online?'#0c6':'#555'};border:2px solid #0f0f18"></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${crown} ${u.name}</div>
+          <span class="admin-badge ${badge}" style="font-size:9px;padding:1px 6px;flex-shrink:0">${role}</span>
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">🆔 ${u.id}</div>
+        <div style="font-size:10px;color:${online?'#4eff88':'rgba(255,255,255,.3)'}">${online?'🟢 ກຳລັງໃຊ້ງານ':'⚫ OffLine · '+getLastSeen(u.id)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--gold);font-weight:700">${Number(u.wallet||0).toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--text2)">ກີບ</div>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <!-- Stats row -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+    <div class="admin-stat" style="border-color:rgba(0,204,102,.3);background:rgba(0,204,102,.06)">
+      <div class="num" style="color:#0c6">${online.length}</div>
+      <div class="lbl">🟢 ອອນລາຍ</div>
+    </div>
+    <div class="admin-stat">
+      <div class="num" style="color:rgba(255,255,255,.4)">${offline.length}</div>
+      <div class="lbl">⚫ ອອຟລາຍ</div>
+    </div>
+    <div class="admin-stat" style="border-color:rgba(201,168,76,.3)">
+      <div class="num">${allUsers.length}</div>
+      <div class="lbl">👥 ສະໝັກທັງໝົດ</div>
+    </div>
+  </div>
+  <!-- Search by ID -->
+  <div style="margin-bottom:14px">
+    <input class="form-input" id="socialSearchId" placeholder="🔍 ຄົ້ນຫາ ID, ຊື່, ເບີໂທ..." style="font-size:13px" oninput="socialSearch()">
+    <div id="socialSearchRes" style="margin-top:8px"></div>
+  </div>
+  <!-- Registered count -->
+  <div style="font-size:11px;color:var(--text2);background:rgba(201,168,76,.06);border-radius:10px;padding:8px 12px;margin-bottom:14px;display:flex;justify-content:space-between">
+    <span>📋 ຜູ້ໃຊ້ທີ່ສະໝັກ (ບໍ່ລວມ Admin)</span>
+    <strong style="color:var(--gold)">${registered} ຄົນ</strong>
+  </div>
+  <!-- Online users -->
+  ${online.length ? `<div style="font-size:12px;font-weight:700;color:#0c6;margin-bottom:8px">🟢 ອອນລາຍ (${online.length})</div>
+  ${online.map(u=>userCard(u,true)).join('')}` : ''}
+  <!-- Offline users -->
+  <div style="font-size:12px;font-weight:700;color:var(--text2);margin:12px 0 8px">⚫ ອອຟລາຍ (${offline.length})</div>
+  ${offline.map(u=>userCard(u,false)).join('')}
+  `;
+}
+
+function socialSearch(){
+  const q = (document.getElementById('socialSearchId').value||'').toLowerCase().trim();
+  const res = document.getElementById('socialSearchRes');
+  if(!q){res.innerHTML='';return;}
+  const allUsers = getAllUsers();
+  const found = allUsers.filter(u=>
+    (u.id||'').toLowerCase().includes(q)||
+    (u.name||'').toLowerCase().includes(q)||
+    (u.phone||'').includes(q)||
+    (u.email||'').toLowerCase().includes(q)
+  );
+  if(!found.length){res.innerHTML='<div style="color:var(--text2);text-align:center;padding:12px;font-size:13px">ບໍ່ພົບ</div>';return;}
+  const m = getOnlineMap();
+  res.innerHTML = found.map(u=>{
+    const on = isOnline(u.id);
+    return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${on?'#0c6':'#555'};flex-shrink:0"></div>
+        <div style="font-weight:700;font-size:13px">${u.crown||''} ${u.name}</div>
+        <div style="font-size:10px;color:var(--text2);margin-left:auto">${on?'🟢 Online':'⚫ '+getLastSeen(u.id)}</div>
+      </div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">🆔 ${u.id} · 📱 ${u.phone||'-'} · 📧 ${u.email||'-'}</div>
+      <div style="font-size:10px;color:var(--gold);margin-top:2px">💰 ${Number(u.wallet||0).toLocaleString()} ກີບ · ${u.isAdmin?'Admin':u.isSeller?'Seller':'ລູກຄ້າ'}</div>
+    </div>`;
+  }).join('');
+}
+
 
 function renderAdminSearch(){
   return `
