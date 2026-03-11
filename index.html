@@ -2458,25 +2458,16 @@ function saveUser(){
 let currentUser = (function(){
   try{
     const sid = localStorage.getItem('kd_session');
-    if(sid){
-      // Try owner accounts
-      const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
-      if(owner){
-        const db = getUsersDB();
-        return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
-      }
+    if(!sid) return null; // No session = logged out, period.
+    // Try owner accounts
+    const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
+    if(owner){
       const db = getUsersDB();
-      if(db[sid]) return db[sid];
+      return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
     }
-    // Fallback: old kd_user
-    const old = JSON.parse(localStorage.getItem('kd_user')||'null');
-    if(old && old.id){
-      // Migrate to new DB
-      const db = getUsersDB();
-      if(!db[old.id]){ db[old.id] = old; saveUsersDB(db); }
-      localStorage.setItem('kd_session', old.id);
-      return old;
-    }
+    // Regular user
+    const db = getUsersDB();
+    if(db[sid]) return db[sid];
   }catch(e){}
   return null;
 })();
@@ -4260,7 +4251,11 @@ function logoutUser(){
   currentUser = null;
   localStorage.removeItem('kd_session');
   localStorage.removeItem('kd_user');
+  // Clear heartbeat so user shows offline immediately
+  const m = getOnlineMap();
+  if(m) { /* don't need to clear, just don't update */ }
   updateProfileUI();
+  switchPage('home');
   showNotif('ອອກຈາກລະບົບແລ້ວ');
 }
 
