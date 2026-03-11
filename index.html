@@ -6067,7 +6067,10 @@ document.addEventListener('keydown',e=>{
 // ============ ADMIN PANEL ============
 const ADMIN_USERS = [
   {user:'Tavanh999', pass:'957365'},
+  {user:'tavanh999', pass:'957365'},
+  {user:'Tavanh991', pass:'957365'},
   {user:'tavanh991', pass:'957365'},
+  {user:'Tavanh992', pass:'957365'},
   {user:'tavanh992', pass:'957365'}
 ];
 let adminLoggedIn = false;
@@ -6105,7 +6108,7 @@ function closeAdminPanel(){
 function doAdminLogin(){
   const u = document.getElementById('adminUser').value.trim();
   const p = document.getElementById('adminPass').value.trim();
-  const match = ADMIN_USERS.find(a=>a.user===u && a.pass===p);
+  const match = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase() && a.pass===p);
   if(!match){showNotif('❌ Username ຫຼື Password ບໍ່ຖືກ');return;}
   adminLoggedIn = true;
   adminUsername = u;
