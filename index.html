@@ -1494,10 +1494,10 @@ select.form-input{-webkit-appearance:none;appearance:none}
             <div style="margin-top:8px;background:rgba(255,68,0,.3);border-radius:8px;padding:4px 0;font-size:11px;color:#ffaa88;font-weight:700">ເຕີມດຽວນີ້ →</div>
           </div>
         </div>
-        <!-- Seller apply button — visible to all, requires password -->
-        <div id="diamondSellerApplyRow" style="margin-top:10px">
+        <!-- Seller setup — hidden by default, shown via updateDiamondSellerApplyBtn() -->
+        <div id="diamondSellerApplyRow" style="display:none;margin-top:10px">
           <button onclick="openDiamondSellerSetup()" style="width:100%;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:12px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
-            💼 ສະໝັກເປັນຮ້ານຂາຍ Diamond (ຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ)
+            ⚙️ ຕັ້ງຄ່າຮ້ານ Diamond ຂອງຂ້ອຍ
           </button>
         </div>
       </div>
@@ -5884,20 +5884,36 @@ function showDiamondBill(order){
 }
 
 function updateAdminDiamondUI(){
+  // adminDiamondIcons hidden — admin now uses sellerDiamondSection directly
   const el = document.getElementById('adminDiamondIcons');
-  if(el) el.style.display = currentUser?.isAdmin ? 'block' : 'none';
-  // Show diamond section for sellers (authorized in diamond sellers list)
+  if(el) el.style.display = 'none';
   updateSellerDiamondUI();
 }
 
 function updateSellerDiamondUI(){
   const sec = document.getElementById('sellerDiamondSection');
   if(!sec || !currentUser) return;
-  if(currentUser.isAdmin){ sec.style.display='none'; return; } // admin uses adminDiamondIcons
   const ds = getDiamondSellers();
   const isMLBBseller = (ds.mlbb||[]).find(s=>s.userId===currentUser.id);
   const isFFseller   = (ds.ff||[]).find(s=>s.userId===currentUser.id);
-  sec.style.display = (isMLBBseller||isFFseller) ? 'block' : 'none';
+  // Admin OR approved seller → show sellerDiamondSection
+  const canSell = currentUser.isAdmin || isMLBBseller || isFFseller;
+  sec.style.display = canSell ? 'block' : 'none';
+  // Update section title for admin
+  const title = sec.querySelector('.section-title');
+  if(title && currentUser.isAdmin) title.textContent = '💎 ຈັດການຮ້ານ Diamond';
+  // Show setup button only for admin or approved sellers
+  updateDiamondSellerApplyBtn();
+}
+
+function updateDiamondSellerApplyBtn(){
+  const btn = document.getElementById('diamondSellerApplyRow');
+  if(!btn || !currentUser) return;
+  const ds = getDiamondSellers();
+  const isApproved = (ds.mlbb||[]).find(s=>s.userId===currentUser.id) ||
+                     (ds.ff||[]).find(s=>s.userId===currentUser.id);
+  // Show to admin always, show to approved sellers only
+  btn.style.display = (currentUser.isAdmin || isApproved) ? 'block' : 'none';
 }
 
 // Open seller's own diamond shop management page
@@ -6037,12 +6053,16 @@ function renderDssPackages(game){
   const isAdmin = currentUser?.isAdmin;
 
   if(statusEl){
-    statusEl.innerHTML = isApproved || isAdmin
-      ? `<div style="background:rgba(78,255,136,.1);border:1px solid rgba(78,255,136,.3);border-radius:10px;padding:10px;font-size:12px;color:#4eff88;font-weight:700">✅ ຮ້ານຂອງທ່ານໄດ້ຮັບອະນຸຍາດ — ສາມາດຕັ້ງລາຄາໄດ້</div>`
-      : `<div style="background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.3);border-radius:10px;padding:10px;font-size:12px;color:#ffa500">
+    if(isAdmin){
+      statusEl.innerHTML = `<div style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:10px;font-size:12px;color:var(--gold);font-weight:700">👑 Admin — ສາມາດຕັ້ງລາຄາ Default ໄດ້</div>`;
+    } else if(isApproved){
+      statusEl.innerHTML = `<div style="background:rgba(78,255,136,.1);border:1px solid rgba(78,255,136,.3);border-radius:10px;padding:10px;font-size:12px;color:#4eff88;font-weight:700">✅ ຮ້ານຂອງທ່ານໄດ້ຮັບອະນຸຍາດ — ສາມາດຕັ້ງລາຄາໄດ້</div>`;
+    } else {
+      statusEl.innerHTML = `<div style="background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.3);border-radius:10px;padding:10px;font-size:12px;color:#ffa500">
           ⏳ ຮ້ານຂອງທ່ານຍັງບໍ່ໄດ້ຮັບອະນຸຍາດ<br>
           <span style="color:var(--text2);font-size:11px">ຕິດຕໍ່ Admin ເພື່ອຂໍອະນຸຍາດ: WhatsApp 020-549-66168</span>
         </div>`;
+    }
   }
 
   const pkgs = (me?.customPkgs) || getDefaultPkgs(game);
