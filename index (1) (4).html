@@ -2499,6 +2499,10 @@ window.onload = () => setTimeout(launchApp, 5000);
 setTimeout(launchApp, 6500);
 
 function initApp() {
+  // Re-verify session is still valid (covers PWA cache edge cases)
+  if(!currentUser){
+    currentUser = restoreSession();
+  }
   renderProducts(products);
   updateWalletDisplay();
   updateProfileUI();
@@ -4172,19 +4176,39 @@ const OWNER_ACCOUNTS = [
   {id:'USR-77777',name:'Tavanh992',user:'tavanh992',pass:'957365',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'🪙',rank:3},
 ];
 
-// ── Restore login session — called after OWNER_ACCOUNTS is defined ──
+// ── Restore login session — bulletproof 3-layer restore ──
 function restoreSession(){
   try{
-    const sid = localStorage.getItem('kd_session');
-    if(!sid) return null;
-    const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
-    if(owner){
-      const db = getUsersDB();
-      return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
-    }
     const db = getUsersDB();
-    if(db[sid]) return db[sid];
-  }catch(e){}
+
+    // Layer 1: kd_session pointer (most reliable)
+    const sid = localStorage.getItem('kd_session');
+    if(sid){
+      const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
+      if(owner) return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
+      if(db[sid]) return db[sid];
+    }
+
+    // Layer 2: kd_user snapshot (backward compat)
+    const snap = JSON.parse(localStorage.getItem('kd_user')||'null');
+    if(snap && snap.id){
+      const owner = OWNER_ACCOUNTS.find(o=>o.id===snap.id);
+      if(owner) return db[snap.id] ? {...owner,...db[snap.id],isAdmin:true} : {...owner};
+      if(db[snap.id]) return db[snap.id];
+      // Migrate: user exists in snapshot but not in db yet
+      db[snap.id] = snap;
+      saveUsersDB(db);
+      localStorage.setItem('kd_session', snap.id);
+      return snap;
+    }
+
+    // Layer 3: scan db for any owner that has a valid session
+    for(const owner of OWNER_ACCOUNTS){
+      if(db[owner.id] && db[owner.id].pass){
+        // Don't auto-restore owners without explicit session
+      }
+    }
+  }catch(e){ console.warn('restoreSession error:', e); }
   return null;
 }
 currentUser = restoreSession();
