@@ -38,7 +38,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 /* SPLASH */
 /* ===== SPLASH SCREEN ===== */
 /* ============================================================
-   SPLASH SCREEN — LaoMarket orbit style
+   SPLASH SCREEN v3 — Saturn orbit + running cart + 5s bar
    ============================================================ */
 #splash{
   position:fixed;inset:0;z-index:9999;
@@ -46,8 +46,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   transition:opacity .9s ease;overflow:hidden;
 }
-
-/* Stars field */
 #splash::before{
   content:'';position:absolute;inset:0;
   background-image:
@@ -60,13 +58,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
     radial-gradient(1px 1px at 18% 55%,rgba(240,208,128,.6) 0%,transparent 100%),
     radial-gradient(1px 1px at 78% 82%,rgba(255,200,80,.5) 0%,transparent 100%),
     radial-gradient(1px 1px at 45% 22%,rgba(255,230,110,.8) 0%,transparent 100%),
-    radial-gradient(1px 1px at 62% 52%,rgba(201,168,76,.4) 0%,transparent 100%),
     radial-gradient(1.5px 1.5px at 25% 40%,rgba(255,220,100,.6) 0%,transparent 100%),
     radial-gradient(1px 1px at 82% 45%,rgba(240,200,80,.5) 0%,transparent 100%);
   animation:splashStars 3s ease-in-out infinite alternate;
 }
-
-/* Bottom glow pool */
 #splash::after{
   content:'';position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);
   width:420px;height:160px;
@@ -75,169 +70,100 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
   animation:splashGroundGlow 2.8s ease-in-out infinite alternate;
 }
 
-/* === MAIN ORBIT CONTAINER === */
-.splash-orbit{
-  position:relative;width:300px;height:300px;
-  margin-bottom:0;flex-shrink:0;
-}
+/* ── MAIN ORBIT CONTAINER ── */
+.splash-orbit{position:relative;width:320px;height:320px;margin-bottom:0;flex-shrink:0;}
+.orbit-aura{position:absolute;inset:-30px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.22) 0%,rgba(201,168,76,.07) 40%,transparent 65%);animation:splashAura 2.5s ease-in-out infinite;}
+.orbit-aura2{position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle,transparent 40%,rgba(255,200,60,.12) 65%,transparent 75%);animation:splashAura 3.5s ease-in-out infinite reverse;}
 
-/* Outer aura halo */
-.orbit-aura{
-  position:absolute;inset:-30px;border-radius:50%;
-  background:radial-gradient(circle,rgba(201,168,76,.22) 0%,rgba(201,168,76,.07) 40%,transparent 65%);
-  animation:splashAura 2.5s ease-in-out infinite;
-}
-/* Secondary aura pulse */
-.orbit-aura2{
-  position:absolute;inset:-8px;border-radius:50%;
-  background:radial-gradient(circle,transparent 40%,rgba(255,200,60,.12) 65%,transparent 75%);
-  animation:splashAura 3.5s ease-in-out infinite reverse;
-}
+/* ── SATURN TILTED RINGS ── */
+.orbit-saturn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:600px;}
+.orbit-band{position:absolute;border-radius:50%;border-style:solid;animation:splashSaturn linear infinite;transform-style:preserve-3d;}
+.orbit-band1{width:308px;height:308px;border-width:4px;border-color:rgba(201,168,76,.8) transparent rgba(201,168,76,.2) transparent;animation-duration:7s;filter:drop-shadow(0 0 14px rgba(201,168,76,.9)) drop-shadow(0 0 32px rgba(201,168,76,.4));transform:rotateX(70deg) rotateZ(0deg);}
+.orbit-band2{width:274px;height:274px;border-width:2.5px;border-color:transparent rgba(255,220,100,.6) transparent rgba(255,220,100,.25);animation-duration:4.5s;animation-direction:reverse;filter:drop-shadow(0 0 9px rgba(255,220,100,.7));transform:rotateX(70deg) rotateZ(40deg);}
+.orbit-band3{width:244px;height:244px;border-width:1.5px;border-color:rgba(240,208,128,.45) transparent rgba(240,208,128,.15) transparent;animation-duration:9s;filter:drop-shadow(0 0 6px rgba(240,208,128,.5));transform:rotateX(70deg) rotateZ(80deg);}
+/* Flat spin rings */
+.orbit-ring{position:absolute;border-radius:50%;border-style:solid;border-color:transparent;animation:splashSpin linear infinite;}
+.orbit-ring1{inset:28px;border-width:1.5px;border-top-color:rgba(201,168,76,.4);border-right-color:rgba(201,168,76,.1);animation-duration:6s;}
+.orbit-ring2{inset:42px;border-width:1px;border-bottom-color:rgba(255,220,100,.35);border-left-color:rgba(255,220,100,.1);animation-duration:3.5s;animation-direction:reverse;}
 
-/* === SATURN-STYLE TILTED ORBIT RINGS === */
-.orbit-saturn{
-  position:absolute;inset:0;
+/* ── CATEGORY ICON ORBIT BALLS ── */
+.orbit-icon{
+  position:absolute;top:50%;left:50%;
+  width:34px;height:34px;margin:-17px;
+  border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  perspective:600px;
+  font-size:17px;line-height:1;
+  background:radial-gradient(circle at 35% 30%,#3d2c00,#1a1200);
+  border:1.5px solid rgba(201,168,76,.55);
+  box-shadow:0 0 10px rgba(201,168,76,.55),0 0 22px rgba(201,168,76,.2),inset 0 0 6px rgba(0,0,0,.5);
+  will-change:transform;
+  /* counter-rotate so icon stays upright */
 }
-.orbit-band{
-  position:absolute;border-radius:50%;border-style:solid;
-  animation:splashSaturn linear infinite;
-  transform-style:preserve-3d;
-}
-/* Main big saturn band */
-.orbit-band1{
-  width:290px;height:290px;
-  border-width:3px;
-  border-color:rgba(201,168,76,.7) transparent rgba(201,168,76,.2) transparent;
-  animation-duration:6s;
-  filter:drop-shadow(0 0 10px rgba(201,168,76,.7)) drop-shadow(0 0 24px rgba(201,168,76,.3));
-  transform:rotateX(72deg) rotateZ(0deg);
-}
-.orbit-band2{
-  width:260px;height:260px;
-  border-width:2px;
-  border-color:transparent rgba(255,220,100,.5) transparent rgba(255,220,100,.2);
-  animation-duration:4s;animation-direction:reverse;
-  filter:drop-shadow(0 0 7px rgba(255,220,100,.6));
-  transform:rotateX(72deg) rotateZ(45deg);
-}
-.orbit-band3{
-  width:230px;height:230px;
-  border-width:1.5px;
-  border-color:rgba(240,208,128,.4) transparent rgba(240,208,128,.15) transparent;
-  animation-duration:8s;
-  filter:drop-shadow(0 0 5px rgba(240,208,128,.5));
-  transform:rotateX(72deg) rotateZ(90deg);
-}
-/* Flat spinning rings */
-.orbit-ring{position:absolute;border-radius:50%;border-style:solid;border-color:transparent;animation:splashSpin linear infinite}
-.orbit-ring1{inset:30px;border-width:2px;border-top-color:rgba(201,168,76,.6);border-right-color:rgba(201,168,76,.15);animation-duration:5s;filter:drop-shadow(0 0 5px rgba(201,168,76,.6))}
-.orbit-ring2{inset:40px;border-width:1.5px;border-bottom-color:rgba(255,220,100,.5);border-left-color:rgba(255,220,100,.15);animation-duration:3s;animation-direction:reverse;filter:drop-shadow(0 0 4px rgba(255,220,100,.5))}
+/* 8 icons, each on a slightly different orbit radius */
+.oi1{animation:oi1 4.6s linear infinite;}
+.oi2{animation:oi2 6.2s linear infinite;}
+.oi3{animation:oi3 5.0s linear infinite reverse;}
+.oi4{animation:oi4 7.4s linear infinite;}
+.oi5{animation:oi5 3.8s linear infinite reverse;}
+.oi6{animation:oi6 8.1s linear infinite;}
+.oi7{animation:oi7 5.5s linear infinite;}
+.oi8{animation:oi8 4.3s linear infinite reverse;}
 
-/* Orbiting sparkle dots */
-.orbit-dot{
-  position:absolute;border-radius:50%;top:50%;left:50%;
-  background:radial-gradient(circle,#fff9e0,#f0c840);
-  box-shadow:0 0 10px rgba(201,168,76,1),0 0 22px rgba(201,168,76,.6);
-}
-.orbit-dot1{width:9px;height:9px;margin:-4.5px;animation:splashDot1 5s linear infinite}
-.orbit-dot2{width:6px;height:6px;margin:-3px;background:radial-gradient(circle,#fff,#ffd060);box-shadow:0 0 8px rgba(255,210,80,1),0 0 16px rgba(255,210,80,.5);animation:splashDot2 3.5s linear infinite reverse}
-.orbit-dot3{width:5px;height:5px;margin:-2.5px;background:radial-gradient(circle,#fff,#ffea90);box-shadow:0 0 7px rgba(255,230,100,.9);animation:splashDot3 7s linear infinite}
-
-/* === INNER GLOWING CART SPHERE === */
+/* ── CENTER SPHERE (cart inside) ── */
 .splash-logo-center{
-  position:absolute;
-  /* Centered circle, about 42% of orbit size */
-  inset:65px;
-  border-radius:50%;
+  position:absolute;inset:68px;border-radius:50%;
   background:radial-gradient(circle at 38% 32%,#3a2800 0%,#1e1400 45%,#0d0900 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
-  box-shadow:
-    0 0 0 2px rgba(201,168,76,.5),
-    0 0 0 5px rgba(201,168,76,.12),
-    0 0 40px rgba(201,168,76,.4),
-    0 0 80px rgba(201,168,76,.15),
-    inset 0 0 30px rgba(0,0,0,.6);
-  animation:splashFloat 3.2s ease-in-out infinite;
-  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2.5px rgba(201,168,76,.55),0 0 0 6px rgba(201,168,76,.1),0 0 45px rgba(201,168,76,.45),0 0 90px rgba(201,168,76,.12),inset 0 0 30px rgba(0,0,0,.6);
+  animation:splashFloat 3.2s ease-in-out infinite;overflow:hidden;
 }
-/* Inner lens flare highlight */
-.splash-logo-center::before{
-  content:'';position:absolute;top:18%;left:22%;
-  width:35%;height:35%;
-  background:radial-gradient(circle,rgba(255,240,180,.18) 0%,transparent 70%);
-  border-radius:50%;
-  pointer-events:none;
-}
+.splash-logo-center::before{content:'';position:absolute;top:16%;left:20%;width:38%;height:38%;background:radial-gradient(circle,rgba(255,240,180,.18) 0%,transparent 70%);border-radius:50%;pointer-events:none;}
+.cart-svg{width:82px;height:82px;filter:drop-shadow(0 0 14px rgba(255,220,80,1)) drop-shadow(0 0 28px rgba(201,168,76,.8)) drop-shadow(0 0 56px rgba(201,168,76,.4));animation:splashCartGlow 2.2s ease-in-out infinite alternate;position:relative;z-index:1;}
+.splash-name-inner{font-family:'Cinzel Decorative',serif;font-size:13px;color:transparent;background:linear-gradient(180deg,#fff9e0 0%,#f0d060 40%,#c9a84c 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:3px;margin-top:4px;filter:drop-shadow(0 0 8px rgba(255,220,80,.9));animation:splashNameInner 2.2s ease-in-out infinite alternate;position:relative;z-index:1;white-space:nowrap;}
 
-.cart-svg{
-  width:80px;height:80px;
-  filter:
-    drop-shadow(0 0 14px rgba(255,220,80,1))
-    drop-shadow(0 0 28px rgba(201,168,76,.8))
-    drop-shadow(0 0 56px rgba(201,168,76,.4))
-    drop-shadow(0 4px 10px rgba(0,0,0,.7));
-  animation:splashCartGlow 2.2s ease-in-out infinite alternate;
-  position:relative;z-index:1;
-}
+/* ── TITLE ── */
+.splash-title{font-family:'Cinzel Decorative',serif;font-size:40px;color:transparent;background:linear-gradient(180deg,#fff9e0 0%,#f5e070 20%,#d4a93a 55%,#8b6914 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:8px;margin-top:10px;margin-bottom:3px;animation:splashTitleAura 2.5s ease-in-out infinite alternate;filter:drop-shadow(0 0 20px rgba(201,168,76,.9));line-height:1;}
+.splash-sub{color:rgba(201,168,76,.5);font-size:10px;letter-spacing:3.5px;text-transform:uppercase;}
 
-/* Name INSIDE orbit sphere, below cart */
-.splash-name-inner{
-  font-family:'Cinzel Decorative',serif;
-  font-size:13px;
-  color:transparent;
-  background:linear-gradient(180deg,#fff9e0 0%,#f0d060 40%,#c9a84c 100%);
-  -webkit-background-clip:text;background-clip:text;
-  letter-spacing:3px;
-  margin-top:4px;
-  filter:drop-shadow(0 0 8px rgba(255,220,80,.9));
-  animation:splashNameInner 2.2s ease-in-out infinite alternate;
-  position:relative;z-index:1;
-  white-space:nowrap;
-}
+/* ── SPARKLES ── */
+.sparkle{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff9e0,#f0d060);box-shadow:0 0 6px rgba(255,220,100,.8),0 0 14px rgba(201,168,76,.5);animation:splashSparkle linear infinite;}
 
-/* === BIG TITLE BELOW ORBIT === */
-.splash-title{
-  font-family:'Cinzel Decorative',serif;
-  font-size:42px;
-  color:transparent;
-  background:linear-gradient(180deg,#fff9e0 0%,#f5e070 20%,#d4a93a 55%,#8b6914 100%);
-  -webkit-background-clip:text;background-clip:text;
-  letter-spacing:8px;
-  margin-top:12px;
-  margin-bottom:4px;
-  animation:splashTitleAura 2.5s ease-in-out infinite alternate;
-  filter:drop-shadow(0 0 20px rgba(201,168,76,.9));
-  line-height:1;
+/* ── 5-SECOND LOAD BAR with running cart ── */
+.splash-bar-wrap{width:240px;margin-top:18px;position:relative;}
+.splash-bar{width:100%;height:7px;background:rgba(201,168,76,.1);border-radius:7px;overflow:visible;position:relative;}
+.splash-bar-track{position:absolute;inset:0;border-radius:7px;overflow:hidden;}
+.splash-bar-fill{
+  height:100%;width:0%;border-radius:7px;
+  background:linear-gradient(90deg,#8b6914,#f5e070,#c9a84c,#f5e070,#8b6914);
+  background-size:200%;
+  animation:splashLoad5 5s linear forwards, splashShimmer 1.2s linear infinite;
+  box-shadow:0 0 14px rgba(201,168,76,1),0 0 28px rgba(201,168,76,.5);
 }
-.splash-sub{
-  color:rgba(201,168,76,.55);font-size:10px;
-  letter-spacing:3.5px;text-transform:uppercase;
+/* Running cart emoji above bar */
+.splash-cart-run{
+  position:absolute;
+  top:-26px;
+  left:0%;
+  animation:cartRun5 5s linear forwards;
+  transform:translateX(-50%);
+  font-size:22px;
+  filter:drop-shadow(0 0 8px rgba(255,220,80,.9)) drop-shadow(0 0 18px rgba(201,168,76,.7));
+  animation-name:cartRun5;
 }
+/* Percent text */
+.splash-pct{text-align:right;font-size:11px;color:rgba(201,168,76,.65);margin-top:5px;letter-spacing:1px;font-family:'Sarabun',sans-serif;}
+.splash-loading-txt{font-size:10px;color:rgba(201,168,76,.4);letter-spacing:2.5px;margin-top:5px;text-transform:uppercase;}
 
-/* === FLOATING SPARKLES === */
-.sparkle{
-  position:absolute;border-radius:50%;
-  background:radial-gradient(circle,#fff9e0,#f0d060);
-  box-shadow:0 0 6px rgba(255,220,100,.8),0 0 14px rgba(201,168,76,.5);
-  animation:splashSparkle linear infinite;
-}
-
-/* === LOAD BAR === */
-.splash-bar{width:200px;height:2px;background:rgba(201,168,76,.12);border-radius:2px;margin-top:24px;overflow:hidden}
-.splash-bar-fill{height:100%;background:linear-gradient(90deg,#8b6914,#f5e070,#c9a84c,#f5e070,#8b6914);background-size:200%;animation:splashLoadbar 2.4s ease forwards, splashShimmer 1.5s linear infinite;width:0;box-shadow:0 0 10px rgba(201,168,76,.8)}
-
-/* === KEYFRAMES === */
+/* ════ KEYFRAMES ════ */
 @keyframes splashStars{0%{opacity:.6;transform:scale(1)}100%{opacity:1;transform:scale(1.02)}}
 @keyframes splashGroundGlow{from{opacity:.6;transform:translateX(-50%) scaleX(1)}to{opacity:1;transform:translateX(-50%) scaleX(1.3)}}
 @keyframes splashAura{0%{opacity:.5;transform:scale(1)}100%{opacity:1;transform:scale(1.1)}}
 @keyframes splashSpin{to{transform:rotate(360deg)}}
-@keyframes splashSaturn{to{transform:rotateX(72deg) rotateZ(360deg)}}
+@keyframes splashSaturn{to{transform:rotateX(70deg) rotateZ(360deg)}}
 @keyframes splashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes splashCartGlow{
-  from{filter:drop-shadow(0 0 10px rgba(255,200,60,.9)) drop-shadow(0 0 22px rgba(201,168,76,.6)) drop-shadow(0 2px 6px rgba(0,0,0,.6))}
-  to{filter:drop-shadow(0 0 22px rgba(255,240,100,1)) drop-shadow(0 0 44px rgba(201,168,76,.8)) drop-shadow(0 0 80px rgba(201,168,76,.35)) drop-shadow(0 2px 8px rgba(0,0,0,.5))}
+  from{filter:drop-shadow(0 0 10px rgba(255,200,60,.9)) drop-shadow(0 0 22px rgba(201,168,76,.6))}
+  to{filter:drop-shadow(0 0 22px rgba(255,240,100,1)) drop-shadow(0 0 44px rgba(201,168,76,.8)) drop-shadow(0 0 80px rgba(201,168,76,.35))}
 }
 @keyframes splashNameInner{
   from{filter:drop-shadow(0 0 6px rgba(201,168,76,.7))}
@@ -245,7 +171,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 }
 @keyframes splashTitleAura{
   from{filter:drop-shadow(0 0 14px rgba(201,168,76,.7))}
-  to{filter:drop-shadow(0 0 28px rgba(255,230,100,1)) drop-shadow(0 0 56px rgba(201,168,76,.6)) drop-shadow(0 0 80px rgba(201,168,76,.3))}
+  to{filter:drop-shadow(0 0 28px rgba(255,230,100,1)) drop-shadow(0 0 56px rgba(201,168,76,.6))}
 }
 @keyframes splashSparkle{
   0%{opacity:0;transform:translate(0,0) scale(0)}
@@ -253,36 +179,27 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
   80%{opacity:.7}
   100%{opacity:0;transform:translate(calc(var(--sx)*2.2),calc(var(--sy)*2.2 - 40px)) scale(0)}
 }
-@keyframes splashLoadbar{to{width:100%}}
+/* 5-second fill */
+@keyframes splashLoad5{0%{width:0%}100%{width:100%}}
+@keyframes cartRun5{0%{left:0%}100%{left:100%}}
 @keyframes splashShimmer{0%{background-position:200%}100%{background-position:-200%}}
-@keyframes splashDot1{
-  0%{transform:translateX(128px) translateY(0)}
-  25%{transform:translateX(0) translateY(-128px)}
-  50%{transform:translateX(-128px) translateY(0)}
-  75%{transform:translateX(0) translateY(128px)}
-  100%{transform:translateX(128px) translateY(0)}
-}
-@keyframes splashDot2{
-  0%{transform:translateX(100px) translateY(0)}
-  25%{transform:translateX(0) translateY(100px)}
-  50%{transform:translateX(-100px) translateY(0)}
-  75%{transform:translateX(0) translateY(-100px)}
-  100%{transform:translateX(100px) translateY(0)}
-}
-@keyframes splashDot3{
-  0%{transform:translateX(0) translateY(-115px)}
-  25%{transform:translateX(115px) translateY(0)}
-  50%{transform:translateX(0) translateY(115px)}
-  75%{transform:translateX(-115px) translateY(0)}
-  100%{transform:translateX(0) translateY(-115px)}
-}
+/* Category icon orbits — 8 icons at varied radii */
+@keyframes oi1{0%{transform:translate(140px,0)}25%{transform:translate(0,-140px)}50%{transform:translate(-140px,0)}75%{transform:translate(0,140px)}100%{transform:translate(140px,0)}}
+@keyframes oi2{0%{transform:translate(0,-125px)}25%{transform:translate(125px,0)}50%{transform:translate(0,125px)}75%{transform:translate(-125px,0)}100%{transform:translate(0,-125px)}}
+@keyframes oi3{0%{transform:translate(132px,0)}25%{transform:translate(0,132px)}50%{transform:translate(-132px,0)}75%{transform:translate(0,-132px)}100%{transform:translate(132px,0)}}
+@keyframes oi4{0%{transform:translate(-118px,0)}25%{transform:translate(0,-118px)}50%{transform:translate(118px,0)}75%{transform:translate(0,118px)}100%{transform:translate(-118px,0)}}
+@keyframes oi5{0%{transform:translate(0,135px)}25%{transform:translate(-135px,0)}50%{transform:translate(0,-135px)}75%{transform:translate(135px,0)}100%{transform:translate(0,135px)}}
+@keyframes oi6{0%{transform:translate(128px,0)}25%{transform:translate(0,-128px)}50%{transform:translate(-128px,0)}75%{transform:translate(0,128px)}100%{transform:translate(128px,0)}}
+@keyframes oi7{0%{transform:translate(0,120px)}25%{transform:translate(120px,0)}50%{transform:translate(0,-120px)}75%{transform:translate(-120px,0)}100%{transform:translate(0,120px)}}
+@keyframes oi8{0%{transform:translate(-130px,0)}25%{transform:translate(0,130px)}50%{transform:translate(130px,0)}75%{transform:translate(0,-130px)}100%{transform:translate(-130px,0)}}
+/* Legacy kept for topbar logo */
 @keyframes loadbar{to{width:100%}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes spinEllipse{to{transform:rotateX(75deg) rotateZ(20deg) rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
 @keyframes auraBreath{0%{opacity:.6;transform:scale(1)}100%{opacity:1;transform:scale(1.08)}}
 @keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes cartGlow{from{filter:drop-shadow(0 0 10px rgba(201,168,76,.8)) drop-shadow(0 0 20px rgba(201,168,76,.4))}to{filter:drop-shadow(0 0 18px rgba(255,220,100,1)) drop-shadow(0 0 36px rgba(201,168,76,.7)) drop-shadow(0 0 60px rgba(201,168,76,.3))}}
+@keyframes cartGlow{from{filter:drop-shadow(0 0 10px rgba(201,168,76,.8)) drop-shadow(0 0 20px rgba(201,168,76,.4))}to{filter:drop-shadow(0 0 18px rgba(255,220,100,1)) drop-shadow(0 0 36px rgba(201,168,76,.7))}}
 @keyframes titleAura{from{filter:drop-shadow(0 0 12px rgba(201,168,76,.6))}to{filter:drop-shadow(0 0 24px rgba(255,220,100,.9)) drop-shadow(0 0 48px rgba(201,168,76,.5))}}
 @keyframes orbitDot{0%{transform:translateX(105px) translateY(0)}25%{transform:translateX(0) translateY(-105px)}50%{transform:translateX(-105px) translateY(0)}75%{transform:translateX(0) translateY(105px)}100%{transform:translateX(105px) translateY(0)}}
 @keyframes orbitDot2{0%{transform:translateX(85px) translateY(0)}25%{transform:translateX(0) translateY(85px)}50%{transform:translateX(-85px) translateY(0)}75%{transform:translateX(0) translateY(-85px)}100%{transform:translateX(85px) translateY(0)}}
@@ -313,6 +230,13 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .cats-scroll::-webkit-scrollbar{display:none}
 .cat-chip{white-space:nowrap;background:var(--dark3);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;transition:.2s;color:var(--text2)}
 .cat-chip.active,.cat-chip:hover{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--black);border-color:transparent;font-weight:700}
+/* CATEGORY ICON BUTTONS */
+.cat-icon-btn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:4px 2px;border-radius:12px;transition:all .18s;-webkit-tap-highlight-color:transparent}
+.cat-icon-btn:active{transform:scale(.92)}
+.cat-icon-img{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;border:2px solid transparent;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+.cat-icon-btn.active .cat-icon-img{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.25),0 4px 14px rgba(0,0,0,.4);transform:translateY(-2px)}
+.cat-icon-label{font-size:10px;color:var(--text2);text-align:center;line-height:1.2;transition:.2s;white-space:nowrap}
+.cat-icon-btn.active .cat-icon-label{color:var(--gold);font-weight:700}
 /* PRODUCTS GRID */
 .section-title{padding:16px 16px 8px;font-size:14px;color:var(--gold);letter-spacing:1px;font-weight:700}
 .products-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 80px}
@@ -512,6 +436,73 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .back-btn{width:32px;height:32px;background:var(--dark3);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px}
 /* TAG */
 .tag{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:8px;margin-right:4px}
+/* ══════════ MANAGE PRODUCTS PAGE ══════════ */
+.mp-ftab{white-space:nowrap;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:.2s;font-family:'Sarabun',sans-serif}
+.mp-ftab.active{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#000;border-color:transparent;font-weight:700}
+.mp-product-card{background:var(--dark2);border:1px solid rgba(255,255,255,.07);border-radius:16px;margin-bottom:12px;overflow:hidden;transition:.2s}
+.mp-product-card:hover{border-color:rgba(201,168,76,.25)}
+.mp-card-header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+.mp-card-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden}
+.mp-card-info{flex:1;min-width:0}
+.mp-card-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-card-price{font-size:13px;color:var(--gold);font-weight:700;margin-top:1px}
+.mp-card-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.mp-card-stats{display:flex;gap:0;border-top:1px solid rgba(255,255,255,.05)}
+.mp-stat-box{flex:1;text-align:center;padding:8px 4px;border-right:1px solid rgba(255,255,255,.05)}
+.mp-stat-box:last-child{border-right:none}
+.mp-stat-num{font-size:15px;font-weight:800;line-height:1.1}
+.mp-stat-lbl{font-size:9px;color:var(--text2)}
+.mp-card-actions{display:flex;gap:0;border-top:1px solid rgba(255,255,255,.05)}
+.mp-action-btn{flex:1;padding:10px 4px;border:none;cursor:pointer;font-size:12px;font-family:'Sarabun',sans-serif;transition:.18s;display:flex;align-items:center;justify-content:center;gap:4px}
+.mp-action-btn:first-child{border-radius:0 0 0 16px}
+.mp-action-btn:last-child{border-radius:0 0 16px 0}
+.mp-action-btn.edit{background:rgba(201,168,76,.1);color:var(--gold)}
+.mp-action-btn.edit:hover{background:rgba(201,168,76,.2)}
+.mp-action-btn.toggle{background:rgba(78,255,136,.07);color:#4eff88}
+.mp-action-btn.toggle:hover{background:rgba(78,255,136,.14)}
+.mp-action-btn.del{background:rgba(255,80,80,.08);color:#f77}
+.mp-action-btn.del:hover{background:rgba(255,80,80,.16)}
+.mp-stock-bar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin:0 14px 10px;overflow:hidden}
+.mp-stock-fill{height:100%;border-radius:2px;transition:width .4s}
+.mp-age-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
+/* Diamond admin */
+.dia-admin-section{background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:16px;margin-bottom:16px}
+.dia-admin-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.dia-seller-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.topup-hero{position:relative;width:100%;height:210px;overflow:hidden;border-radius:0 0 24px 24px;margin-bottom:16px}
+.topup-hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.75) 100%)}
+.topup-hero-text{position:absolute;bottom:0;left:0;right:0;padding:16px 20px}
+.topup-hero-title{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+.topup-hero-sub{font-size:12px;color:rgba(255,255,255,.72);margin-top:4px;letter-spacing:1px}
+.topup-hero-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(201,168,76,.25);border:1px solid rgba(201,168,76,.5);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--gold);margin-top:6px}
+.pkg-section-title{padding:0 16px 10px;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1px}
+.pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px}
+.pkg-card{border-radius:16px;padding:14px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;border:2px solid rgba(255,255,255,.08);transition:all .22s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
+.pkg-card::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 60%);pointer-events:none}
+.pkg-card:active{transform:scale(.96)}
+.pkg-card.selected{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(201,168,76,.3),0 8px 28px rgba(0,0,0,.5)}
+.pkg-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:13px;color:var(--gold);font-weight:800}
+.pkg-amount{font-size:16px;font-weight:900;color:#fff;line-height:1.1;text-align:center}
+.pkg-bonus{font-size:10px;color:#4eff88;font-weight:700;background:rgba(0,200,80,.15);border:1px solid rgba(0,200,80,.3);border-radius:10px;padding:1px 7px}
+.pkg-price{font-size:12px;font-weight:700;color:var(--gold)}
+.pkg-popular{position:absolute;top:0;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#ff6b00,#ff9900);color:#fff;font-size:9px;font-weight:700;padding:2px 10px;border-radius:0 0 8px 8px;white-space:nowrap}
+.topup-shop-row{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px}
+.topup-shop-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s}
+.topup-shop-card:hover{background:rgba(201,168,76,.07);border-color:rgba(201,168,76,.25)}
+.topup-shop-avatar{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.topup-shop-name{font-size:14px;font-weight:700;color:var(--text)}
+.topup-shop-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(0,180,255,.12);border:1px solid rgba(0,180,255,.3);color:#5bcbff;font-size:10px;padding:1px 7px;border-radius:8px;margin-top:3px}
+.topup-shop-stats{font-size:11px;color:var(--text2);margin-top:2px}
+.home-topup-banner{margin:0 16px 14px;border-radius:16px;overflow:hidden;display:flex;border:1px solid rgba(201,168,76,.2)}
+.htb-card{flex:1;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.htb-card::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.06),transparent)}
+.htb-card:active{filter:brightness(.8)}
+.htb-mlbb{background:linear-gradient(135deg,#0d0040,#220088,#0d0040)}
+.htb-ff{background:linear-gradient(135deg,#2a0000,#880000,#2a0000)}
+.htb-divider{width:1px;background:rgba(201,168,76,.2);flex-shrink:0}
+.htb-icon{font-size:38px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6))}
+.htb-name{font-size:12px;font-weight:800;color:#fff;letter-spacing:.5px;text-align:center}
+.htb-sub{font-size:10px;color:rgba(255,255,255,.5);text-align:center}
 /* SELL FORM DYNAMIC */
 .sell-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:14px}
 .sell-section-title{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:6px}
@@ -563,6 +554,11 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .popup-box{background:var(--dark2);border:1px solid rgba(201,168,76,.3);border-radius:20px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;padding:20px}
 /* PWA INSTALL BANNER */
 #pwa-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(135deg,var(--black),var(--dark2));border-top:2px solid var(--gold-dark);z-index:9990;padding:16px 20px;display:none;flex-direction:column;align-items:center;gap:10px;box-shadow:0 -4px 20px rgba(0,0,0,.6)}
+/* iOS Install Banner */
+#ios-install-banner{animation:slideUpBanner .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideUpBanner{from{transform:translateX(-50%) translateY(100%);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+.ios-bounce-arrow{animation:bounceDown 1.2s ease-in-out infinite;color:var(--gold);filter:drop-shadow(0 2px 8px rgba(201,168,76,.6))}
+@keyframes bounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
 .pwa-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:14px;font-weight:900;color:var(--black);box-shadow:0 4px 12px rgba(201,168,76,.4)}
 .pwa-text{text-align:center}
 .pwa-text h3{font-size:15px;font-weight:700;color:var(--gold);margin-bottom:2px}
@@ -611,16 +607,14 @@ select.form-input{-webkit-appearance:none;appearance:none}
 <!-- SPLASH -->
 <div id="splash">
   <!-- Floating sparkles -->
-  <div class="sparkle" style="width:5px;height:5px;--sx:70px;--sy:-50px;top:32%;left:25%;animation-duration:2.3s;animation-delay:0s"></div>
-  <div class="sparkle" style="width:4px;height:4px;--sx:-60px;--sy:-35px;top:28%;right:22%;animation-duration:1.9s;animation-delay:.5s"></div>
-  <div class="sparkle" style="width:3px;height:3px;--sx:35px;--sy:-55px;top:58%;left:18%;animation-duration:2.6s;animation-delay:.9s"></div>
-  <div class="sparkle" style="width:4px;height:4px;--sx:-45px;--sy:-40px;top:42%;right:18%;animation-duration:2.1s;animation-delay:1.3s"></div>
-  <div class="sparkle" style="width:3px;height:3px;--sx:25px;--sy:-30px;top:68%;left:38%;animation-duration:1.7s;animation-delay:.2s"></div>
-  <div class="sparkle" style="width:5px;height:5px;--sx:-35px;--sy:-60px;top:25%;left:48%;animation-duration:3s;animation-delay:.7s"></div>
-  <div class="sparkle" style="width:3px;height:3px;--sx:50px;--sy:-25px;top:72%;right:30%;animation-duration:2.4s;animation-delay:1.6s"></div>
-  <div class="sparkle" style="width:4px;height:4px;--sx:-20px;--sy:-45px;top:38%;left:55%;animation-duration:2s;animation-delay:.4s"></div>
+  <div class="sparkle" style="width:5px;height:5px;--sx:70px;--sy:-50px;top:30%;left:22%;animation-duration:2.3s;animation-delay:0s"></div>
+  <div class="sparkle" style="width:4px;height:4px;--sx:-60px;--sy:-35px;top:26%;right:20%;animation-duration:1.9s;animation-delay:.5s"></div>
+  <div class="sparkle" style="width:3px;height:3px;--sx:35px;--sy:-55px;top:56%;left:16%;animation-duration:2.6s;animation-delay:.9s"></div>
+  <div class="sparkle" style="width:4px;height:4px;--sx:-45px;--sy:-40px;top:40%;right:16%;animation-duration:2.1s;animation-delay:1.3s"></div>
+  <div class="sparkle" style="width:5px;height:5px;--sx:-35px;--sy:-60px;top:22%;left:46%;animation-duration:3s;animation-delay:.7s"></div>
+  <div class="sparkle" style="width:3px;height:3px;--sx:50px;--sy:-25px;top:70%;right:28%;animation-duration:2.4s;animation-delay:1.6s"></div>
 
-  <!-- Main orbit system -->
+  <!-- ══ MAIN ORBIT SYSTEM ══ -->
   <div class="splash-orbit">
     <!-- Auras -->
     <div class="orbit-aura"></div>
@@ -633,50 +627,46 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <div class="orbit-band orbit-band3"></div>
     </div>
 
-    <!-- Flat spin rings -->
+    <!-- Flat spin rings (subtle inner) -->
     <div class="orbit-ring orbit-ring1"></div>
     <div class="orbit-ring orbit-ring2"></div>
 
-    <!-- Orbiting sparkle dots -->
-    <div class="orbit-dot orbit-dot1"></div>
-    <div class="orbit-dot orbit-dot2"></div>
-    <div class="orbit-dot orbit-dot3"></div>
+    <!-- ══ 8 CATEGORY ICON PLANETS orbiting ══ -->
+    <!-- Each is a small circle with category emoji -->
+    <div class="orbit-icon oi1">🛍️</div>
+    <div class="orbit-icon oi2">👕</div>
+    <div class="orbit-icon oi3">📱</div>
+    <div class="orbit-icon oi4">👟</div>
+    <div class="orbit-icon oi5">🎮</div>
+    <div class="orbit-icon oi6">🏠</div>
+    <div class="orbit-icon oi7">🍜</div>
+    <div class="orbit-icon oi8">💄</div>
 
-    <!-- Center sphere with cart + name inside -->
+    <!-- ══ CENTER SPHERE — cart + name ══ -->
     <div class="splash-logo-center">
       <svg class="cart-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="cartGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+          <linearGradient id="cg" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#fff8d0"/>
             <stop offset="25%" stop-color="#f5e070"/>
             <stop offset="60%" stop-color="#c9a84c"/>
             <stop offset="100%" stop-color="#8b6914"/>
           </linearGradient>
-          <linearGradient id="wheelGrad" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="wg" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#f5e070"/>
             <stop offset="100%" stop-color="#c9a84c"/>
           </linearGradient>
-          <filter id="cartBlur">
-            <feGaussianBlur stdDeviation="0.4" result="blur"/>
-            <feComposite in="SourceGraphic" in2="blur"/>
-          </filter>
         </defs>
-        <!-- Cart handle -->
-        <path d="M10 20h5" stroke="url(#cartGrad)" stroke-width="4" stroke-linecap="round"/>
-        <!-- Cart body -->
-        <path d="M15 20h5l7 26h26l5-18H28" stroke="url(#cartGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Cart shelf line -->
-        <path d="M28 28h26" stroke="url(#cartGrad)" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
-        <!-- Left wheel -->
-        <circle cx="33" cy="52" r="5" fill="url(#wheelGrad)"/>
-        <circle cx="33" cy="52" r="5" stroke="rgba(255,248,208,0.5)" stroke-width="1"/>
-        <circle cx="31.8" cy="50.8" r="1.5" fill="rgba(255,255,255,0.6)"/>
-        <!-- Right wheel -->
-        <circle cx="53" cy="52" r="5" fill="url(#wheelGrad)"/>
-        <circle cx="53" cy="52" r="5" stroke="rgba(255,248,208,0.5)" stroke-width="1"/>
-        <circle cx="51.8" cy="50.8" r="1.5" fill="rgba(255,255,255,0.6)"/>
+        <path d="M10 20h5" stroke="url(#cg)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M15 20h5l7 26h26l5-18H28" stroke="url(#cg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M28 28h26" stroke="url(#cg)" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+        <circle cx="33" cy="52" r="5" fill="url(#wg)"/>
+        <circle cx="33" cy="52" r="5" stroke="rgba(255,248,208,.5)" stroke-width="1"/>
+        <circle cx="31.8" cy="50.8" r="1.5" fill="rgba(255,255,255,.6)"/>
+        <circle cx="53" cy="52" r="5" fill="url(#wg)"/>
+        <circle cx="53" cy="52" r="5" stroke="rgba(255,248,208,.5)" stroke-width="1"/>
+        <circle cx="51.8" cy="50.8" r="1.5" fill="rgba(255,255,255,.6)"/>
       </svg>
-      <!-- ຂາຍດີ name inside sphere, below cart -->
       <div class="splash-name-inner">ຂາຍດີ</div>
     </div>
   </div>
@@ -684,7 +674,19 @@ select.form-input{-webkit-appearance:none;appearance:none}
   <!-- Big title below orbit -->
   <div class="splash-title">ຂາຍດີ</div>
   <div class="splash-sub">KHAIDEE MARKETPLACE • LAO</div>
-  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+
+  <!-- ══ 5-SECOND PROGRESS BAR with running cart ══ -->
+  <div class="splash-bar-wrap">
+    <div class="splash-bar">
+      <!-- Running cart above bar -->
+      <div class="splash-cart-run">🛒</div>
+      <div class="splash-bar-track">
+        <div class="splash-bar-fill" id="splashBarFill"></div>
+      </div>
+    </div>
+    <div class="splash-pct" id="splashPct">0%</div>
+  </div>
+  <div class="splash-loading-txt">Loading...</div>
 </div>
 
 <!-- PWA INSTALL BANNER -->
@@ -699,6 +701,58 @@ select.form-input{-webkit-appearance:none;appearance:none}
   <div class="pwa-btns">
     <button class="btn btn-gold" style="flex:2" onclick="installPWA()">⬇️ ຕິດຕັ້ງເລີຍ</button>
     <button class="btn btn-outline" style="flex:1" onclick="dismissPWA()">ຍົກເລີກ</button>
+  </div>
+</div>
+
+<!-- iOS INSTALL BANNER -->
+<div id="ios-install-banner" style="display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:9995;flex-direction:column;align-items:center">
+  <!-- Arrow pointing to share button -->
+  <div style="display:flex;justify-content:center;margin-bottom:0;padding:0 20px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div class="ios-bounce-arrow">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4 L16 24 M8 16 L16 26 L24 16" stroke="#c9a84c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <!-- Card -->
+  <div style="background:linear-gradient(135deg,#0f0f18,#1a1b28);border:1.5px solid rgba(201,168,76,.4);border-radius:20px 20px 0 0;padding:18px 20px 24px;width:100%;box-shadow:0 -8px 40px rgba(0,0,0,.7)">
+    <!-- Handle bar -->
+    <div style="width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 14px"></div>
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#b8860b,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:12px;font-weight:900;color:#000;flex-shrink:0;box-shadow:0 3px 12px rgba(201,168,76,.4)">ຂດ</div>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#fff">ຕິດຕັ້ງ ຂາຍດີ App</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">ເພີ່ມໃສ່ໜ້າຈໍຫຼັກ iPhone</div>
+      </div>
+      <button onclick="dismissIOSBanner()" style="margin-left:auto;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+    <!-- Steps -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border-radius:12px;padding:10px 12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,122,255,.2);border:1px solid rgba(0,122,255,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px">📤</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.4">ແຕະ ປຸ່ມ <strong style="color:#6ab4ff">Share 📤</strong> ທີ່ bar ລຸ່ມ Safari<br><span style="font-size:10px;color:rgba(255,255,255,.4)">แตะปุ่ม Share ที่แถบด้านล่าง Safari</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border-radius:12px;padding:10px 12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(52,199,89,.15);border:1px solid rgba(52,199,89,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px">📱</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.4">ເລືອກ <strong style="color:#4eff88">"Add to Home Screen"</strong><br><span style="font-size:10px;color:rgba(255,255,255,.4)">เลือก "Add to Home Screen"</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border-radius:12px;padding:10px 12px">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px">✅</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.4">ກົດ <strong style="color:var(--gold)">"Add"</strong> ມຸມຂວາເທິງ<br><span style="font-size:10px;color:rgba(255,255,255,.4)">กด "Add" มุมขวาบน</span></div>
+      </div>
+    </div>
+    <!-- Warning: must use Safari -->
+    <div style="background:rgba(255,149,0,.08);border:1px solid rgba(255,149,0,.25);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:16px;flex-shrink:0">⚠️</span>
+      <div style="font-size:10px;color:rgba(255,165,0,.85);line-height:1.6">ຕ້ອງໃຊ້ <strong>Safari</strong> ເທົ່ານັ້ນ (ບໍ່ໃຊ້ Chrome ຫຼື Firefox)<br>ต้องใช้ Safari เท่านั้น ไม่ใช่ Chrome หรือ Firefox</div>
+    </div>
+    <!-- Dismiss -->
+    <button onclick="dismissIOSBanner()" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);border-radius:12px;padding:10px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
+      ເຂົ້າໃຈແລ້ວ — ບໍ່ສະແດງອີກ
+    </button>
   </div>
 </div>
 
@@ -742,15 +796,413 @@ select.form-input{-webkit-appearance:none;appearance:none}
         <input type="text" placeholder="ຄົ້ນຫາສິນຄ້າ / ค้นหาสินค้า / Search..." id="searchInput" oninput="filterProducts()">
       </div>
     </div>
-    <div class="cats-scroll" id="catsBar">
-      <div class="cat-chip active" onclick="filterCat('all',this)" data-lo="ທັງໝົດ" data-th="ทั้งหมด" data-en="All">ທັງໝົດ</div>
-      <div class="cat-chip" onclick="filterCat('clothes',this)" data-lo="ເສື້ອຜ້າ&ເຄື່ອງສໍາອາງ" data-th="เสื้อผ้า&เครื่องสำอาง" data-en="Fashion&Beauty">ເສື້ອຜ້າ&ເຄື່ອງສໍາອາງ</div>
-      <div class="cat-chip" onclick="filterCat('electronics',this)" data-lo="ອິເລັກໂທຣນິກ" data-th="อิเล็กทรอนิกส์" data-en="Electronics">ອິເລັກໂທຣນິກ</div>
-      <div class="cat-chip" onclick="filterCat('home',this)" data-lo="ເຄື່ອງໃຊ້ໃນບ້ານ" data-th="เครื่องใช้บ้าน" data-en="Home">ເຄື່ອງໃຊ້ໃນບ້ານ</div>
-      <div class="cat-chip" onclick="filterCat('game',this)" data-lo="ID ເກມ" data-th="ID เกม" data-en="Game ID">ID ເກມ</div>
+    <!-- CATEGORY ICON GRID -->
+    <div style="padding:10px 12px 6px;background:var(--dark2)">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px" id="catIconGrid">
+        <!-- All -->
+        <div class="cat-icon-btn active" id="caticon-all" onclick="filterCatIcon('all',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#c9a84c,#f0d080)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="3" y="3" width="10" height="10" rx="2.5" fill="rgba(255,255,255,.9)"/>
+              <rect x="15" y="3" width="10" height="10" rx="2.5" fill="rgba(255,255,255,.7)"/>
+              <rect x="3" y="15" width="10" height="10" rx="2.5" fill="rgba(255,255,255,.7)"/>
+              <rect x="15" y="15" width="10" height="10" rx="2.5" fill="rgba(255,255,255,.9)"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ທັງໝົດ</div>
+        </div>
+        <!-- Fashion -->
+        <div class="cat-icon-btn" id="caticon-clothes" onclick="filterCatIcon('clothes',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#e91e8c,#9b59b6)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <path d="M8 4 L4 8 L7 10 L7 24 L21 24 L21 10 L24 8 L20 4 L17 7 Q14 9 11 7 Z" fill="rgba(255,255,255,.95)"/>
+              <path d="M11 7 Q14 9 17 7" stroke="rgba(255,150,200,.8)" stroke-width="1.5" fill="none"/>
+              <circle cx="14" cy="15" r="2" fill="rgba(255,150,200,.6)"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ເສື້ອຜ້າ</div>
+        </div>
+        <!-- Electronics -->
+        <div class="cat-icon-btn" id="caticon-electronics" onclick="filterCatIcon('electronics',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#0080ff,#00c8ff)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="8" y="3" width="12" height="20" rx="2.5" fill="rgba(255,255,255,.95)"/>
+              <rect x="9.5" y="5" width="9" height="13" rx="1.5" fill="#0070ee"/>
+              <circle cx="14" cy="20.5" r="1.2" fill="#0070ee"/>
+              <rect x="11" y="7" width="6" height="1" rx=".5" fill="rgba(255,255,255,.6)"/>
+              <rect x="11" y="9.5" width="4" height="1" rx=".5" fill="rgba(255,255,255,.4)"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ໂທລະສັບ</div>
+        </div>
+        <!-- Home -->
+        <div class="cat-icon-btn" id="caticon-home" onclick="filterCatIcon('home',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#27ae60,#2ecc71)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <path d="M4 14 L14 5 L24 14" fill="rgba(255,255,255,.95)"/>
+              <rect x="7" y="14" width="14" height="11" rx="1.5" fill="rgba(255,255,255,.95)"/>
+              <rect x="11" y="18" width="6" height="7" rx="1" fill="rgba(39,174,96,.7)"/>
+              <rect x="17" y="15.5" width="3" height="4" rx=".7" fill="rgba(39,174,96,.5)"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ເຄື່ອງໃຊ້</div>
+        </div>
+        <!-- Game ID -->
+        <div class="cat-icon-btn" id="caticon-game" onclick="filterCatIcon('game',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#ff6b00,#ffcc00)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="3" y="8" width="22" height="14" rx="4" fill="rgba(255,255,255,.95)"/>
+              <rect x="6.5" y="13" width="5" height="2" rx="1" fill="#ff6b00"/>
+              <rect x="8.5" y="11" width="1" height="6" rx=".5" fill="#ff6b00"/>
+              <circle cx="19" cy="13" r="1.2" fill="#ff6b00"/>
+              <circle cx="22" cy="15.5" r="1.2" fill="#ff6b00"/>
+              <circle cx="19" cy="18" r="1.2" fill="#ff6b00"/>
+              <circle cx="16" cy="15.5" r="1.2" fill="#ff6b00"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ID ເກມ</div>
+        </div>
+      </div>
+      <!-- Row 2: more categories -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px">
+        <!-- Shoes -->
+        <div class="cat-icon-btn" id="caticon-shoes" onclick="filterCatIcon('shoes',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#795548,#a0785a)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <path d="M3 19 Q5 12 10 12 Q13 12 15 14 Q18 17 24 16 L24 19 Q18 21 12 21 Q7 22 3 19 Z" fill="rgba(255,255,255,.95)"/>
+              <path d="M10 12 L10 8 Q10 6 12 6 L13 6 Q14 6 14 8 L14 12" fill="rgba(255,255,255,.85)"/>
+              <path d="M15 14 Q18 13 24 16" stroke="rgba(255,200,150,.6)" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ເກີບ</div>
+        </div>
+        <!-- Bags -->
+        <div class="cat-icon-btn" id="caticon-bags" onclick="filterCatIcon('bags',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#9b59b6,#c0392b)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="5" y="11" width="18" height="14" rx="3" fill="rgba(255,255,255,.95)"/>
+              <path d="M10 11 L10 9 Q10 5 14 5 Q18 5 18 9 L18 11" stroke="rgba(255,255,255,.95)" stroke-width="2.5" fill="none"/>
+              <rect x="5" y="14" width="18" height="2" rx="1" fill="rgba(155,89,182,.4)"/>
+              <rect x="11" y="17" width="6" height="1.5" rx=".7" fill="rgba(255,255,255,.5)"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ກະເປົາ</div>
+        </div>
+        <!-- Food -->
+        <div class="cat-icon-btn" id="caticon-food" onclick="filterCatIcon('food',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#e67e22,#f39c12)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="15" r="9" fill="rgba(255,255,255,.95)"/>
+              <circle cx="14" cy="15" r="7" fill="#f39c12" opacity=".3"/>
+              <path d="M10 12 Q12 10 14 12 Q16 14 18 12" stroke="rgba(230,126,34,.8)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M10 16 Q14 19 18 16" stroke="rgba(230,126,34,.8)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <rect x="8" y="5" width="2.5" height="6" rx="1.2" fill="rgba(255,255,255,.8)"/>
+              <rect x="12.7" y="4" width="2.5" height="7" rx="1.2" fill="rgba(255,255,255,.8)"/>
+              <rect x="17.5" y="5" width="2.5" height="6" rx="1.2" fill="rgba(255,255,255,.8)"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ອາຫານ</div>
+        </div>
+        <!-- Cosmetics -->
+        <div class="cat-icon-btn" id="caticon-cosmetics" onclick="filterCatIcon('cosmetics',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#e91e63,#ff5722)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="10" y="3" width="8" height="14" rx="4" fill="rgba(255,255,255,.95)"/>
+              <rect x="9" y="14" width="10" height="11" rx="3" fill="rgba(255,255,255,.85)"/>
+              <rect x="12" y="16" width="4" height="2" rx="1" fill="rgba(233,30,99,.5)"/>
+              <path d="M12 7 Q14 5 16 7" stroke="rgba(255,150,180,.7)" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ສຳອາງ</div>
+        </div>
+        <!-- Other -->
+        <div class="cat-icon-btn" id="caticon-other" onclick="filterCatIcon('other',this)">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#607d8b,#90a4ae)">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="4" y="4" width="9" height="9" rx="2" fill="rgba(255,255,255,.9)"/>
+              <rect x="15" y="4" width="9" height="9" rx="2" fill="rgba(255,255,255,.7)"/>
+              <rect x="4" y="15" width="9" height="9" rx="2" fill="rgba(255,255,255,.7)"/>
+              <circle cx="19.5" cy="19.5" r="4.5" fill="rgba(255,255,255,.9)"/>
+              <text x="17.2" y="22.5" font-family="Arial" font-size="7" font-weight="900" fill="#607d8b">+</text>
+            </svg>
+          </div>
+          <div class="cat-icon-label">ອື່ນໆ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIAMOND TOPUP — compact strip -->
+    <div style="display:flex;gap:8px;padding:10px 16px 4px">
+      <div onclick="switchPage('topup-mlbb')" style="flex:1;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0d0040,#220088);border:1px solid rgba(100,80,255,.3);border-radius:12px;padding:9px 12px;cursor:pointer;transition:.15s">
+        <svg width="28" height="28" viewBox="0 0 28 28">
+          <defs><linearGradient id="mlG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00ccff"/><stop offset="100%" stop-color="#6644ff"/></linearGradient></defs>
+          <polygon points="14,2 22,10 14,26 6,10" fill="url(#mlG)"/>
+          <polygon points="14,2 22,10 14,14" fill="rgba(255,255,255,.25)"/>
+          <polygon points="14,14 6,10 14,2" fill="rgba(0,0,0,.15)"/>
+        </svg>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#fff;line-height:1.2">Mobile Legends</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5)">ເຕີມ Diamond</div>
+        </div>
+        <div style="margin-left:auto;color:#6644ff;font-size:16px;font-weight:700">›</div>
+      </div>
+      <div onclick="switchPage('topup-ff')" style="flex:1;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2a0000,#7a0000);border:1px solid rgba(255,68,0,.3);border-radius:12px;padding:9px 12px;cursor:pointer;transition:.15s">
+        <svg width="28" height="28" viewBox="0 0 28 28">
+          <defs><linearGradient id="ffG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffcc00"/><stop offset="100%" stop-color="#ff4400"/></linearGradient></defs>
+          <path d="M14 2 Q16 8 22 6 Q18 12 22 16 Q16 14 14 26 Q12 14 6 16 Q10 12 6 6 Q12 8 14 2 Z" fill="url(#ffG)"/>
+          <path d="M14 8 Q15 12 18 11 Q16 14 18 16 Q15 15 14 22 Q13 15 10 16 Q12 14 10 11 Q13 12 14 8 Z" fill="rgba(255,255,255,.3)"/>
+        </svg>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#fff;line-height:1.2">Free Fire</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5)">ເຕີມ Diamond</div>
+        </div>
+        <div style="margin-left:auto;color:#ff6600;font-size:16px;font-weight:700">›</div>
+      </div>
     </div>
     <div class="section-title" id="sectionTitle">🛍️ ສິນຄ້າທັງໝົດ</div>
     <div class="products-grid" id="productsGrid"></div>
+  </div>
+
+  <!-- ══════════ MLBB TOPUP PAGE ══════════ -->
+  <div class="page" id="page-topup-mlbb">
+    <!-- Hero SVG Art -->
+    <div class="topup-hero" style="background:linear-gradient(135deg,#04003a 0%,#14007a 40%,#2200aa 70%,#04003a 100%)">
+      <svg viewBox="0 0 480 210" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="xMidYMid slice">
+        <!-- Stars -->
+        <circle cx="40" cy="30" r="1.5" fill="#fff" opacity=".6"/><circle cx="120" cy="15" r="1" fill="#fff" opacity=".4"/>
+        <circle cx="200" cy="40" r="2" fill="#fff" opacity=".5"/><circle cx="320" cy="20" r="1.5" fill="#fff" opacity=".7"/>
+        <circle cx="420" cy="35" r="1" fill="#fff" opacity=".4"/><circle cx="460" cy="10" r="2" fill="#fff" opacity=".6"/>
+        <circle cx="70" cy="60" r="1" fill="#c9a84c" opacity=".5"/><circle cx="380" cy="55" r="1.5" fill="#c9a84c" opacity=".6"/>
+        <!-- Magic rings -->
+        <ellipse cx="380" cy="140" rx="90" ry="25" fill="none" stroke="rgba(100,80,255,.3)" stroke-width="1.5"/>
+        <ellipse cx="380" cy="140" rx="110" ry="32" fill="none" stroke="rgba(100,80,255,.15)" stroke-width="1"/>
+        <!-- Glow orb -->
+        <radialGradient id="mlbbGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#6040ff" stop-opacity=".8"/>
+          <stop offset="100%" stop-color="#6040ff" stop-opacity="0"/>
+        </radialGradient>
+        <circle cx="380" cy="115" r="80" fill="url(#mlbbGlow)"/>
+        <!-- Hero character — Layla style -->
+        <!-- Body base -->
+        <ellipse cx="380" cy="185" rx="30" ry="8" fill="rgba(0,0,0,.4)"/>
+        <!-- Legs -->
+        <rect x="366" y="155" width="10" height="35" rx="5" fill="#1a0080"/>
+        <rect x="382" y="155" width="10" height="35" rx="5" fill="#1a0080"/>
+        <!-- Boot detail -->
+        <rect x="364" y="175" width="14" height="16" rx="4" fill="#2200cc"/>
+        <rect x="380" y="175" width="14" height="16" rx="4" fill="#2200cc"/>
+        <!-- Body/Torso -->
+        <path d="M365 105 Q358 130 362 160 L398 160 Q402 130 395 105 Z" fill="#3300dd"/>
+        <path d="M365 105 Q380 100 395 105 Q392 98 380 95 Q368 98 365 105 Z" fill="#5533ff"/>
+        <!-- Waist belt -->
+        <rect x="362" y="148" width="36" height="8" rx="3" fill="#c9a84c"/>
+        <circle cx="380" cy="152" r="4" fill="#f0d060"/>
+        <!-- Chest armor -->
+        <path d="M367 108 Q380 103 393 108 L391 130 Q380 134 369 130 Z" fill="#4422ee"/>
+        <path d="M374 108 Q380 105 386 108 L385 125 Q380 127 375 125 Z" fill="#6644ff"/>
+        <!-- Energy cannon (right arm) -->
+        <rect x="393" y="115" width="40" height="14" rx="7" fill="#2200cc"/>
+        <rect x="425" y="112" width="16" height="20" rx="5" fill="#3300ff"/>
+        <circle cx="441" cy="122" r="7" fill="#00ccff"/>
+        <circle cx="441" cy="122" r="4" fill="#fff"/>
+        <!-- Left arm -->
+        <rect x="347" y="115" width="20" height="10" rx="5" fill="#3300dd"/>
+        <!-- Neck -->
+        <rect x="375" y="90" width="10" height="16" rx="5" fill="#ffcc99"/>
+        <!-- Head -->
+        <ellipse cx="380" cy="80" rx="22" ry="24" fill="#ffcc99"/>
+        <!-- Hair -->
+        <path d="M358 72 Q360 50 380 48 Q400 50 402 72 Q398 60 380 58 Q362 60 358 72 Z" fill="#1a0099"/>
+        <path d="M358 72 Q354 80 356 88 Q360 85 363 80 Z" fill="#1a0099"/>
+        <path d="M402 72 Q406 80 404 88 Q400 85 397 80 Z" fill="#1a0099"/>
+        <!-- Face detail -->
+        <ellipse cx="373" cy="80" rx="3" ry="3.5" fill="#fff"/>
+        <ellipse cx="387" cy="80" rx="3" ry="3.5" fill="#fff"/>
+        <circle cx="374" cy="81" r="2" fill="#2200aa"/>
+        <circle cx="388" cy="81" r="2" fill="#2200aa"/>
+        <path d="M375 90 Q380 93 385 90" stroke="#cc6666" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <!-- Crown/headpiece -->
+        <path d="M362 68 L366 58 L372 68 Z" fill="#c9a84c"/>
+        <path d="M388 68 L394 58 L398 68 Z" fill="#c9a84c"/>
+        <path d="M374 65 L380 54 L386 65 Z" fill="#f0d060"/>
+        <circle cx="380" cy="54" r="3" fill="#00ccff"/>
+        <!-- Energy effects -->
+        <circle cx="441" cy="122" r="12" fill="none" stroke="#00ccff" stroke-width="1" opacity=".5"/>
+        <circle cx="441" cy="122" r="18" fill="none" stroke="#00ccff" stroke-width=".5" opacity=".3"/>
+        <!-- Diamond particles -->
+        <polygon points="90,80 96,88 90,96 84,88" fill="#c9a84c" opacity=".7"/>
+        <polygon points="150,50 154,56 150,62 146,56" fill="#00ccff" opacity=".6"/>
+        <polygon points="60,120 65,128 60,136 55,128" fill="#c9a84c" opacity=".5"/>
+        <!-- MLBB Logo text area -->
+        <text x="48" y="85" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="#fff" opacity=".95">Mobile</text>
+        <text x="48" y="112" font-family="Arial Black,sans-serif" font-size="22" font-weight="900" fill="#c9a84c">Legends</text>
+        <text x="48" y="132" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,.6)" letter-spacing="2">BANG BANG</text>
+        <!-- Diamond icon -->
+        <polygon points="48,148 58,140 68,148 58,162" fill="#00ccff" opacity=".9"/>
+        <polygon points="48,148 58,148 58,162" fill="rgba(0,0,0,.2)"/>
+        <text x="74" y="158" font-family="Arial,sans-serif" font-size="12" fill="#00ccff" font-weight="700">Diamond Topup</text>
+      </svg>
+      <div class="topup-hero-overlay"></div>
+    </div>
+
+    <div style="padding:0 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <button onclick="switchPage('home')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text);border-radius:10px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບຄືນ</button>
+      <div style="font-size:13px;color:var(--text2)">ຮ້ານ: <span id="mlbbShopCount" style="color:var(--gold);font-weight:700">0</span> ຮ້ານ</div>
+    </div>
+
+    <!-- Shops list -->
+    <div class="pkg-section-title">🏪 ຮ້ານຄ້າທີ່ໄດ້ຮັບອະນຸຍາດ</div>
+    <div id="mlbbShopList" class="topup-shop-row"></div>
+
+    <!-- Admin: add diamond seller -->
+    <div id="mlbbAdminSection" style="display:none;padding:0 16px 16px">
+      <div style="background:rgba(201,168,76,.06);border:1px dashed rgba(201,168,76,.3);border-radius:14px;padding:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px">⚙️ Admin — ຈັດການຮ້ານ MLBB</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">ID ຜູ້ຂາຍ</label>
+          <input class="form-input" id="mlbbSellerIdInput" placeholder="ID ຜູ້ໃຊ້ ເຊັ່ນ USR-123456">
+        </div>
+        <button class="btn btn-gold" onclick="addDiamondSeller('mlbb')" style="width:100%;margin-bottom:0">✅ ອະນຸຍາດຮ້ານນີ້ຂາຍ MLBB</button>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:10px;font-weight:700">ຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ:</div>
+      <div id="mlbbSellerManage" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ FREE FIRE TOPUP PAGE ══════════ -->
+  <div class="page" id="page-topup-ff">
+    <!-- Hero SVG Art -->
+    <div class="topup-hero" style="background:linear-gradient(135deg,#1a0000 0%,#5c0000 40%,#9a0000 70%,#1a0000 100%)">
+      <svg viewBox="0 0 480 210" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="xMidYMid slice">
+        <!-- Background fire embers -->
+        <circle cx="50" cy="40" r="1.5" fill="#ff6600" opacity=".6"/>
+        <circle cx="130" cy="20" r="1" fill="#ff9900" opacity=".5"/>
+        <circle cx="230" cy="35" r="2" fill="#ffcc00" opacity=".4"/>
+        <circle cx="400" cy="25" r="1.5" fill="#ff6600" opacity=".7"/>
+        <circle cx="460" cy="45" r="1" fill="#ff9900" opacity=".5"/>
+        <!-- Flame glow -->
+        <radialGradient id="ffGlow" cx="50%" cy="60%" r="50%">
+          <stop offset="0%" stop-color="#ff4400" stop-opacity=".7"/>
+          <stop offset="100%" stop-color="#ff4400" stop-opacity="0"/>
+        </radialGradient>
+        <circle cx="380" cy="130" r="90" fill="url(#ffGlow)"/>
+        <!-- Ground shadow -->
+        <ellipse cx="380" cy="192" rx="35" ry="8" fill="rgba(0,0,0,.5)"/>
+        <!-- Free Fire character — Alok/DJ style -->
+        <!-- Legs -->
+        <rect x="366" y="152" width="11" height="38" rx="5" fill="#1a1a1a"/>
+        <rect x="381" y="152" width="11" height="38" rx="5" fill="#1a1a1a"/>
+        <!-- Boots -->
+        <rect x="363" y="173" width="15" height="18" rx="5" fill="#ff3300"/>
+        <rect x="379" y="173" width="15" height="18" rx="5" fill="#ff3300"/>
+        <!-- Pants detail -->
+        <rect x="365" y="152" width="28" height="10" rx="3" fill="#333"/>
+        <!-- Jacket/body -->
+        <path d="M363 108 Q356 132 360 158 L398 158 Q402 132 395 108 Z" fill="#cc0000"/>
+        <!-- Jacket details -->
+        <path d="M375 108 L380 160 L385 108 Z" fill="#aa0000"/>
+        <!-- Collar/neck armor -->
+        <path d="M368 108 Q380 102 392 108 L390 118 Q380 122 370 118 Z" fill="#ff2200"/>
+        <!-- Zipper/center line -->
+        <line x1="380" y1="110" x2="380" y2="155" stroke="#ffcc00" stroke-width="1.5"/>
+        <!-- Badge -->
+        <circle cx="372" cy="120" r="5" fill="#ffcc00"/>
+        <text x="369.5" y="123.5" font-family="Arial" font-size="6" font-weight="900" fill="#000">FF</text>
+        <!-- Left arm (gun) -->
+        <rect x="345" y="112" width="20" height="12" rx="5" fill="#cc0000"/>
+        <rect x="330" y="116" width="22" height="8" rx="3" fill="#333"/>
+        <rect x="325" y="114" width="10" height="12" rx="3" fill="#222"/>
+        <!-- Right arm up -->
+        <rect x="394" y="108" width="22" height="11" rx="5" fill="#cc0000"/>
+        <!-- Neck -->
+        <rect x="375" y="90" width="10" height="18" rx="5" fill="#e8a060"/>
+        <!-- Head -->
+        <ellipse cx="380" cy="78" rx="22" ry="23" fill="#e8a060"/>
+        <!-- Helmet/cap -->
+        <path d="M358 74 Q360 50 380 48 Q400 50 402 74 Q398 62 380 60 Q362 62 358 74 Z" fill="#111"/>
+        <rect x="358" y="68" width="44" height="8" rx="3" fill="#222"/>
+        <!-- Visor/goggles -->
+        <rect x="364" y="73" width="32" height="12" rx="6" fill="#ff6600" opacity=".8"/>
+        <rect x="365" y="74" width="30" height="10" rx="5" fill="#ffaa00" opacity=".6"/>
+        <circle cx="371" cy="79" r="4" fill="#ff3300"/>
+        <circle cx="389" cy="79" r="4" fill="#ff3300"/>
+        <circle cx="371" cy="79" r="2" fill="#fff" opacity=".8"/>
+        <circle cx="389" cy="79" r="2" fill="#fff" opacity=".8"/>
+        <!-- Mouth guard -->
+        <rect x="372" y="87" width="16" height="8" rx="4" fill="#333"/>
+        <!-- Headphones -->
+        <path d="M358 74 Q352 80 354 88 Q357 90 360 86" fill="none" stroke="#ff4400" stroke-width="3"/>
+        <path d="M402 74 Q408 80 406 88 Q403 90 400 86" fill="none" stroke="#ff4400" stroke-width="3"/>
+        <!-- Fire effect behind -->
+        <path d="M370 200 Q365 170 375 155 Q368 165 365 145 Q375 160 373 140 Q380 158 385 135 Q387 160 393 145 Q390 165 382 155 Q390 170 385 200 Z" fill="#ff6600" opacity=".4"/>
+        <path d="M373 200 Q369 175 378 162 Q373 170 372 155 Q378 165 380 148 Q382 165 387 155 Q385 170 380 162 Q388 175 384 200 Z" fill="#ff9900" opacity=".5"/>
+        <!-- Diamond particles -->
+        <polygon points="90,75 97,84 90,93 83,84" fill="#ffcc00" opacity=".8"/>
+        <polygon points="140,45 145,52 140,59 135,52" fill="#ff6600" opacity=".6"/>
+        <polygon points="55,120 61,129 55,138 49,129" fill="#ffcc00" opacity=".6"/>
+        <!-- FF Text -->
+        <text x="48" y="82" font-family="Arial Black,sans-serif" font-size="24" font-weight="900" fill="#fff" opacity=".95">FREE</text>
+        <text x="48" y="110" font-family="Arial Black,sans-serif" font-size="24" font-weight="900" fill="#ff4400">FIRE</text>
+        <text x="48" y="130" font-family="Arial,sans-serif" font-size="10" fill="rgba(255,255,255,.55)" letter-spacing="2">GARENA</text>
+        <!-- Diamond -->
+        <polygon points="48,145 60,136 72,145 60,162" fill="#ffcc00" opacity=".9"/>
+        <polygon points="48,145 60,145 60,162" fill="rgba(0,0,0,.2)"/>
+        <text x="78" y="155" font-family="Arial,sans-serif" font-size="12" fill="#ffcc00" font-weight="700">Diamond Topup</text>
+      </svg>
+      <div class="topup-hero-overlay"></div>
+    </div>
+
+    <div style="padding:0 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <button onclick="switchPage('home')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text);border-radius:10px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບຄືນ</button>
+      <div style="font-size:13px;color:var(--text2)">ຮ້ານ: <span id="ffShopCount" style="color:#ff6600;font-weight:700">0</span> ຮ້ານ</div>
+    </div>
+
+    <div class="pkg-section-title" style="color:#ff6600">🏪 ຮ້ານຄ້າທີ່ໄດ້ຮັບອະນຸຍາດ</div>
+    <div id="ffShopList" class="topup-shop-row"></div>
+
+    <!-- Admin -->
+    <div id="ffAdminSection" style="display:none;padding:0 16px 16px">
+      <div style="background:rgba(255,68,0,.06);border:1px dashed rgba(255,68,0,.3);border-radius:14px;padding:14px">
+        <div style="font-size:13px;font-weight:700;color:#ff6600;margin-bottom:12px">⚙️ Admin — ຈັດການຮ້ານ FF</div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">ID ຜູ້ຂາຍ</label>
+          <input class="form-input" id="ffSellerIdInput" placeholder="ID ຜູ້ໃຊ້ ເຊັ່ນ USR-123456">
+        </div>
+        <button class="btn" onclick="addDiamondSeller('ff')" style="width:100%;background:linear-gradient(135deg,#cc2200,#ff4400);color:#fff;border:none;margin-bottom:0">✅ ອະນຸຍາດຮ້ານນີ້ຂາຍ FF</button>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:10px;font-weight:700">ຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ:</div>
+      <div id="ffSellerManage" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- DIAMOND TOPUP ORDER MODAL -->
+  <div class="popup-overlay" id="diamondOrderModal" style="display:none">
+    <div class="popup-box">
+      <div class="modal-title" id="diamondOrderTitle">💎 ເຕີມ Diamond</div>
+      <!-- Package picker inside order -->
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">ເລືອກຈຳນວນ Diamond</div>
+      <div id="diamondPkgPicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px"></div>
+      <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:14px">
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">🎮 ID ໃນເກມ <span style="color:#f66">*</span></label>
+          <input class="form-input" id="diaGameId" placeholder="ໃສ່ Game ID ຂອງທ່ານ">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Server/Zone (ຖ້າມີ)</label>
+          <input class="form-input" id="diaServer" placeholder="Server ID (MLBB) ຫຼື ລະຫັດ (FF)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ໂທລະສັບ <span style="color:#f66">*</span></label>
+        <input class="form-input" type="tel" id="diaPhone" placeholder="020-XXXXXXXX">
+      </div>
+      <div id="diaSelectedSummary" style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:10px;font-size:12px;color:var(--gold);margin-bottom:14px;display:none">
+        <div id="diaSelectedText"></div>
+      </div>
+      <div class="bill-warning" id="diaWarning">⚠️ ກະລຸນາກວດ Game ID ໃຫ້ຖືກຕ້ອງກ່ອນສັ່ງຊື້</div>
+      <button class="btn btn-gold" onclick="submitDiamondOrder()" style="margin-top:12px;margin-bottom:8px;width:100%">✅ ຢືນຢັນສັ່ງຊື້</button>
+      <button class="btn btn-outline" onclick="closeModal('diamondOrderModal')" style="width:100%">ຍົກເລີກ</button>
+    </div>
   </div>
 
   <!-- CHAT PAGE -->
@@ -957,11 +1409,81 @@ select.form-input{-webkit-appearance:none;appearance:none}
             <div>Wallet</div>
           </div>
         </div>
+        <!-- Admin-only: Diamond seller management -->
+        <div id="adminDiamondIcons" style="display:none;margin-top:4px">
+          <div class="section-title" style="padding:12px 0 8px;font-size:12px">💎 ຈັດການຮ້ານ Diamond</div>
+          <div class="profile-icons-seller">
+            <div class="profile-icon-btn" onclick="switchPage('topup-mlbb')" style="background:linear-gradient(135deg,rgba(34,0,170,.3),rgba(100,80,255,.15));border:1px solid rgba(100,80,255,.3)">
+              <div class="icon">💎</div>
+              <div style="font-size:9px">ຮ້ານ MLBB</div>
+            </div>
+            <div class="profile-icon-btn" onclick="switchPage('topup-ff')" style="background:linear-gradient(135deg,rgba(153,0,0,.3),rgba(255,68,0,.15));border:1px solid rgba(255,68,0,.3)">
+              <div class="icon">💠</div>
+              <div style="font-size:9px">ຮ້ານ FF</div>
+            </div>
+          </div>
+        </div>
       </div>
       <div style="padding:12px 16px">
         <button class="btn btn-danger" onclick="logoutUser()" style="font-size:13px;padding:8px">ອອກຈາກລະບົບ</button>
       </div>
     </div>
+  </div>
+
+  <!-- ══════ MANAGE PRODUCTS PAGE ══════ -->
+  <div class="page" id="page-manage">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button onclick="switchPage('profile')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;color:var(--gold)">🗂️ ຈັດການສິນຄ້າ</div>
+          <div style="font-size:11px;color:var(--text2)" id="mpPageSubtitle">ສິນຄ້າຂອງຂ້ອຍ</div>
+        </div>
+        <button onclick="switchPage('profile');showSellProduct()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">➕ ລົງຂາຍ</button>
+      </div>
+      <!-- Stat row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="mpStatRow">
+        <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:var(--gold)" id="mpStatTotal">0</div>
+          <div style="font-size:9px;color:var(--text2)">ທັງໝົດ</div>
+        </div>
+        <div style="background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.15);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:#4eff88" id="mpStatSold">0</div>
+          <div style="font-size:9px;color:var(--text2)">ຂາຍໄດ້</div>
+        </div>
+        <div style="background:rgba(255,165,0,.06);border:1px solid rgba(255,165,0,.15);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:#ffa500" id="mpStatStock">0</div>
+          <div style="font-size:9px;color:var(--text2)">ສ໊ອກຄ້າງ</div>
+        </div>
+        <div style="background:rgba(255,80,80,.06);border:1px solid rgba(255,80,80,.15);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:#ff5050" id="mpStatOut">0</div>
+          <div style="font-size:9px;color:var(--text2)">ໝົດສ໊ອກ</div>
+        </div>
+      </div>
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:2px">
+        <button class="mp-ftab active" id="mpft-all" onclick="setMpFilter('all',this)">ທັງໝົດ</button>
+        <button class="mp-ftab" id="mpft-general" onclick="setMpFilter('general',this)">📦 ສິນຄ້າ</button>
+        <button class="mp-ftab" id="mpft-game" onclick="setMpFilter('game',this)">🎮 ເກມ</button>
+        <button class="mp-ftab" id="mpft-low" onclick="setMpFilter('low',this)">⚠️ ຈວນໝົດ</button>
+        <button class="mp-ftab" id="mpft-out" onclick="setMpFilter('out',this)">🔴 ໝົດ</button>
+        <button class="mp-ftab" id="mpft-old" onclick="setMpFilter('old',this)">⏰ ຄ້າງດົນ</button>
+      </div>
+    </div>
+    <!-- Product list -->
+    <div id="mpPageList" style="padding:12px 16px 80px"></div>
+  </div>
+
+  <!-- EDIT PRODUCT FULL PAGE -->
+  <div class="page" id="page-edit-product">
+    <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 16px;position:sticky;top:0;z-index:50">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="switchPage('manage')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
+        <div style="font-size:16px;font-weight:700;color:var(--gold)">✏️ ແກ້ໄຂສິນຄ້າ</div>
+      </div>
+    </div>
+    <div id="editProductPageContent" style="padding:16px 16px 80px"></div>
   </div>
 
   <!-- CART PAGE -->
@@ -1548,25 +2070,48 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <button class="btn btn-gold" onclick="saveSettings()" style="margin-bottom:8px">💾 ບັນທຶກ</button>
 
     <!-- Install App Section -->
-    <div style="border-top:1px solid var(--gray2);margin:16px 0 12px;padding-top:16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:11px;font-weight:900;color:var(--black);flex-shrink:0">ຂດ</div>
-        <div>
-          <div style="font-weight:700;font-size:14px;color:var(--gold)">ຕິດຕັ້ງ ຂາຍດີ App</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5">ກະລຸນາຕິດຕັ້ງ application ລົງໜ້າຈໍໂທລະສັບຂອງທ່ານ<br>กรุณาติดตั้ง application ลงหน้าจอโทรศัพท์ของคุณ</div>
+    <div style="border-top:1px solid rgba(201,168,76,.2);margin:16px 0 0;padding-top:16px">
+      <!-- App card -->
+      <div style="background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.25);border-radius:16px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#b8860b,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:13px;font-weight:900;color:#000;flex-shrink:0;box-shadow:0 4px 14px rgba(201,168,76,.3)">ຂດ</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:800;color:var(--gold)">ຂາຍດີ App</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px">ຕະຫຼາດອອນລາຍ ລາວ · ไทย · English</div>
+            <div id="installStatusBadge" style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(78,255,136,.1);color:#4eff88;border:1px solid rgba(78,255,136,.2)">⬇️ ພ້ອມຕິດຕັ້ງ</div>
+          </div>
+        </div>
+
+        <!-- SMART INSTALL BUTTON -->
+        <button id="bigInstallBtn" onclick="smartInstallApp()" style="width:100%;background:linear-gradient(135deg,#b8860b,#c9a84c,#f0d080);border:none;color:#000;border-radius:14px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 18px rgba(201,168,76,.35);margin-bottom:12px">
+          <span style="font-size:22px">📲</span><span>ຕິດຕັ້ງ App ເລີຍ!</span>
+        </button>
+
+        <!-- Direct link bar -->
+        <div style="background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:16px">🌐</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:9px;color:var(--text2);margin-bottom:2px">ລິ້ງໂດຍກົງ / Link ตรง</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">tavanh903-byte.github.io/khaidee-V1</div>
+          </div>
+          <a href="https://tavanh903-byte.github.io/khaidee-V1/" target="_blank"
+            style="background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0">
+            ເປີດ 🔗
+          </a>
+        </div>
+
+        <!-- Platform hint -->
+        <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.8" id="platformHintBox">
+          <span id="platformHint">ກຳລັງກວດລະບົບ...</span>
         </div>
       </div>
-      <button class="btn btn-gold" onclick="installPWAFromSettings()" style="width:100%;margin-bottom:8px;font-size:14px">
-        📲 ຕິດຕັ້ງ App / ติดตั้ง App
+
+      <!-- Step-by-step toggle -->
+      <button onclick="toggleInstallSteps()" id="toggleStepsBtn" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--text2);border-radius:10px;padding:8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;margin-bottom:8px">
+        📋 ເບິ່ງຂັ້ນຕອນລະອຽດ ▾
       </button>
-      <div id="installInstructions" style="display:none;background:var(--dark3);border:1px solid var(--gray2);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);line-height:1.8">
-        <div style="color:var(--gold);font-weight:700;margin-bottom:6px">📋 ວິທີຕິດຕັ້ງ / วิธีติดตั้ง</div>
-        <div><strong style="color:var(--text)">🍎 iPhone / iPad (Safari):</strong><br>
-        ແຕະ 🔗 Share → "Add to Home Screen" → "Add"<br>
-        แตะ Share → "Add to Home Screen" → "Add"</div>
-        <div style="margin-top:8px"><strong style="color:var(--text)">🤖 Android (Chrome):</strong><br>
-        ແຕະ ⋮ Menu → "Add to Home screen" → "Add"<br>
-        แตะ Menu → "Add to Home screen" → "Add"</div>
+      <div id="installStepsWrap" style="display:none;background:var(--dark3);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px;font-size:12px;color:var(--text2);line-height:2;margin-bottom:4px">
+        <div id="installStepsContent"></div>
       </div>
     </div>
 
@@ -1670,6 +2215,9 @@ select.form-input{-webkit-appearance:none;appearance:none}
     <button class="admin-side-btn" id="aside-finance" onclick="switchAdminTab('finance')" title="ການເງິນ"><span>💰</span></button>
     <button class="admin-side-btn" id="aside-sellers" onclick="switchAdminTab('sellers')" title="ຜູ້ຂາຍ"><span>🏪</span></button>
     <button class="admin-side-btn" id="aside-history" onclick="switchAdminTab('history')" title="ປະຫວັດ"><span>📋</span></button>
+    <button class="admin-side-btn" id="aside-diamond" onclick="switchAdminTab('diamond')" title="💎 Diamond Topup" style="position:relative">
+      <span>💎</span>
+    </button>
     <div style="flex:1"></div>
     <button class="admin-side-btn" onclick="closeAdminPanel()" title="ອອກ" style="color:#f66;border-color:rgba(255,100,100,.3)"><span>🚪</span></button>
   </div>
@@ -1706,6 +2254,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
       <button class="admin-tab" id="atab-finance" onclick="switchAdminTab('finance')">💰 ການເງິນ</button>
       <button class="admin-tab" id="atab-sellers" onclick="switchAdminTab('sellers')">🏪 ຜູ້ຂາຍ</button>
       <button class="admin-tab" id="atab-history" onclick="switchAdminTab('history')">📋 ປະຫວັດ</button>
+      <button class="admin-tab" id="atab-diamond" onclick="switchAdminTab('diamond')">💎 Diamond</button>
     </div>
     <!-- CONTENT -->
     <div id="adminContent" style="flex:1;overflow-y:auto;padding:18px"></div>
@@ -1828,23 +2377,36 @@ let currentLang = localStorage.getItem('kd_lang') || 'lo';
 let sellGameData = null;
 
 // ============ INIT ============
+// Splash percent counter — updates #splashPct every 50ms
+(function(){
+  let elapsed = 0;
+  const TOTAL = 5000;
+  const pctEl = document.getElementById('splashPct');
+  const timer = setInterval(()=>{
+    elapsed += 50;
+    const pct = Math.min(100, Math.round(elapsed/TOTAL*100));
+    if(pctEl) pctEl.textContent = pct + '%';
+    if(elapsed >= TOTAL) clearInterval(timer);
+  }, 50);
+})();
+
 function launchApp() {
   const splash = document.getElementById('splash');
   const app = document.getElementById('app');
-  if (app.style.display === 'flex') return; // already launched
+  if (app.style.display === 'flex') return;
   splash.style.opacity = '0';
   setTimeout(() => {
     splash.style.display = 'none';
     app.style.display = 'flex';
     initApp();
-  }, 600);
+  }, 700);
 }
 
-// Try multiple triggers to ensure splash always disappears
-document.addEventListener('DOMContentLoaded', () => setTimeout(launchApp, 1800));
-window.onload = () => setTimeout(launchApp, 1800);
-// Hard fallback: force launch after 4 seconds no matter what
-setTimeout(launchApp, 4000);
+// Launch exactly at 5 seconds
+document.addEventListener('DOMContentLoaded', () => setTimeout(launchApp, 5000));
+window.onload = () => setTimeout(launchApp, 5000);
+// Hard fallback at 6.5s
+setTimeout(launchApp, 6500);
 
 function initApp() {
   renderProducts(products);
@@ -1897,9 +2459,38 @@ function filterCat(cat, el){
   filterProducts();
 }
 
+function filterCatIcon(cat, el){
+  currentCat = cat;
+  // Remove active from all icon buttons
+  document.querySelectorAll('.cat-icon-btn').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  // Update section title
+  const titles = {
+    all:'🛍️ ສິນຄ້າທັງໝົດ', clothes:'👗 ເສື້ອຜ້າ', electronics:'📱 ໂທລະສັບ & ອິເລັກໂທຣ',
+    home:'🏠 ເຄື່ອງໃຊ້ໃນບ້ານ', game:'🎮 ID ເກມ', shoes:'👟 ເກີບ',
+    bags:'👜 ກະເປົາ & ສຳອາງ', food:'🍜 ອາຫານ & ເຄື່ອງດື່ມ', cosmetics:'💄 ເຄື່ອງສຳອາງ', other:'📦 ອື່ນໆ'
+  };
+  const st = document.getElementById('sectionTitle');
+  if(st) st.textContent = titles[cat]||'🛍️ ສິນຄ້າ';
+  filterProducts();
+}
+
 function filterProducts(){
   const q = document.getElementById('searchInput').value.toLowerCase();
-  let list = products.filter(p=>(currentCat==='all'||p.cat===currentCat) && (p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q)));
+  const subCats = {shoes:'shoes', bags:'bags', food:'food', cosmetics:'bags', other:'other'};
+  let list = products.filter(p=>{
+    const matchSearch = p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q);
+    if(currentCat==='all') return matchSearch;
+    // match by cat OR subcat
+    const matchCat = p.cat===currentCat || p.subcat===currentCat ||
+      (currentCat==='clothes' && (p.cat==='clothes'||p.subcat==='clothes'||p.subcat==='shoes'||p.subcat==='bags')) ||
+      (currentCat==='shoes' && p.subcat==='shoes') ||
+      (currentCat==='bags' && (p.subcat==='bags'||p.subcat==='cosmetics')) ||
+      (currentCat==='food' && p.subcat==='food') ||
+      (currentCat==='cosmetics' && p.subcat==='bags') ||
+      (currentCat==='other' && p.subcat==='other');
+    return matchCat && matchSearch;
+  });
   renderProducts(list);
 }
 
@@ -2808,11 +3399,361 @@ function previewWithdrawQR(){
 // ============ MANAGE PRODUCTS ============
 let currentMpTab = 'game';
 
+// ============ MANAGE PRODUCTS — FULL PAGE ============
+let mpFilter = 'all';
+
 function showManageProducts(){
   if(!currentUser?.isSeller){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
-  openModal('manageProductsModal');
-  renderMpProducts();
+  mpFilter = 'all';
+  switchPage('manage');
+  renderManagePage();
 }
+
+function setMpFilter(f, el){
+  mpFilter = f;
+  document.querySelectorAll('.mp-ftab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderManagePage();
+}
+
+function getProductAgeDays(p){
+  if(!p.postedAt) return null;
+  const diff = Date.now() - new Date(p.postedAt).getTime();
+  return Math.floor(diff / 86400000);
+}
+
+function getAgeLabel(days){
+  if(days===null) return '';
+  if(days===0) return {text:'ໂພສ໌ວັນນີ້', color:'#4eff88'};
+  if(days<=3)  return {text:`${days} ວັນ`, color:'#4eff88'};
+  if(days<=7)  return {text:`${days} ວັນ`, color:'#ffa500'};
+  if(days<=30) return {text:`${days} ວັນ`, color:'#ff8800'};
+  return {text:`${days} ວັນ ⚠️`, color:'#ff4444'};
+}
+
+function renderManagePage(){
+  if(!currentUser) return;
+  const myProds = products.filter(p=>p.sellerId===currentUser.id);
+  // Stats
+  const totalSold = myProds.reduce((s,p)=>s+(p.sold||0),0);
+  const outOfStock = myProds.filter(p=>p.qty<=0).length;
+  const lowStock = myProds.filter(p=>p.qty>0&&p.qty<=3).length;
+  document.getElementById('mpStatTotal').textContent = myProds.length;
+  document.getElementById('mpStatSold').textContent = totalSold;
+  document.getElementById('mpStatStock').textContent = lowStock;
+  document.getElementById('mpStatOut').textContent = outOfStock;
+
+  // Filter
+  let filtered = myProds;
+  if(mpFilter==='general') filtered = myProds.filter(p=>!p.isGame&&p.cat!=='game');
+  else if(mpFilter==='game') filtered = myProds.filter(p=>p.isGame||p.cat==='game');
+  else if(mpFilter==='low') filtered = myProds.filter(p=>p.qty>0&&p.qty<=3);
+  else if(mpFilter==='out') filtered = myProds.filter(p=>p.qty<=0);
+  else if(mpFilter==='old') filtered = myProds.filter(p=>{const d=getProductAgeDays(p);return d!==null&&d>14;}).sort((a,b)=>new Date(a.postedAt)-new Date(b.postedAt));
+
+  const subtitle = document.getElementById('mpPageSubtitle');
+  if(subtitle) subtitle.textContent = `${filtered.length} ລາຍການ`;
+
+  const container = document.getElementById('mpPageList');
+  if(!container) return;
+
+  if(!filtered.length){
+    container.innerHTML = `<div style="text-align:center;padding:50px 20px;color:var(--text2)">
+      <div style="font-size:48px;margin-bottom:12px">📭</div>
+      <div style="font-size:14px">ຍັງບໍ່ມີສິນຄ້າ</div>
+      <button class="btn btn-gold" style="margin-top:16px;font-size:13px" onclick="switchPage('profile');showSellProduct()">➕ ລົງຂາຍສິນຄ້າ</button>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p=>{
+    const isGame = p.isGame||p.cat==='game';
+    const days = getProductAgeDays(p);
+    const ageInfo = getAgeLabel(days);
+    const maxQty = Math.max(p.qty+(p.sold||0), 1);
+    const stockPct = Math.min(100, Math.round((p.qty/maxQty)*100));
+    const stockColor = p.qty<=0?'#ff4444':p.qty<=3?'#ffa500':'#4eff88';
+    const thumb = p.images&&p.images[0]
+      ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover">`
+      : `<div style="font-size:26px;width:56px;height:56px;display:flex;align-items:center;justify-content:center">${p.emoji||'📦'}</div>`;
+    const postDate = p.postedAt ? new Date(p.postedAt).toLocaleString('lo-LA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'ບໍ່ຮູ້';
+
+    return `<div class="mp-product-card">
+      <div class="mp-card-header">
+        <div class="mp-card-thumb">${thumb}</div>
+        <div class="mp-card-info">
+          <div class="mp-card-name">${p.name}</div>
+          <div class="mp-card-price">${Number(p.price).toLocaleString()} ກີບ</div>
+          <div class="mp-card-meta">
+            ${isGame?'<span style="background:rgba(255,165,0,.15);color:#ffa500;font-size:9px;padding:1px 6px;border-radius:6px;margin-right:4px">🎮 ID ເກມ</span>':''}
+            ${ageInfo.text?`<span class="mp-age-badge" style="background:${ageInfo.color}18;color:${ageInfo.color};border:1px solid ${ageInfo.color}30">⏰ ${ageInfo.text}</span>`:''}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:3px">📅 ${postDate}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:var(--text2)">ຂາຍໄດ້</div>
+          <div style="font-size:18px;font-weight:800;color:#4eff88">${p.sold||0}</div>
+        </div>
+      </div>
+      <!-- Stock bar -->
+      <div style="padding:0 14px 4px;display:flex;align-items:center;gap:8px">
+        <div style="font-size:11px;color:${stockColor};font-weight:700;min-width:60px">
+          ${p.qty<=0?'🔴 ໝົດ':p.qty<=3?`⚠️ ເຫຼືອ ${p.qty}`:`✅ ສ໊ອກ ${p.qty}`}
+        </div>
+        <div class="mp-stock-bar" style="flex:1;margin:0">
+          <div class="mp-stock-fill" style="width:${stockPct}%;background:${stockColor}"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text2)">${p.sold||0}/${(p.sold||0)+(p.qty||0)} ຂາຍ</div>
+      </div>
+      <!-- Stats row -->
+      <div class="mp-card-stats">
+        <div class="mp-stat-box">
+          <div class="mp-stat-num" style="color:var(--gold)">${Number(p.price).toLocaleString()}</div>
+          <div class="mp-stat-lbl">ລາຄາ (ກ)</div>
+        </div>
+        <div class="mp-stat-box">
+          <div class="mp-stat-num" style="color:#4eff88">${p.sold||0}</div>
+          <div class="mp-stat-lbl">ຂາຍໄດ້</div>
+        </div>
+        <div class="mp-stat-box">
+          <div class="mp-stat-num" style="color:${stockColor}">${p.qty||0}</div>
+          <div class="mp-stat-lbl">ຄ້າງ</div>
+        </div>
+        <div class="mp-stat-box">
+          <div class="mp-stat-num" style="color:#aaa">${days!==null?days+'d':'—'}</div>
+          <div class="mp-stat-lbl">ວັນໂພສ</div>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="mp-card-actions">
+        <button class="mp-action-btn edit" onclick="openEditProductPage('${p.id}')">✏️ ແກ້ໄຂ</button>
+        <button class="mp-action-btn toggle" onclick="toggleProductActive('${p.id}')">${p.hidden?'👁 ສະແດງ':'🙈 ຊ່ອນ'}</button>
+        <button class="mp-action-btn" onclick="quickEditStock('${p.id}')" style="background:rgba(100,180,255,.08);color:#6ab4ff">📦 ສ໊ອກ</button>
+        <button class="mp-action-btn del" onclick="deleteProductFromManage('${p.id}')">🗑 ລຶບ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEditProductPage(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  const isGame = p.isGame||p.cat==='game';
+  const content = document.getElementById('editProductPageContent');
+  content.innerHTML = `
+    <input type="hidden" id="eppId" value="${id}">
+    <input type="hidden" id="eppIsGame" value="${isGame?'1':'0'}">
+
+    <div style="background:var(--dark2);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:12px">📋 ຂໍ້ມູນຫຼັກ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ຊື່ສິນຄ້າ</label>
+        <input class="form-input" id="eppName" value="${(p.name||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">ລາຍລະອຽດ</label>
+        <textarea class="form-input" id="eppDesc" rows="3">${p.desc||''}</textarea>
+      </div>
+      <div class="form-row2">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">ລາຄາ (ກີບ)</label>
+          <input class="form-input" type="number" id="eppPrice" value="${p.price||0}">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">ຈຳນວນສ໊ອກ</label>
+          <input class="form-input" type="number" id="eppQty" value="${p.qty||0}">
+        </div>
+      </div>
+    </div>
+    ${isGame?`
+    <div style="background:var(--dark2);border:1px solid rgba(255,165,0,.15);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#ffa500;margin-bottom:12px">🎮 ຂໍ້ມູນ ID ເກມ</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Email / ID ເກມ</label>
+        <input class="form-input" id="eppEmail" value="${(p.gameEmail||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">ລະຫັດຜ່ານ</label>
+        <input class="form-input" id="eppPass" value="${(p.gamePass||'').replace(/"/g,'&quot;')}">
+      </div>
+    </div>`:''}
+    <div style="background:var(--dark2);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:10px">📅 ໂພສ໌ & ສ໊ອກ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+        <div><div style="color:var(--text2)">ໂພສ໌ວັນທີ</div><div style="color:var(--text);font-weight:600">${p.postedAt?new Date(p.postedAt).toLocaleString('lo-LA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'ບໍ່ຮູ້'}</div></div>
+        <div><div style="color:var(--text2)">ຄ້າງ</div><div style="color:var(--text);font-weight:600">${getProductAgeDays(p)!==null?getProductAgeDays(p)+' ວັນ':'—'}</div></div>
+        <div><div style="color:var(--text2)">ຂາຍໄດ້</div><div style="color:#4eff88;font-weight:700">${p.sold||0} ຕ່ຽວ</div></div>
+        <div><div style="color:var(--text2)">ລາຍໄດ້</div><div style="color:var(--gold);font-weight:700">${Number((p.sold||0)*p.price).toLocaleString()} ກ</div></div>
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="saveEditProductPage()" style="width:100%;margin-bottom:10px">💾 ບັນທຶກການແກ້ໄຂ</button>
+    <button class="btn btn-danger" onclick="deleteProductFromManage('${id}')" style="width:100%">🗑 ລຶບສິນຄ້ານີ້</button>
+  `;
+  switchPage('edit-product');
+}
+
+function saveEditProductPage(){
+  const id = document.getElementById('eppId')?.value;
+  const isGame = document.getElementById('eppIsGame')?.value==='1';
+  const idx = products.findIndex(p=>p.id===id);
+  if(idx<0){showNotif('ບໍ່ພົບ');return;}
+  const name = document.getElementById('eppName')?.value?.trim();
+  const desc = document.getElementById('eppDesc')?.value?.trim();
+  const price = parseInt(document.getElementById('eppPrice')?.value)||0;
+  const qty = parseInt(document.getElementById('eppQty')?.value)||0;
+  if(!name||!price){showNotif('ໃສ່ຊື່ ແລະ ລາຄາ');return;}
+  products[idx] = {...products[idx], name, desc, price, qty};
+  if(isGame){
+    const email = document.getElementById('eppEmail')?.value?.trim();
+    const pass = document.getElementById('eppPass')?.value?.trim();
+    products[idx].gameEmail = email;
+    products[idx].gamePass = pass;
+  }
+  saveProducts();
+  showNotif('✅ ບັນທຶກແລ້ວ!');
+  switchPage('manage');
+  renderManagePage();
+}
+
+function toggleProductActive(id){
+  const idx = products.findIndex(p=>p.id===id);
+  if(idx<0) return;
+  products[idx].hidden = !products[idx].hidden;
+  saveProducts();
+  renderManagePage();
+  showNotif(products[idx].hidden?'🙈 ຊ່ອນສິນຄ້າແລ້ວ':'👁 ສະແດງສິນຄ້າແລ້ວ');
+}
+
+function quickEditStock(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  const newQty = prompt(`📦 ແກ້ໄຂສ໊ອກ "${p.name}"\nສ໊ອກປັດຈຸບັນ: ${p.qty}\nໃສ່ຈຳນວນໃໝ່:`);
+  if(newQty===null) return;
+  const n = parseInt(newQty);
+  if(isNaN(n)||n<0){showNotif('ຕົວເລກບໍ່ຖືກ');return;}
+  const idx = products.findIndex(x=>x.id===id);
+  products[idx].qty = n;
+  saveProducts();
+  renderManagePage();
+  showNotif(`✅ ອັບເດດສ໊ອກ ${p.name} → ${n}`);
+}
+
+function deleteProductFromManage(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`🗑 ລຶບ "${p.name}" ?\nຂໍ້ມູນຈະຫາຍຖາວອນ`)) return;
+  const idx = products.findIndex(x=>x.id===id);
+  products.splice(idx,1);
+  saveProducts();
+  // If on edit page, go back
+  const curPage = document.querySelector('.page.active');
+  if(curPage&&curPage.id==='page-edit-product') switchPage('manage');
+  renderManagePage();
+  renderProducts(products);
+  showNotif('🗑 ລຶບ '+p.name+' ແລ້ວ');
+}
+
+// Old alias kept for compatibility
+function deleteProduct(id){ deleteProductFromManage(id); }
+
+// ============ ADMIN DIAMOND TAB ============
+function renderAdminDiamond(){
+  const ds = getDiamondSellers();
+  const map = getAllUsersMap();
+  const mlbbList = ds.mlbb||[];
+  const ffList = ds.ff||[];
+
+  const renderSellerList = (list, game) => {
+    if(!list.length) return '<div style="font-size:12px;color:var(--text2);padding:8px">ຍັງບໍ່ມີ</div>';
+    return list.map((s,i)=>`
+      <div class="dia-seller-chip">
+        <div style="font-size:22px">${game==='mlbb'?'💎':'💠'}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${map[s.userId]?.name||s.name||s.userId}</div>
+          <div style="font-size:10px;color:var(--text2)">${s.userId} · ຂາຍ ${s.sold||0} ອໍ · ເພີ່ມ ${s.addedDate||''}</div>
+        </div>
+        <button onclick="adminRemoveDiaSeller('${game}',${i})" style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);color:#f88;border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ລຶບ</button>
+      </div>`).join('');
+  };
+
+  return `<div style="max-width:600px">
+    <div style="font-size:20px;font-weight:800;color:var(--gold);margin-bottom:4px">💎 ຈັດການ Diamond Topup</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">ອະນຸຍາດ ຫຼື ລຶບ ຜູ້ຂາຍ Diamond ສຳລັບແຕ່ລະເກມ</div>
+
+    <!-- MLBB -->
+    <div class="dia-admin-section" style="border-color:rgba(100,68,255,.3)">
+      <div class="dia-admin-title" style="color:#6644ff">💎 Mobile Legends — ຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ (${mlbbList.length})</div>
+      ${renderSellerList(mlbbList,'mlbb')}
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <input class="form-input" id="adm_mlbbId" placeholder="User ID ຜູ້ຂາຍ (ເຊັ່ນ USR-123456)" style="flex:1;font-size:12px">
+        <button onclick="adminAddDiaSeller('mlbb')" style="background:linear-gradient(135deg,#2200aa,#4400ff);border:none;color:#fff;border-radius:10px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:700;white-space:nowrap">✅ ອະນຸຍາດ</button>
+      </div>
+    </div>
+
+    <!-- FF -->
+    <div class="dia-admin-section" style="border-color:rgba(255,68,0,.3)">
+      <div class="dia-admin-title" style="color:#ff4400">💠 Free Fire — ຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ (${ffList.length})</div>
+      ${renderSellerList(ffList,'ff')}
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <input class="form-input" id="adm_ffId" placeholder="User ID ຜູ້ຂາຍ (ເຊັ່ນ USR-123456)" style="flex:1;font-size:12px">
+        <button onclick="adminAddDiaSeller('ff')" style="background:linear-gradient(135deg,#880000,#cc2200);border:none;color:#fff;border-radius:10px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:700;white-space:nowrap">✅ ອະນຸຍາດ</button>
+      </div>
+    </div>
+
+    <!-- Diamond orders summary -->
+    <div class="dia-admin-section">
+      <div class="dia-admin-title">📊 ສະຫຼຸບ Diamond Orders</div>
+      ${(()=>{
+        const dorders = getDiamondOrders();
+        const mlbbO = dorders.filter(o=>o.game==='mlbb');
+        const ffO = dorders.filter(o=>o.game==='ff');
+        const mlbbRev = mlbbO.reduce((s,o)=>s+o.price,0);
+        const ffRev = ffO.reduce((s,o)=>s+o.price,0);
+        return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:rgba(100,68,255,.08);border:1px solid rgba(100,68,255,.2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:24px">💎</div>
+            <div style="font-size:18px;font-weight:800;color:#6644ff">${mlbbO.length}</div>
+            <div style="font-size:10px;color:var(--text2)">MLBB Orders</div>
+            <div style="font-size:12px;color:var(--gold);font-weight:700">${Number(mlbbRev).toLocaleString()} ກ</div>
+          </div>
+          <div style="background:rgba(255,68,0,.08);border:1px solid rgba(255,68,0,.2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:24px">💠</div>
+            <div style="font-size:18px;font-weight:800;color:#ff4400">${ffO.length}</div>
+            <div style="font-size:10px;color:var(--text2)">FF Orders</div>
+            <div style="font-size:12px;color:var(--gold);font-weight:700">${Number(ffRev).toLocaleString()} ກ</div>
+          </div>
+        </div>`;
+      })()}
+    </div>
+  </div>`;
+}
+
+function adminAddDiaSeller(game){
+  const inp = document.getElementById(`adm_${game}Id`);
+  const uid = inp?.value?.trim();
+  if(!uid){showNotif('ໃສ່ ID ກ່ອນ');return;}
+  const ds = getDiamondSellers();
+  if(!ds[game]) ds[game]=[];
+  if(ds[game].find(s=>s.userId===uid)){showNotif('ຢູ່ແລ້ວ');return;}
+  const map = getAllUsersMap();
+  const u = map[uid];
+  if(!u){showNotif('ບໍ່ພົບ User: '+uid);return;}
+  ds[game].push({userId:uid,name:u.name,addedDate:new Date().toLocaleDateString('lo-LA'),sold:0});
+  saveDiamondSellers(ds);
+  if(inp) inp.value='';
+  switchAdminTab('diamond');
+  showNotif('✅ ອະນຸຍາດ '+u.name+' ຂາຍ '+(game==='mlbb'?'MLBB':'FF'));
+}
+
+function adminRemoveDiaSeller(game,idx){
+  const ds = getDiamondSellers();
+  const name = ds[game][idx]?.name;
+  ds[game].splice(idx,1);
+  saveDiamondSellers(ds);
+  switchAdminTab('diamond');
+  showNotif('🗑 ລຶບ '+name+' ແລ້ວ');
+}
+
+// ============ SELLER SUBMIT — add timestamp ============
 
 function switchMpTab(tab){
   currentMpTab = tab;
@@ -2912,15 +3853,6 @@ function saveEditProduct(){
   showNotif('✅ ແກ້ໄຂສຳເລັດ');
 }
 
-function deleteProduct(id){
-  if(!confirm('ທ່ານຕ້ອງການລຶບສິນຄ້ານີ້ຫຼືບໍ່?')) return;
-  products = products.filter(p=>p.id!==id);
-  saveProducts();
-  renderMpProducts();
-  renderProducts(products);
-  showNotif('🗑️ ລຶບສິນຄ້າສຳເລັດ');
-}
-
 // ============ PWA ============
 let deferredPrompt = null;
 
@@ -2928,19 +3860,40 @@ window.addEventListener('beforeinstallprompt', e=>{
   e.preventDefault();
   deferredPrompt = e;
   if(!localStorage.getItem('kd_pwa_dismissed')){
-    setTimeout(()=>{ document.getElementById('pwa-banner').style.display='flex'; }, 3000);
+    setTimeout(()=>{ document.getElementById('pwa-banner').style.display='flex'; }, 2500);
   }
 });
+
+// iOS install banner — show after 3s if not installed & not dismissed
+(function(){
+  const ua = navigator.userAgent||'';
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/i.test(ua);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('kd_ios_dismissed');
+  if(isIOS && !isStandalone && !dismissed){
+    setTimeout(showIOSBanner, 3000);
+  }
+})();
+
+function showIOSBanner(){
+  const el = document.getElementById('ios-install-banner');
+  if(el) el.style.display='flex';
+}
+function dismissIOSBanner(){
+  const el = document.getElementById('ios-install-banner');
+  if(el) el.style.display='none';
+  localStorage.setItem('kd_ios_dismissed','1');
+}
 
 function installPWA(){
   if(deferredPrompt){
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(r=>{
-      if(r.outcome==='accepted') showNotif('✅ ຕິດຕັ້ງ App ສຳເລັດ!');
+      if(r.outcome==='accepted') showNotif('🎉 ຕິດຕັ້ງ App ສຳເລັດ!');
       deferredPrompt=null;
     });
   } else {
-    // iOS fallback
     showNotif('iOS: ແຕະ Share → "Add to Home Screen"');
   }
   document.getElementById('pwa-banner').style.display='none';
@@ -2951,19 +3904,133 @@ function dismissPWA(){
   localStorage.setItem('kd_pwa_dismissed','1');
 }
 
-function installPWAFromSettings(){
+// ============ SMART INSTALL PWA ============
+const APP_URL = 'https://tavanh903-byte.github.io/khaidee-V1/';
+
+function detectPlatform(){
+  const ua = navigator.userAgent||'';
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+  const isChrome = /Chrome/i.test(ua);
+  const isFirefox = /Firefox/i.test(ua);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  return {isIOS, isAndroid, isSafari, isChrome, isFirefox, isStandalone};
+}
+
+function initInstallUI(){
+  const {isIOS, isAndroid, isSafari, isChrome, isStandalone} = detectPlatform();
+  const badge = document.getElementById('installStatusBadge');
+  const hint  = document.getElementById('platformHint');
+  const btn   = document.getElementById('bigInstallBtn');
+
+  if(isStandalone){
+    if(badge){ badge.style.cssText='background:rgba(78,255,136,.12);color:#4eff88;border-color:rgba(78,255,136,.3)'; badge.textContent='✅ ຕິດຕັ້ງແລ້ວ'; }
+    if(btn){ btn.style.background='linear-gradient(135deg,#1a1a1a,#2a2a2a)'; btn.style.color='#4eff88'; btn.style.boxShadow='none'; btn.innerHTML='<span style="font-size:20px">✅</span><span>ຕິດຕັ້ງ App ແລ້ວ!</span>'; }
+    if(hint) hint.innerHTML='✅ ທ່ານໃຊ້ App ຮູບແບບ installed ຢູ່ແລ້ວ';
+    return;
+  }
+
+  if(deferredPrompt){
+    // Android Chrome — native install available
+    if(badge){ badge.style.cssText='background:rgba(78,255,136,.12);color:#4eff88;border-color:rgba(78,255,136,.25)'; badge.textContent='✅ Android — ກົດຕິດຕັ້ງໄດ້ເລີຍ!'; }
+    if(btn){ btn.innerHTML='<span style="font-size:22px">📲</span><span>ຕິດຕັ້ງ App ທັນທີ!</span>'; }
+    if(hint) hint.innerHTML='<strong style="color:#4eff88">🤖 Android Chrome</strong> — ກົດປຸ່ມດ້ານເທິງ ຕິດຕັ້ງໄດ້ທັນທີ!';
+    return;
+  }
+
+  if(isIOS){
+    if(badge){ badge.style.cssText='background:rgba(100,180,255,.1);color:#6ab4ff;border-color:rgba(100,180,255,.2)'; badge.textContent='🍎 iPhone/iPad'; }
+    if(btn){
+      btn.style.background='linear-gradient(135deg,#003880,#0066cc,#1e90ff)';
+      btn.innerHTML='<span style="font-size:22px">📤</span><span>ດູວິທີຕິດຕັ້ງ iOS</span>';
+    }
+    if(hint) hint.innerHTML=`<strong style="color:#6ab4ff">🍎 iPhone/iPad</strong><br>
+      ① ແຕະ <strong style="color:#fff">📤 Share</strong> ທີ່ bar Safari<br>
+      ② ເລືອກ <strong style="color:#4eff88">"Add to Home Screen" 📱</strong><br>
+      ③ ກົດ <strong style="color:var(--gold)">"Add"</strong> ✅<br>
+      <span style="color:#f90;font-size:10px">⚠️ Safari ເທົ່ານັ້ນ (ບໍ່ໃຊ້ Chrome/Firefox)</span>`;
+  } else if(isAndroid){
+    if(badge){ badge.style.cssText='background:rgba(78,255,136,.08);color:#4eff88;border-color:rgba(78,255,136,.2)'; badge.textContent='🤖 Android'; }
+    if(hint) hint.innerHTML=`<strong style="color:#4eff88">🤖 Android</strong><br>
+      ① ແຕະ ⋮ <strong>Menu</strong> ມຸມຂວາ Chrome<br>
+      ② ເລືອກ <strong>"Add to Home screen"</strong><br>
+      ③ ກົດ <strong>"Add"</strong> ✅`;
+  } else {
+    if(hint) hint.innerHTML='<strong style="color:var(--gold)">💻 Desktop:</strong> ຄລິກ ⬇️ ໃນ address bar ຫຼື Menu → Install';
+  }
+}
+
+function smartInstallApp(){
+  const {isIOS, isStandalone, isSafari} = detectPlatform();
+  if(isStandalone){ showNotif('✅ ຕິດຕັ້ງ App ແລ້ວ!'); return; }
+
   if(deferredPrompt){
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(r=>{
-      if(r.outcome==='accepted') showNotif('✅ ຕິດຕັ້ງ App ສຳເລັດ!');
+      if(r.outcome==='accepted'){
+        showNotif('🎉 ຕິດຕັ້ງ ຂາຍດີ App ສຳເລັດ!');
+        const badge = document.getElementById('installStatusBadge');
+        const btn   = document.getElementById('bigInstallBtn');
+        if(badge){badge.textContent='✅ ຕິດຕັ້ງແລ້ວ';}
+        if(btn){btn.innerHTML='<span style="font-size:20px">✅</span><span>ຕິດຕັ້ງແລ້ວ!</span>';btn.style.background='linear-gradient(135deg,#1a1a1a,#2a2a2a)';btn.style.color='#4eff88';}
+      }
       deferredPrompt=null;
     });
+    return;
+  }
+
+  if(isIOS){
+    // Show iOS banner from settings
+    closeModal('settingsModal');
+    setTimeout(()=>{ showIOSBanner(); }, 300);
+    return;
+  }
+
+  // Fallback — open link
+  window.open(APP_URL,'_blank');
+  const steps = document.getElementById('installStepsWrap');
+  if(steps) steps.style.display='block';
+  showInstallSteps();
+  showNotif('📱 ເປີດລິ້ງ App ແລ້ວ');
+}
+
+function showInstallSteps(){
+  const {isIOS, isAndroid} = detectPlatform();
+  const content = document.getElementById('installStepsContent');
+  if(!content) return;
+  if(isIOS){
+    content.innerHTML = `<div style="color:var(--gold);font-weight:700;margin-bottom:8px">🍎 iPhone / iPad — Safari ເທົ່ານັ້ນ</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">1</div><div>ເປີດ Safari ແລ້ວໄປທີ່ລິ້ງ App</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">2</div><div>ແຕະ ໄອຄອນ <strong>📤 Share</strong> ທີ່ bar ລຸ່ມ</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">3</div><div>ເລື່ອນລົງ ເລືອກ <strong>"Add to Home Screen" 📱</strong></div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">4</div><div>ກົດ <strong>"Add"</strong> ມຸມຂວາເທິງ ✅</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:#f90;background:rgba(255,165,0,.08);border-radius:8px;padding:8px">⚠️ ຕ້ອງໃຊ້ Safari ເທົ່ານັ້ນ — Chrome/Firefox ໃນ iOS ຕິດຕັ້ງ PWA ບໍ່ໄດ້</div>`;
   } else {
-    // Show manual instructions for iOS or already-installed
-    const inst = document.getElementById('installInstructions');
-    if(inst) inst.style.display = inst.style.display==='none' ? 'block' : 'none';
+    content.innerHTML = `<div style="color:#4eff88;font-weight:700;margin-bottom:8px">🤖 Android — Chrome</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:#4eff88;color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">1</div><div>ເປີດ Chrome ໄປທີ່ URL App</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:#4eff88;color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">2</div><div>ແຕະ ⋮ <strong>3 ຈຸດ</strong> ມຸມຂວາເທິງ</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:#4eff88;color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">3</div><div>ເລືອກ <strong>"Add to Home screen"</strong></div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:22px;height:22px;border-radius:50%;background:#4eff88;color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">4</div><div>ກົດ <strong>"Add"</strong> ✅</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#4eff88">💡 ຖ້າມີ pop-up "Install app" ໃຫ້ຕອບ Install ໄດ້ທັນທີ!</div>`;
   }
 }
+
+function toggleInstallSteps(){
+  const wrap = document.getElementById('installStepsWrap');
+  const btn = document.getElementById('toggleStepsBtn');
+  if(!wrap) return;
+  const open = wrap.style.display==='block';
+  wrap.style.display = open ? 'none' : 'block';
+  if(btn) btn.textContent = open ? '📋 ເບິ່ງຂັ້ນຕອນລະອຽດ ▾' : '📋 ປິດຂັ້ນຕອນ ▴';
+  if(!open) showInstallSteps();
+}
+
+function installPWAFromSettings(){ smartInstallApp(); }
 
 // ============ AUTH ============
 function showRegister(){openModal('registerModal');}
@@ -3120,6 +4187,7 @@ function updateProfileUI(){
     // Show admin chat button only for admin users
     const adminBtn = document.getElementById('adminChatBtn');
     if(adminBtn) adminBtn.style.display = currentUser.isAdmin ? 'flex' : 'none';
+    updateAdminDiamondUI();
     updateWalletDisplay();
     renderBillsPage();
     updateAdminNotifBadge();
@@ -3758,6 +4826,7 @@ function submitSellProduct(){
       price, qty, emoji, sold: 0,
       seller: currentUser.name, sellerId: currentUser.id,
       images: imgs,
+      postedAt: new Date().toISOString(),
       ...extra
     };
     try{
@@ -3839,7 +4908,8 @@ function submitGameSell(){
       sellerId: currentUser.id,
       gameEmail: email,
       gamePass: pass,
-      images: imgs
+      images: imgs,
+      postedAt: new Date().toISOString(),
     };
     try{
       products.push(p);
@@ -3947,6 +5017,8 @@ function showSettings(){
   document.getElementById('langSelect').value = currentLang;
   document.getElementById('displayNameEdit').value = currentUser.name||'';
   openModal('settingsModal');
+  // Init install UI after DOM is ready
+  setTimeout(initInstallUI, 50);
 }
 
 function saveSettings(){
@@ -4161,9 +5233,260 @@ function switchPage(name){
   const nav  = document.getElementById('nav-'+name);
   if(page) page.classList.add('active');
   if(nav)  nav.classList.add('active');
-  if(name==='profile') updateProfileUI();
-  if(name==='bills')   renderBillsPage();
-  if(name==='cart')    renderCartPage();
+  if(name==='profile'){ updateProfileUI(); updateAdminDiamondUI(); }
+  if(name==='bills')        renderBillsPage();
+  if(name==='cart')         renderCartPage();
+  if(name==='topup-mlbb')   renderTopupPage('mlbb');
+  if(name==='topup-ff')     renderTopupPage('ff');
+  if(name==='manage')       renderManagePage();
+}
+
+// ============ DIAMOND TOPUP SYSTEM ============
+const MLBB_PACKAGES = [
+  {id:'m1', amount:11,  bonus:0,   price:8000,   color:'#1a0080,#2200cc'},
+  {id:'m2', amount:22,  bonus:0,   price:16000,  color:'#1a0080,#2200cc'},
+  {id:'m3', amount:56,  bonus:0,   price:40000,  color:'#2200aa,#4400ff'},
+  {id:'m4', amount:112, bonus:0,   price:80000,  color:'#1a0099,#3300ff', popular:true},
+  {id:'m5', amount:240, bonus:0,   price:160000, color:'#1100aa,#3300ff'},
+  {id:'m6', amount:336, bonus:0,   price:220000, color:'#0a0099,#2200ee'},
+  {id:'m7', amount:570, bonus:0,   price:370000, color:'#070080,#1a00cc'},
+  {id:'m8', amount:1144,bonus:0,   price:740000, color:'#050060,#1100aa'},
+  {id:'m9', amount:2195,bonus:50,  price:1450000,color:'#030040,#0a0088'},
+];
+const FF_PACKAGES = [
+  {id:'f1', amount:10,  bonus:0,   price:5000,   color:'#5c0000,#880000'},
+  {id:'f2', amount:50,  bonus:0,   price:22000,  color:'#5c0000,#aa0000'},
+  {id:'f3', amount:100, bonus:0,   price:44000,  color:'#660000,#bb0000', popular:true},
+  {id:'f4', amount:210, bonus:10,  price:88000,  color:'#660000,#cc0000'},
+  {id:'f5', amount:520, bonus:20,  price:210000, color:'#550000,#bb0000'},
+  {id:'f6', amount:1060,bonus:60,  price:420000, color:'#440000,#990000'},
+  {id:'f7', amount:2180,bonus:180, price:840000, color:'#330000,#770000'},
+];
+
+function getDiamondSellers(){ return JSON.parse(localStorage.getItem('kd_diamond_sellers')||'{"mlbb":[],"ff":[]}'); }
+function saveDiamondSellers(d){ localStorage.setItem('kd_diamond_sellers',JSON.stringify(d)); }
+function getDiamondOrders(){ return JSON.parse(localStorage.getItem('kd_diamond_orders')||'[]'); }
+function saveDiamondOrders(o){ localStorage.setItem('kd_diamond_orders',JSON.stringify(o)); }
+
+let currentDiamondGame = 'mlbb';
+let currentDiamondSeller = null;
+let selectedDiamondPkg = null;
+
+function getAllUsersMap(){
+  const map={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('kd_user_')){
+      try{const u=JSON.parse(localStorage.getItem(k));if(u&&u.id)map[u.id]=u;}catch(e){}
+    }
+  }
+  return map;
+}
+
+function renderTopupPage(game){
+  currentDiamondGame = game;
+  const ds = getDiamondSellers();
+  const sellers = ds[game]||[];
+  const isAdm = currentUser?.isAdmin;
+
+  const countEl = document.getElementById(game==='mlbb'?'mlbbShopCount':'ffShopCount');
+  if(countEl) countEl.textContent = sellers.length;
+
+  const admEl = document.getElementById(game==='mlbb'?'mlbbAdminSection':'ffAdminSection');
+  if(admEl) admEl.style.display = isAdm ? 'block' : 'none';
+
+  const listEl = document.getElementById(game==='mlbb'?'mlbbShopList':'ffShopList');
+  if(!listEl) return;
+
+  if(!sellers.length){
+    listEl.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text2);font-size:13px">
+      ${isAdm ? '⚙️ ຍັງບໍ່ມີຮ້ານ — ເພີ່ມຮ້ານຂ້າງລຸ່ມ' : '🚫 ຍັງບໍ່ມີຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ'}
+    </div>`;
+    if(isAdm) renderDiamondSellerManage(game);
+    return;
+  }
+  const map = getAllUsersMap();
+  const gameName = game==='mlbb' ? 'Mobile Legends' : 'Free Fire';
+  const icon = game==='mlbb' ? '💎' : '💠';
+  const gradBg = game==='mlbb' ? '#1a0080,#3300ff' : '#5c0000,#cc2200';
+  const accentColor = game==='mlbb' ? '#6644ff' : '#ff4400';
+
+  listEl.innerHTML = sellers.map(s=>{
+    const u = map[s.userId];
+    const name = u ? u.name : s.name||'ຮ້ານ Diamond';
+    const avatarHtml = u?.avatarImg
+      ? `<img src="${u.avatarImg}" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
+      : `<div style="font-size:26px">${icon}</div>`;
+    return `<div class="topup-shop-card" onclick="openDiamondShop('${s.userId}','${game}')">
+      <div class="topup-shop-avatar" style="background:linear-gradient(135deg,${gradBg})">${avatarHtml}</div>
+      <div style="flex:1;min-width:0">
+        <div class="topup-shop-name">${name}</div>
+        <div class="topup-shop-badge">✅ ຮ້ານຮັບຮອງ ${gameName}</div>
+        <div class="topup-shop-stats">ຂາຍໄດ້ ${s.sold||0} ອໍເດີ &nbsp;⚡ ຮັບ 15-30 ນາທີ</div>
+      </div>
+      <div style="color:${accentColor};font-size:22px;font-weight:700">›</div>
+    </div>`;
+  }).join('');
+
+  if(isAdm) renderDiamondSellerManage(game);
+}
+
+function renderDiamondSellerManage(game){
+  const el = document.getElementById(game==='mlbb'?'mlbbSellerManage':'ffSellerManage');
+  if(!el) return;
+  const ds = getDiamondSellers();
+  const sellers = ds[game]||[];
+  if(!sellers.length){el.innerHTML='<div style="font-size:12px;color:var(--text2);padding:4px">ຍັງບໍ່ມີ</div>';return;}
+  const map = getAllUsersMap();
+  el.innerHTML = sellers.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;margin-bottom:6px">
+      <div style="flex:1">
+        <div style="font-size:13px;color:var(--text);font-weight:600">${map[s.userId]?.name||s.name||s.userId}</div>
+        <div style="font-size:10px;color:var(--text2)">${s.userId} · ຂາຍ ${s.sold||0} ອໍ</div>
+      </div>
+      <button onclick="removeDiamondSeller('${game}',${i})" style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);color:#f88;border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ລຶບ</button>
+    </div>`).join('');
+}
+
+function addDiamondSeller(game){
+  if(!currentUser?.isAdmin){showNotif('Admin ເທົ່ານັ້ນ');return;}
+  const inp = document.getElementById(game==='mlbb'?'mlbbSellerIdInput':'ffSellerIdInput');
+  const uid = inp?.value?.trim();
+  if(!uid){showNotif('ກະລຸນາໃສ່ ID ຜູ້ຂາຍ');return;}
+  const ds = getDiamondSellers();
+  if(!ds[game]) ds[game]=[];
+  if(ds[game].find(s=>s.userId===uid)){showNotif('ຮ້ານນີ້ຢູ່ແລ້ວ');return;}
+  const map = getAllUsersMap();
+  const u = map[uid];
+  if(!u){showNotif('ບໍ່ພົບຜູ້ໃຊ້ ID: '+uid);return;}
+  ds[game].push({userId:uid,name:u.name,addedDate:new Date().toLocaleDateString('lo-LA'),sold:0});
+  saveDiamondSellers(ds);
+  if(inp) inp.value='';
+  renderTopupPage(game);
+  showNotif('✅ ອະນຸຍາດ '+u.name+' ຂາຍ '+(game==='mlbb'?'MLBB':'FF')+' ແລ້ວ!');
+}
+
+function removeDiamondSeller(game,idx){
+  if(!currentUser?.isAdmin) return;
+  const ds = getDiamondSellers();
+  const name = ds[game][idx]?.name||'ຮ້ານ';
+  ds[game].splice(idx,1);
+  saveDiamondSellers(ds);
+  renderTopupPage(game);
+  showNotif('🗑 ລຶບ '+name+' ແລ້ວ');
+}
+
+function openDiamondShop(sellerId, game){
+  if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
+  currentDiamondGame = game;
+  const ds = getDiamondSellers();
+  currentDiamondSeller = ds[game]?.find(s=>s.userId===sellerId)||null;
+  selectedDiamondPkg = null;
+  const map = getAllUsersMap();
+  const u = map[sellerId];
+  const sellerName = u?.name||currentDiamondSeller?.name||'ຮ້ານ Diamond';
+  const isMLBB = game==='mlbb';
+  const pkgs = isMLBB ? MLBB_PACKAGES : FF_PACKAGES;
+  const icon = isMLBB ? '💎' : '💠';
+  document.getElementById('diamondOrderTitle').innerHTML = `${icon} ເຕີມ ${isMLBB?'Diamond MLBB':'Diamond FF'}<br><span style="font-size:12px;color:var(--text2);font-weight:400">ຮ້ານ: ${sellerName}</span>`;
+  const picker = document.getElementById('diamondPkgPicker');
+  picker.innerHTML = pkgs.map(pkg=>`
+    <div class="pkg-card" id="dpkg_${pkg.id}" onclick="selectDiamondPkg('${pkg.id}')"
+      style="background:linear-gradient(160deg,${pkg.color})">
+      ${pkg.popular?`<div class="pkg-popular">🔥 ນິຍົມ</div>`:''}
+      <div style="font-size:28px;margin-top:${pkg.popular?'10px':'2px'};filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))">${icon}</div>
+      <div class="pkg-amount">${pkg.amount.toLocaleString()}</div>
+      ${pkg.bonus?`<div class="pkg-bonus">+${pkg.bonus}</div>`:''}
+      <div class="pkg-price">${Number(pkg.price).toLocaleString()}ກ</div>
+    </div>`).join('');
+  document.getElementById('diaSelectedSummary').style.display='none';
+  document.getElementById('diaGameId').value='';
+  document.getElementById('diaServer').value='';
+  document.getElementById('diaPhone').value=currentUser?.personalInfo?.phone||'';
+  openModal('diamondOrderModal');
+}
+
+function selectDiamondPkg(pkgId){
+  const pkgs = currentDiamondGame==='mlbb' ? MLBB_PACKAGES : FF_PACKAGES;
+  selectedDiamondPkg = pkgs.find(p=>p.id===pkgId)||null;
+  document.querySelectorAll('#diamondPkgPicker .pkg-card').forEach(c=>c.classList.remove('selected'));
+  const el = document.getElementById('dpkg_'+pkgId);
+  if(el) el.classList.add('selected');
+  if(selectedDiamondPkg){
+    const icon = currentDiamondGame==='mlbb'?'💎':'💠';
+    const bonus = selectedDiamondPkg.bonus?` (+${selectedDiamondPkg.bonus} ໂບນັດ)`:'';
+    document.getElementById('diaSelectedText').innerHTML = `${icon} <strong>${selectedDiamondPkg.amount.toLocaleString()}${bonus} Diamond</strong> — ${Number(selectedDiamondPkg.price).toLocaleString()} ກີບ`;
+    document.getElementById('diaSelectedSummary').style.display='block';
+  }
+}
+
+function submitDiamondOrder(){
+  if(!selectedDiamondPkg){showNotif('ກະລຸນາເລືອກ Package ກ່ອນ');return;}
+  const gameId=document.getElementById('diaGameId').value.trim();
+  const server=document.getElementById('diaServer').value.trim();
+  const phone=document.getElementById('diaPhone').value.trim();
+  if(!gameId){showNotif('ກະລຸນາໃສ່ Game ID');return;}
+  if(!phone){showNotif('ກະລຸນາໃສ່ໂທລະສັບ');return;}
+  const total=selectedDiamondPkg.price;
+  if(currentUser.wallet<total){showNotif('ຍອດ Wallet ບໍ່ພໍ ກະລຸນາເຕີມເງິນກ່ອນ');return;}
+  const isMLBB=currentDiamondGame==='mlbb';
+  const icon=isMLBB?'💎':'💠';
+  const gameName=isMLBB?'Mobile Legends':'Free Fire';
+  const orderId='DIA-'+Date.now().toString().slice(-6);
+  const order={
+    id:orderId, game:currentDiamondGame, gameName, pkgId:selectedDiamondPkg.id,
+    amount:selectedDiamondPkg.amount, bonus:selectedDiamondPkg.bonus||0,
+    price:total, gameId, server, phone,
+    sellerId:currentDiamondSeller?.userId||'admin',
+    sellerName:currentDiamondSeller?.name||'Admin',
+    userId:currentUser.id, userName:currentUser.name,
+    status:'pending', date:new Date().toLocaleDateString('lo-LA'), isGame:true,
+    productName:`${icon} ${selectedDiamondPkg.amount.toLocaleString()} Diamond ${gameName}`,
+    productEmoji:icon, qty:1, total,
+  };
+  currentUser.wallet-=total; saveUser(); updateWalletDisplay();
+  const dorders=getDiamondOrders(); dorders.push(order); saveDiamondOrders(dorders);
+  orders.push(order); saveOrders();
+  const ds=getDiamondSellers();
+  const s=ds[currentDiamondGame]?.find(x=>x.userId===order.sellerId);
+  if(s){s.sold=(s.sold||0)+1;saveDiamondSellers(ds);}
+  waNewOrder(currentUser,order);
+  closeModal('diamondOrderModal');
+  showDiamondBill(order);
+}
+
+function showDiamondBill(order){
+  const icon=order.game==='mlbb'?'💎':'💠';
+  const accentColor=order.game==='mlbb'?'#6644ff':'#ff4400';
+  const bonus=order.bonus?`<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88">+${order.bonus} 💎</span></div>`:'';
+  const html=`
+    <div style="text-align:center;padding:6px 0 14px">
+      <div style="font-size:48px;filter:drop-shadow(0 4px 16px ${accentColor})">${icon}</div>
+      <div style="font-size:14px;color:var(--gold);font-weight:700;margin-top:6px">ບິນເຕີມ Diamond ${order.gameName}</div>
+    </div>
+    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div class="bill-detail-row"><span>ລະຫັດ</span><span style="font-weight:700">#${order.id}</span></div>
+      <div class="bill-detail-row"><span>Diamond</span><span style="color:${accentColor};font-weight:700">${icon} ${order.amount.toLocaleString()}</span></div>
+      ${bonus}
+      <div class="bill-detail-row"><span>Game ID</span><span style="color:var(--gold);font-weight:700">${order.gameId}</span></div>
+      ${order.server?`<div class="bill-detail-row"><span>Server</span><span>${order.server}</span></div>`:''}
+      <div class="bill-detail-row"><span>ຮ້ານ</span><span>${order.sellerName}</span></div>
+      <div class="bill-detail-row"><span>ໂທ</span><span>${order.phone}</span></div>
+      <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold);font-weight:700">${Number(order.price).toLocaleString()} ກີບ</span></div>
+      <div class="bill-detail-row"><span>ສະຖານະ</span><span style="color:#ffa500">⏳ ລໍຖ້າ</span></div>
+    </div>
+    <div style="background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.2);border-radius:10px;padding:10px;font-size:11px;color:#4eff88;line-height:2;margin-bottom:14px">
+      ✅ ຮ້ານຈະເຕີມໃຫ້ທ່ານພາຍໃນ 15-30 ນາທີ<br>
+      ⚠️ ຖ້າ Game ID ຜິດ ຈະບໍ່ສາມາດ refund ໄດ້
+    </div>
+    <button class="btn btn-gold" onclick="closeModal('billModal')" style="width:100%">✅ ຮັບຮູ້</button>`;
+  document.getElementById('billModalContent').innerHTML=html;
+  openModal('billModal');
+}
+
+function updateAdminDiamondUI(){
+  const el=document.getElementById('adminDiamondIcons');
+  if(el) el.style.display=currentUser?.isAdmin?'block':'none';
 }
 
 // ============ MODALS ============
@@ -4826,6 +6149,7 @@ function renderAdminTab(tab){
   else if(tab==='finance') c.innerHTML = renderAdminFinance();
   else if(tab==='sellers') c.innerHTML = renderAdminSellers();
   else if(tab==='history') c.innerHTML = renderAdminHistory();
+  else if(tab==='diamond') c.innerHTML = renderAdminDiamond();
   updateAdminNotifBadge();
 }
 
