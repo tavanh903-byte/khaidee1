@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ຂາຍດີ - Khaidee Marketplace</title>
+<meta name="app-version" content="202603111854">
 <meta name="theme-color" content="#0a0a0a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -601,6 +602,21 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .qr-box{text-align:center;padding:20px;border:2px solid rgba(201,168,76,.3);border-radius:16px;background:var(--dark3);margin:12px 0}
 .slip-preview{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-top:8px}
 </style>
+<script>
+// ── Auto-update checker ──
+(function(){
+  const CURRENT_VER = '202603111854';
+  const saved = localStorage.getItem('kd_app_ver');
+  if(saved && saved !== CURRENT_VER){
+    // New version detected — clear old cache and reload
+    localStorage.setItem('kd_app_ver', CURRENT_VER);
+    // Force reload bypassing cache
+    window.location.reload(true);
+  } else {
+    localStorage.setItem('kd_app_ver', CURRENT_VER);
+  }
+})();
+</script>
 </head>
 <body>
 
@@ -1175,6 +1191,80 @@ select.form-input{-webkit-appearance:none;appearance:none}
     </div>
   </div>
 
+  <!-- DIAMOND SELLER PASSWORD GATE MODAL -->
+  <div class="popup-overlay" id="diamondSellerGateModal" style="display:none">
+    <div class="popup-box" style="max-width:360px">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:36px">🔐</div>
+        <div class="modal-title" style="margin:8px 0 4px">ຕັ້ງຄ່າຮ້ານ Diamond</div>
+        <div style="font-size:12px;color:var(--text2)">ໃສ່ລະຫັດຜ່ານສຳລັບຜູ້ຂາຍ Diamond</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">🔑 ລະຫັດຜ່ານ Seller</label>
+        <input class="form-input" id="diamondSellerPassInput" type="password" placeholder="ໃສ່ລະຫັດ..." onkeydown="if(event.key==='Enter')verifyDiamondSellerPass()">
+      </div>
+      <button class="btn btn-gold" onclick="verifyDiamondSellerPass()" style="width:100%;margin-top:4px">✅ ເຂົ້າລະບົບ</button>
+      <button class="btn btn-outline" onclick="closeModal('diamondSellerGateModal')" style="width:100%;margin-top:8px">ຍົກເລີກ</button>
+      <div style="margin-top:12px;padding:10px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;font-size:11px;color:var(--text2);text-align:center">
+        💡 ລະຫັດນີ້ສຳລັບຜູ້ທີ່ໄດ້ຮັບອະນຸຍາດຈາກ Admin ເທົ່ານັ້ນ
+      </div>
+    </div>
+  </div>
+
+  <!-- DIAMOND SELLER SETUP PAGE -->
+  <div class="popup-overlay" id="diamondSellerSetupModal" style="display:none;align-items:flex-start;padding-top:0">
+    <div style="background:var(--dark2);width:100%;min-height:100vh;overflow-y:auto">
+      <div style="background:linear-gradient(135deg,#0a0030,#1a0066);padding:16px;position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(100,80,255,.3)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button onclick="closeModal('diamondSellerSetupModal')" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:7px 13px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#a080ff">💼 ຕັ້ງຄ່າຮ້ານ Diamond</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.5)" id="dssUserLabel"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="dssTabMlbb" onclick="switchDssTab('mlbb')" style="flex:1;background:rgba(100,80,255,.3);border:1px solid rgba(100,80,255,.5);color:#c0a0ff;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">💎 MLBB</button>
+          <button id="dssTabFf" onclick="switchDssTab('ff')" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:var(--text2);border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">🔥 Free Fire</button>
+          <button id="dssTabOrders" onclick="switchDssTab('orders')" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:var(--text2);border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">📋 ອໍເດີ</button>
+        </div>
+      </div>
+      <div id="dssTabMlbbContent" style="padding:16px">
+        <div style="background:linear-gradient(135deg,rgba(34,0,170,.2),rgba(100,80,255,.1));border:1px solid rgba(100,80,255,.3);border-radius:16px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#1a0080,#3300ff);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">💎</div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#a080ff">Mobile Legends: Bang Bang</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.4)">ຕັ້ງຄ່າລາຄາ Diamond ຂອງຮ້ານ</div>
+            </div>
+          </div>
+          <div id="dssMlbbStatus" style="margin-bottom:14px"></div>
+          <div style="font-size:13px;font-weight:700;color:#a080ff;margin-bottom:10px">📦 ແພັກເກດ Diamond</div>
+          <div id="dssMlbbPackages" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button onclick="saveDssPackages('mlbb')" style="width:100%;margin-top:14px;background:linear-gradient(135deg,#2200aa,#4400ff);border:none;color:#fff;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">💾 ບັນທຶກລາຄາ</button>
+        </div>
+      </div>
+      <div id="dssTabFfContent" style="padding:16px;display:none">
+        <div style="background:linear-gradient(135deg,rgba(153,0,0,.2),rgba(255,68,0,.1));border:1px solid rgba(255,68,0,.3);border-radius:16px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#660000,#cc2200);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">🔥</div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#ff8844">Garena Free Fire</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.4)">ຕັ້ງຄ່າລາຄາ Diamond ຂອງຮ້ານ</div>
+            </div>
+          </div>
+          <div id="dssFfStatus" style="margin-bottom:14px"></div>
+          <div style="font-size:13px;font-weight:700;color:#ff8844;margin-bottom:10px">📦 ແພັກເກດ Diamond</div>
+          <div id="dssFfPackages" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button onclick="saveDssPackages('ff')" style="width:100%;margin-top:14px;background:linear-gradient(135deg,#880000,#cc2200);border:none;color:#fff;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">💾 ບັນທຶກລາຄາ</button>
+        </div>
+      </div>
+      <div id="dssTabOrdersContent" style="padding:16px;display:none">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px">📋 ອໍເດີທີ່ຕ້ອງດຳເນີນການ</div>
+        <div id="dssOrdersList"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- DIAMOND TOPUP ORDER MODAL -->
   <div class="popup-overlay" id="diamondOrderModal" style="display:none">
     <div class="popup-box">
@@ -1384,6 +1474,34 @@ select.form-input{-webkit-appearance:none;appearance:none}
           <div>ອອກ</div>
         </div>
       </div>
+
+      <!-- 💎 Diamond Topup Section — แสดงให้ทุกคนเห็น -->
+      <div style="padding:0 16px 8px">
+        <div class="section-title" style="padding:10px 0 8px">💎 ເຕີມ Diamond ເກມ</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div onclick="openDiamondTopupPublic('mlbb')" style="background:linear-gradient(135deg,#0d0050,#1a0099);border:1px solid rgba(100,80,255,.4);border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;position:relative;overflow:hidden">
+            <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(100,80,255,.2),transparent);border-radius:50%"></div>
+            <div style="font-size:28px;margin-bottom:4px">💎</div>
+            <div style="font-size:12px;font-weight:700;color:#a080ff">Mobile Legends</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">ເຕີມ Diamond MLBB</div>
+            <div style="margin-top:8px;background:rgba(100,80,255,.3);border-radius:8px;padding:4px 0;font-size:11px;color:#c0a0ff;font-weight:700">ເຕີມດຽວນີ້ →</div>
+          </div>
+          <div onclick="openDiamondTopupPublic('ff')" style="background:linear-gradient(135deg,#3d0000,#880000);border:1px solid rgba(255,68,0,.4);border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;position:relative;overflow:hidden">
+            <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(255,68,0,.2),transparent);border-radius:50%"></div>
+            <div style="font-size:28px;margin-bottom:4px">🔥</div>
+            <div style="font-size:12px;font-weight:700;color:#ff8844">Free Fire</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">ເຕີມ Diamond FF</div>
+            <div style="margin-top:8px;background:rgba(255,68,0,.3);border-radius:8px;padding:4px 0;font-size:11px;color:#ffaa88;font-weight:700">ເຕີມດຽວນີ້ →</div>
+          </div>
+        </div>
+        <!-- Seller apply button — visible to all, requires password -->
+        <div id="diamondSellerApplyRow" style="margin-top:10px">
+          <button onclick="openDiamondSellerSetup()" style="width:100%;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:12px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+            💼 ສະໝັກເປັນຮ້ານຂາຍ Diamond (ຮ້ານທີ່ໄດ້ຮັບອະນຸຍາດ)
+          </button>
+        </div>
+      </div>
+
       <!-- Seller Icons (shown if seller) -->
       <div id="sellerIcons" style="display:none">
         <div class="section-title">🏪 ຮ້ານຂາຍຂອງເຈົ້າ</div>
@@ -1972,6 +2090,21 @@ select.form-input{-webkit-appearance:none;appearance:none}
 <div class="popup-overlay" id="loginModal" style="display:none">
   <div class="popup-box">
     <div class="modal-title">🔑 ເຂົ້າລະບົບ</div>
+
+    <!-- Quick login card (shown if saved credentials exist) -->
+    <div id="quickLoginCard" style="display:none;background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">🔒 ບັນທຶກຂໍ້ມູນໄວ້</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="quickLoginAvatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👤</div>
+        <div style="flex:1;min-width:0">
+          <div id="quickLoginName" style="font-size:14px;font-weight:700;color:var(--gold)">ຜູ້ໃຊ້</div>
+          <div id="quickLoginId" style="font-size:11px;color:var(--text2)">ID: -</div>
+        </div>
+        <button onclick="doQuickLogin()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">▶ ເຂົ້າ</button>
+      </div>
+      <button onclick="clearSavedLogin()" style="background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;margin-top:8px;text-decoration:underline;font-family:'Sarabun',sans-serif">🗑 ລ້າງຂໍ້ມູນທີ່ບັນທຶກ</button>
+    </div>
+
     <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:12px;line-height:1.7;background:rgba(201,168,76,.06);border-radius:10px;padding:8px">
       ໃຊ້ <strong style="color:var(--gold)">ອີເມລ</strong> ຫຼື <strong style="color:var(--gold)">ເບີໂທ</strong> + ລະຫັດຜ່ານ ເພື່ອເຂົ້າລະບົບ
     </div>
@@ -1981,7 +2114,12 @@ select.form-input{-webkit-appearance:none;appearance:none}
     </div>
     <div class="form-group">
       <label class="form-label">ລະຫັດຜ່ານ</label>
-      <input class="form-input" type="password" id="loginPass" placeholder="ລະຫັດຜ່ານ" autocomplete="current-password">
+      <input class="form-input" type="password" id="loginPass" placeholder="ລະຫັດຜ່ານ" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <!-- Remember me -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:0 2px">
+      <input type="checkbox" id="rememberMeCheck" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
+      <label for="rememberMeCheck" style="font-size:12px;color:var(--text2);cursor:pointer">💾 ຈື່ຂໍ້ມູນການເຂົ້າລະບົບ</label>
     </div>
     <button class="btn btn-gold" onclick="doLogin()" style="margin-bottom:8px">✅ ເຂົ້າລະບົບ</button>
     <button class="btn btn-outline" onclick="showRegister();closeModal('loginModal')" style="margin-bottom:8px">ສ້າງບັນຊີໃໝ່</button>
@@ -2442,6 +2580,9 @@ function findUserByEmailAndPass(val, pass){
   return null;
 }
 
+// currentUser restored after OWNER_ACCOUNTS is defined (see restoreSession below)
+let currentUser = null;
+
 function saveUser(){
   if(!currentUser) return;
   // Save to indexed DB
@@ -2454,23 +2595,6 @@ function saveUser(){
   localStorage.setItem('kd_session', currentUser.id);
 }
 
-// Restore session on load
-let currentUser = (function(){
-  try{
-    const sid = localStorage.getItem('kd_session');
-    if(!sid) return null; // No session = logged out, period.
-    // Try owner accounts
-    const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
-    if(owner){
-      const db = getUsersDB();
-      return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
-    }
-    // Regular user
-    const db = getUsersDB();
-    if(db[sid]) return db[sid];
-  }catch(e){}
-  return null;
-})();
 let products = JSON.parse(localStorage.getItem('kd_products') || '[]');
 let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
 let chatMsgs = JSON.parse(localStorage.getItem('kd_chat') || '{}');
@@ -2513,6 +2637,10 @@ window.onload = () => setTimeout(launchApp, 5000);
 setTimeout(launchApp, 6500);
 
 function initApp() {
+  // Re-verify session is still valid (covers PWA cache edge cases)
+  if(!currentUser){
+    currentUser = restoreSession();
+  }
   renderProducts(products);
   updateWalletDisplay();
   updateProfileUI();
@@ -2780,9 +2908,8 @@ function showProductDetail(id){
     </div>
     <div style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:10px;margin-bottom:14px;cursor:pointer" onclick="closeModal('productModal');setTimeout(()=>openPublicProfile('${p.sellerId||'admin'}'),200)">
       ${(()=>{
-        const su = JSON.parse(localStorage.getItem('kd_user')||'null');
-        const isSellerUser = su && su.id === p.sellerId;
-        const avImg = isSellerUser && su.avatarImg ? `<img src="${su.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">` : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏪</div>`;
+        const _su = getUsersDB()[p.sellerId]||null;
+        const avImg = _su && _su.avatarImg ? `<img src="${_su.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">` : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏪</div>`;
         return avImg;
       })()}
       <div style="flex:1;min-width:0">
@@ -4134,7 +4261,18 @@ function installPWAFromSettings(){ smartInstallApp(); }
 
 // ============ AUTH ============
 function showRegister(){openModal('registerModal');}
-function showLogin(){openModal('loginModal');}
+function showLogin(){
+  openModal('loginModal');
+  // Auto-fill saved credentials
+  const saved = getSavedLogin();
+  if(saved){
+    const emailEl = document.getElementById('loginEmail');
+    const passEl = document.getElementById('loginPass');
+    if(emailEl && !emailEl.value) emailEl.value = saved.val;
+    if(passEl && !passEl.value) passEl.value = saved.pass;
+  }
+  renderQuickLoginCard();
+}
 
 // ============ FORGOT PASSWORD ============
 function fpCheckEmail(){
@@ -4187,6 +4325,43 @@ const OWNER_ACCOUNTS = [
   {id:'USR-77777',name:'Tavanh992',user:'tavanh992',pass:'957365',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'🪙',rank:3},
 ];
 
+// ── Restore login session — bulletproof 3-layer restore ──
+function restoreSession(){
+  try{
+    const db = getUsersDB();
+
+    // Layer 1: kd_session pointer (most reliable)
+    const sid = localStorage.getItem('kd_session');
+    if(sid){
+      const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
+      if(owner) return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
+      if(db[sid]) return db[sid];
+    }
+
+    // Layer 2: kd_user snapshot (backward compat)
+    const snap = JSON.parse(localStorage.getItem('kd_user')||'null');
+    if(snap && snap.id){
+      const owner = OWNER_ACCOUNTS.find(o=>o.id===snap.id);
+      if(owner) return db[snap.id] ? {...owner,...db[snap.id],isAdmin:true} : {...owner};
+      if(db[snap.id]) return db[snap.id];
+      // Migrate: user exists in snapshot but not in db yet
+      db[snap.id] = snap;
+      saveUsersDB(db);
+      localStorage.setItem('kd_session', snap.id);
+      return snap;
+    }
+
+    // Layer 3: scan db for any owner that has a valid session
+    for(const owner of OWNER_ACCOUNTS){
+      if(db[owner.id] && db[owner.id].pass){
+        // Don't auto-restore owners without explicit session
+      }
+    }
+  }catch(e){ console.warn('restoreSession error:', e); }
+  return null;
+}
+currentUser = restoreSession();
+
 function doRegister(){
   const name  = document.getElementById('regName').value.trim();
   const phone = document.getElementById('regPhone').value.trim();
@@ -4215,10 +4390,58 @@ function doRegister(){
   waNewUser(currentUser);
 }
 
+// ─── Saved credentials helpers ───
+function getSavedLogin(){ try{ return JSON.parse(localStorage.getItem('kd_saved_login')||'null'); }catch(e){ return null; } }
+function setSavedLogin(val, pass){ localStorage.setItem('kd_saved_login', JSON.stringify({val, pass})); }
+function clearSavedLogin(){ localStorage.removeItem('kd_saved_login'); renderQuickLoginCard(); showNotif('🗑 ລ້າງຂໍ້ມູນແລ້ວ'); }
+
+function renderQuickLoginCard(){
+  const card = document.getElementById('quickLoginCard');
+  if(!card) return;
+  const saved = getSavedLogin();
+  if(!saved){ card.style.display='none'; return; }
+  // Find user info for display
+  const owner = OWNER_ACCOUNTS.find(a=>
+    a.user.toLowerCase()===saved.val.toLowerCase()||a.name.toLowerCase()===saved.val.toLowerCase()
+  );
+  const db = getUsersDB();
+  let displayName = saved.val, displayId = '', avatarHtml = '👤';
+  if(owner){
+    displayName = (owner.crown||'')+ ' ' + owner.name;
+    displayId = owner.id;
+    const stored = db[owner.id];
+    if(stored?.avatarImg) avatarHtml = `<img src="${stored.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`;
+    else avatarHtml = owner.crown||'👑';
+  } else {
+    const u = Object.values(db).find(u=>u.email===saved.val||u.phone===saved.val||u.name===saved.val);
+    if(u){
+      displayName = u.name;
+      displayId = u.id;
+      if(u.avatarImg) avatarHtml = `<img src="${u.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`;
+    }
+  }
+  const nameEl = document.getElementById('quickLoginName');
+  const idEl = document.getElementById('quickLoginId');
+  const avEl = document.getElementById('quickLoginAvatar');
+  if(nameEl) nameEl.textContent = displayName;
+  if(idEl) idEl.textContent = displayId ? 'ID: '+displayId : saved.val;
+  if(avEl) avEl.innerHTML = avatarHtml;
+  card.style.display = 'block';
+}
+
+function doQuickLogin(){
+  const saved = getSavedLogin();
+  if(!saved){ showNotif('ບໍ່ພົບຂໍ້ມູນທີ່ບັນທຶກ'); return; }
+  document.getElementById('loginEmail').value = saved.val;
+  document.getElementById('loginPass').value = saved.pass;
+  doLogin();
+}
+
 function doLogin(){
   const val  = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
   if(!val||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນ');return;}
+  const remember = document.getElementById('rememberMeCheck')?.checked !== false;
   // Owner accounts (case-insensitive)
   const owner = OWNER_ACCOUNTS.find(a=>
     (a.user.toLowerCase()===val.toLowerCase()||a.id===val||a.name.toLowerCase()===val.toLowerCase())&&a.pass===pass
@@ -4228,6 +4451,7 @@ function doLogin(){
     currentUser = db[owner.id] ? {...owner,...db[owner.id],isAdmin:true} : {...owner};
     saveUser();
     heartbeat();
+    if(remember) setSavedLogin(val, pass);
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ຍິນດີຕ້ອນຮັບ '+owner.crown+' '+owner.name);
@@ -4239,6 +4463,7 @@ function doLogin(){
     currentUser = user;
     saveUser();
     heartbeat();
+    if(remember) setSavedLogin(val, pass);
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ເຂົ້າລະບົບສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+currentUser.name);
@@ -5225,9 +5450,9 @@ function openAdminChat(adminName, adminId){
   document.getElementById('chatRoomView').style.display='flex';
   const ap = ADMIN_PROFILES.find(a=>a.id===adminId);
   const crown = ap ? ap.crown : '👑';
-  setChatRoomHeader('🔰 '+adminName+' (Admin)',
-    `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-size:18px;color:#000">${crown}</div>`
-  );
+  // Use real admin photo if available
+  const _adminAv = getAvatarHtml(adminId, adminName, 36);
+  setChatRoomHeader('🔰 '+adminName+' (Admin)', _adminAv);
   if(!chatMsgs[roomId]||!chatMsgs[roomId].length){
     if(!chatMsgs[roomId]) chatMsgs[roomId]=[];
     chatMsgs[roomId].push({
@@ -5258,14 +5483,16 @@ function backToChatList(){
 }
 
 function getAvatarHtml(uid, name, size=32){
-  // Try to get avatar from saved user or admin
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
+  const db = getUsersDB();
+  const u = db[uid] || null;
+  const ownerAcc = OWNER_ACCOUNTS.find(o=>o.id===uid);
   const adminP = ADMIN_PROFILES.find(a=>a.id===uid);
-  let avatarImg = null, crown = '', isAdmin = false;
-  if(u && u.id===uid){ avatarImg=u.avatarImg||null; crown=u.crown||''; }
-  if(adminP){ isAdmin=true; crown=adminP.crown||'👑'; }
+  const merged = ownerAcc ? (u ? {...ownerAcc,...u} : ownerAcc) : u;
+  const isAdmin = !!(ownerAcc || adminP);
+  const avatarImg = merged?.avatarImg || null;
+  const crown = merged?.crown || adminP?.crown || '';
   if(avatarImg){
-    return `<img src="${avatarImg}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid ${isAdmin?'var(--gold)':'rgba(255,255,255,.2)'}">`;
+    return `<img src="${avatarImg}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${isAdmin?'var(--gold)':'rgba(255,255,255,.2)'}">`;
   }
   const bg = isAdmin ? 'linear-gradient(135deg,#c9a84c,#f0d080)' : 'linear-gradient(135deg,var(--blue),var(--accent))';
   const color = isAdmin ? '#000' : '#fff';
@@ -5336,9 +5563,8 @@ function searchFriendById(){
   const res = document.getElementById('friendSearchResult');
   if(!q){res.innerHTML='';return;}
   const admins = ADMIN_PROFILES.filter(a=>a.id.includes(q)||a.name.toLowerCase().includes(q));
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  const users = u ? [u] : [];
-  const matched = users.filter(u2=>u2.id?.toLowerCase().includes(q)||u2.name?.toLowerCase().includes(q));
+  const _allU = getAllUsers();
+  const matched = _allU.filter(u2=>u2.id?.toLowerCase().includes(q)||u2.name?.toLowerCase().includes(q));
   const allResults = [
     ...admins.map(a=>({name:a.name,id:a.id,isAdmin:true,crown:a.crown,avatarImg:null})),
     ...matched.map(u2=>({name:u2.name,id:u2.id,isAdmin:false,crown:'',avatarImg:u2.avatarImg||null,isSeller:u2.isSeller}))
@@ -5711,6 +5937,236 @@ function showSellerDiamondOrders(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// DIAMOND PUBLIC TOPUP (from profile page)
+// ═══════════════════════════════════════════════════════════
+function openDiamondTopupPublic(game){
+  if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
+  switchPage(game==='mlbb'?'topup-mlbb':'topup-ff');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DIAMOND SELLER SETUP — password gate + management
+// ═══════════════════════════════════════════════════════════
+const DIAMOND_SELLER_PASS = '995365';
+
+function openDiamondSellerSetup(){
+  if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
+  document.getElementById('diamondSellerPassInput').value='';
+  openModal('diamondSellerGateModal');
+}
+
+function verifyDiamondSellerPass(){
+  const pass = document.getElementById('diamondSellerPassInput').value.trim();
+  if(pass !== DIAMOND_SELLER_PASS){showNotif('❌ ລະຫັດຜ່ານບໍ່ຖືກ');return;}
+  closeModal('diamondSellerGateModal');
+  openDiamondSellerSetupPage();
+}
+
+function openDiamondSellerSetupPage(){
+  const lbl = document.getElementById('dssUserLabel');
+  if(lbl) lbl.textContent = (currentUser?.name||'') + ' · ' + (currentUser?.id||'');
+  switchDssTab('mlbb');
+  openModal('diamondSellerSetupModal');
+}
+
+let _dssCurrentTab = 'mlbb';
+function switchDssTab(tab){
+  _dssCurrentTab = tab;
+  ['mlbb','ff','orders'].forEach(t=>{
+    const btn = document.getElementById('dssTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    const content = document.getElementById('dssTab'+t.charAt(0).toUpperCase()+t.slice(1)+'Content');
+    if(!btn||!content) return;
+    if(t===tab){
+      btn.style.background = t==='mlbb'?'rgba(100,80,255,.3)':t==='ff'?'rgba(255,68,0,.3)':'rgba(201,168,76,.3)';
+      btn.style.borderColor = t==='mlbb'?'rgba(100,80,255,.5)':t==='ff'?'rgba(255,68,0,.5)':'rgba(201,168,76,.5)';
+      btn.style.color = t==='mlbb'?'#c0a0ff':t==='ff'?'#ffaa88':'var(--gold)';
+      content.style.display='block';
+    } else {
+      btn.style.background='rgba(255,255,255,.05)';
+      btn.style.borderColor='rgba(255,255,255,.12)';
+      btn.style.color='var(--text2)';
+      content.style.display='none';
+    }
+  });
+  if(tab==='mlbb') renderDssPackages('mlbb');
+  else if(tab==='ff') renderDssPackages('ff');
+  else renderDssOrders();
+}
+
+function getDssSellerPkgs(game){
+  // Per-seller custom packages stored in kd_diamond_sellers
+  const ds = getDiamondSellers();
+  const list = ds[game]||[];
+  const me = list.find(s=>s.userId===currentUser?.id);
+  return me?.customPkgs || null; // null = use default
+}
+
+function getDefaultPkgs(game){
+  return game==='mlbb' ? [
+    {id:'m1',amount:11,bonus:0,price:8000},
+    {id:'m2',amount:22,bonus:0,price:16000},
+    {id:'m3',amount:56,bonus:0,price:40000},
+    {id:'m4',amount:112,bonus:0,price:80000},
+    {id:'m5',amount:240,bonus:0,price:160000},
+    {id:'m6',amount:336,bonus:0,price:220000},
+    {id:'m7',amount:570,bonus:0,price:370000},
+    {id:'m8',amount:1144,bonus:0,price:740000},
+    {id:'m9',amount:2195,bonus:50,price:1450000},
+  ] : [
+    {id:'f1',amount:10,bonus:0,price:5000},
+    {id:'f2',amount:50,bonus:0,price:22000},
+    {id:'f3',amount:100,bonus:0,price:44000},
+    {id:'f4',amount:210,bonus:10,price:88000},
+    {id:'f5',amount:520,bonus:20,price:210000},
+    {id:'f6',amount:1060,bonus:60,price:420000},
+    {id:'f7',amount:2180,bonus:180,price:840000},
+  ];
+}
+
+function renderDssPackages(game){
+  const container = document.getElementById(game==='mlbb'?'dssMlbbPackages':'dssFfPackages');
+  const statusEl = document.getElementById(game==='mlbb'?'dssMlbbStatus':'dssFfStatus');
+  if(!container) return;
+
+  // Check if approved
+  const ds = getDiamondSellers();
+  const list = ds[game]||[];
+  const me = list.find(s=>s.userId===currentUser?.id);
+  const isApproved = !!me;
+  const isAdmin = currentUser?.isAdmin;
+
+  if(statusEl){
+    statusEl.innerHTML = isApproved || isAdmin
+      ? `<div style="background:rgba(78,255,136,.1);border:1px solid rgba(78,255,136,.3);border-radius:10px;padding:10px;font-size:12px;color:#4eff88;font-weight:700">✅ ຮ້ານຂອງທ່ານໄດ້ຮັບອະນຸຍາດ — ສາມາດຕັ້ງລາຄາໄດ້</div>`
+      : `<div style="background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.3);border-radius:10px;padding:10px;font-size:12px;color:#ffa500">
+          ⏳ ຮ້ານຂອງທ່ານຍັງບໍ່ໄດ້ຮັບອະນຸຍາດ<br>
+          <span style="color:var(--text2);font-size:11px">ຕິດຕໍ່ Admin ເພື່ອຂໍອະນຸຍາດ: WhatsApp 020-549-66168</span>
+        </div>`;
+  }
+
+  const pkgs = (me?.customPkgs) || getDefaultPkgs(game);
+  const accentColor = game==='mlbb' ? '#a080ff' : '#ff8844';
+  const disabled = (!isApproved && !isAdmin) ? 'disabled style="opacity:.5;pointer-events:none"' : '';
+
+  container.innerHTML = pkgs.map((p,i)=>`
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:${accentColor};min-width:80px;text-align:center">
+          ${p.amount.toLocaleString()} 💎${p.bonus?`<span style="color:#4eff88;font-size:10px"> +${p.bonus}</span>`:''}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ລາຄາ (ກີບ)</div>
+          <input type="number" id="dss_${game}_price_${i}" value="${p.price}" ${disabled}
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif">
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ໂບນັດ 💎</div>
+          <input type="number" id="dss_${game}_bonus_${i}" value="${p.bonus||0}" ${disabled}
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#4eff88;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;width:100%;box-sizing:border-box;font-family:'Sarabun',sans-serif">
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function saveDssPackages(game){
+  if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບ');return;}
+  const ds = getDiamondSellers();
+  const list = ds[game]||[];
+  const meIdx = list.findIndex(s=>s.userId===currentUser.id);
+  const isAdmin = currentUser?.isAdmin;
+  if(meIdx<0 && !isAdmin){showNotif('❌ ຮ້ານຍັງບໍ່ໄດ້ຮັບອະນຸຍາດ');return;}
+
+  const basePkgs = getDefaultPkgs(game);
+  const customPkgs = basePkgs.map((p,i)=>{
+    const priceEl = document.getElementById(`dss_${game}_price_${i}`);
+    const bonusEl = document.getElementById(`dss_${game}_bonus_${i}`);
+    return {
+      ...p,
+      price: parseInt(priceEl?.value)||p.price,
+      bonus: parseInt(bonusEl?.value)||0
+    };
+  });
+
+  if(meIdx>=0){
+    list[meIdx].customPkgs = customPkgs;
+  } else if(isAdmin){
+    // Admin sets default packages
+    if(game==='mlbb') MLBB_PACKAGES.forEach((p,i)=>{ p.price=customPkgs[i]?.price||p.price; p.bonus=customPkgs[i]?.bonus||0; });
+    else FF_PACKAGES.forEach((p,i)=>{ p.price=customPkgs[i]?.price||p.price; p.bonus=customPkgs[i]?.bonus||0; });
+  }
+  ds[game] = list;
+  saveDiamondSellers(ds);
+  showNotif('✅ ບັນທຶກລາຄາສຳເລັດ!');
+}
+
+function renderDssOrders(){
+  const container = document.getElementById('dssOrdersList');
+  if(!container) return;
+  const allOrders = getDiamondOrders();
+  const myOrders = currentUser?.isAdmin ? allOrders : allOrders.filter(o=>o.sellerId===currentUser?.id);
+  if(!myOrders.length){
+    container.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px;font-size:13px">ຍັງບໍ່ມີອໍເດີ</div>';
+    return;
+  }
+  container.innerHTML = myOrders.slice().reverse().map(o=>{
+    const isMLBB = o.game==='mlbb';
+    const color = isMLBB?'#a080ff':'#ff8844';
+    const icon = isMLBB?'💎':'🔥';
+    const statusColor = o.status==='done'?'#4eff88':o.status==='rejected'?'#ff4444':'#ffa500';
+    const statusText = o.status==='done'?'✅ ສຳເລັດ':o.status==='rejected'?'❌ ປະຕິເສດ':'⏳ ລໍຖ້າ';
+    return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:${color}">${icon} ${o.gameName||o.game} — ${Number(o.amount).toLocaleString()} 💎</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">#${o.id} · ${o.date}</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:${statusColor}">${statusText}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8">
+        <div>👤 ຜູ້ຊື້: <span style="color:var(--text)">${o.userName||'-'}</span></div>
+        <div>🎮 Game ID: <span style="color:var(--gold);font-weight:700">${o.gameId||'-'}</span></div>
+        ${o.server?`<div>🖥 Server: <span style="color:var(--text)">${o.server}</span></div>`:''}
+        <div>📱 ໂທ: <span style="color:var(--text)">${o.phone||'-'}</span></div>
+        <div>💰 ລາຄາ: <span style="color:var(--gold);font-weight:700">${Number(o.total||0).toLocaleString()} ກີບ</span></div>
+      </div>
+      ${o.status==='pending'?`<div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="dssCompleteOrder('${o.id}')" style="flex:1;background:rgba(78,255,136,.15);border:1px solid rgba(78,255,136,.3);color:#4eff88;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">✅ ສຳເລັດ</button>
+        <button onclick="dssRejectOrder('${o.id}')" style="flex:1;background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.25);color:#ff6666;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">❌ ຍົກເລີກ</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function dssCompleteOrder(orderId){
+  const dorders = getDiamondOrders();
+  const o = dorders.find(x=>x.id===orderId);
+  if(o) o.status='done';
+  saveDiamondOrders(dorders);
+  const gOrders = JSON.parse(localStorage.getItem('kd_orders')||'[]');
+  const go = gOrders.find(x=>x.id===orderId);
+  if(go) go.status='done';
+  localStorage.setItem('kd_orders',JSON.stringify(gOrders));
+  showNotif('✅ ອໍເດີ #'+orderId+' ສຳເລັດ');
+  renderDssOrders();
+}
+
+function dssRejectOrder(orderId){
+  if(!confirm('ຍົກເລີກອໍເດີນີ້?')) return;
+  const dorders = getDiamondOrders();
+  const o = dorders.find(x=>x.id===orderId);
+  if(o){
+    o.status='rejected';
+    // Refund
+    const db = getUsersDB();
+    if(db[o.userId]){ db[o.userId].wallet=(db[o.userId].wallet||0)+o.price; saveUsersDB(db); }
+    if(currentUser?.id===o.userId){ currentUser.wallet=(currentUser.wallet||0)+o.price; saveUser(); updateWalletDisplay(); }
+  }
+  saveDiamondOrders(dorders);
+  showNotif('❌ ຍົກເລີກ + Refund ສຳເລັດ');
+  renderDssOrders();
+}
+
 // ============ MODALS ============
 function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
@@ -5744,7 +6200,7 @@ function openPublicProfile(userId){
   let u = null;
   if(currentUser && currentUser.id === userId) u = currentUser;
   else {
-    try { const raw = localStorage.getItem('kd_user'); if(raw){ const pu = JSON.parse(raw); if(pu.id===userId) u=pu; } } catch(e){}
+    const _dbPub = getUsersDB(); if(_dbPub[userId]) u = _dbPub[userId];
   }
   if(!u) { showNotif('ບໍ່ພົບຂໍ້ມູນຜູ້ໃຊ້'); return; }
 
@@ -6734,12 +7190,12 @@ function adminApproveSeller(userId){
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
   // Update user's isSeller flag + save waNum
   const waNum = apps[idx].waNum || '';
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===userId){
-    u.isSeller=true; u.sellerPending=false; u.sellerWA=waNum;
-    localStorage.setItem('kd_user',JSON.stringify(u));
-    if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;updateProfileUI();}
+  const db1 = getUsersDB();
+  if(db1[userId]){
+    db1[userId].isSeller=true; db1[userId].sellerPending=false; db1[userId].sellerWA=waNum;
+    saveUsersDB(db1);
   }
+  if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;updateProfileUI();}
   renderAdminTab('sellers');
   showNotif('✅ ອະນຸມັດຜູ້ຂາຍ '+apps[idx].name+' ສຳເລັດ');
 }
@@ -6750,13 +7206,12 @@ function adminRejectSeller(userId){
   if(idx<0)return;
   apps[idx].status='rejected';
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===userId){
-    u.sellerPending=false;
-    u.sellerRejected=true;
-    localStorage.setItem('kd_user',JSON.stringify(u));
-    if(currentUser&&currentUser.id===userId){currentUser.sellerPending=false;currentUser.sellerRejected=true;updateProfileUI();}
+  const db2 = getUsersDB();
+  if(db2[userId]){
+    db2[userId].sellerPending=false; db2[userId].sellerRejected=true;
+    saveUsersDB(db2);
   }
+  if(currentUser&&currentUser.id===userId){currentUser.sellerPending=false;currentUser.sellerRejected=true;updateProfileUI();}
   renderAdminTab('sellers');
   showNotif('❌ ປະຕິເສດຄຳຂໍຜູ້ຂາຍ');
 }
@@ -6857,23 +7312,26 @@ function adminSaveEditUser(uid){
     if(newPhone) updated.phone  = newPhone;
     if(newPass)  updated.pass   = newPass;
     updated.wallet = newWallet;
-    localStorage.setItem('kd_user_'+uid, JSON.stringify(updated));
+    const _dbOwn = getUsersDB();
+    _dbOwn[uid] = updated;
+    saveUsersDB(_dbOwn);
     if(currentUser && currentUser.id===uid){
       Object.assign(currentUser, updated);
-      localStorage.setItem('kd_user', JSON.stringify(currentUser));
+      saveUser();
       updateWalletDisplay(); updateProfileUI();
     }
   } else {
-    const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-    if(u && u.id===uid){
-      if(newName)  u.name   = newName;
-      if(newEmail) { u.email = newEmail; u.user = newEmail; }
-      if(newPhone) u.phone  = newPhone;
-      if(newPass)  u.pass   = newPass;
-      u.wallet = newWallet;
-      localStorage.setItem('kd_user', JSON.stringify(u));
+    const _dbEd = getUsersDB();
+    if(_dbEd[uid]){
+      if(newName)  _dbEd[uid].name   = newName;
+      if(newEmail) { _dbEd[uid].email = newEmail; _dbEd[uid].user = newEmail; }
+      if(newPhone) _dbEd[uid].phone  = newPhone;
+      if(newPass)  _dbEd[uid].pass   = newPass;
+      _dbEd[uid].wallet = newWallet;
+      saveUsersDB(_dbEd);
       if(currentUser && currentUser.id===uid){
-        Object.assign(currentUser, u);
+        Object.assign(currentUser, _dbEd[uid]);
+        saveUser();
         updateWalletDisplay(); updateProfileUI();
       }
     }
@@ -6885,7 +7343,15 @@ function adminSaveEditUser(uid){
 
 function adminDeleteUser(uid){
   if(!confirm('ຕ້ອງການລຶບຜູ້ໃຊ້ນີ້ຫຼືບໍ່?')) return;
-  if(currentUser && currentUser.id===uid){ currentUser=null; localStorage.removeItem('kd_user'); updateProfileUI(); }
+  const _dbDel = getUsersDB();
+  delete _dbDel[uid];
+  saveUsersDB(_dbDel);
+  if(currentUser && currentUser.id===uid){
+    currentUser=null;
+    localStorage.removeItem('kd_session');
+    localStorage.removeItem('kd_user');
+    updateProfileUI();
+  }
   renderAdminTab('users');
   showNotif('🗑 ລຶບຜູ້ໃຊ້ສຳເລັດ');
 }
@@ -7047,11 +7513,12 @@ function adminApproveDeposit(id){
   updateAdminSysWalletDisplay();
   deps[idx].status='approved';
   // Add to user wallet
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===deps[idx].userId){
-    u.wallet = (u.wallet||0) + amount;
-    localStorage.setItem('kd_user',JSON.stringify(u));
-    if(currentUser&&currentUser.id===u.id){ currentUser.wallet=u.wallet; updateWalletDisplay(); }
+  const _dbDep = getUsersDB();
+  const _depUid = deps[idx].userId;
+  if(_dbDep[_depUid]){
+    _dbDep[_depUid].wallet = (_dbDep[_depUid].wallet||0) + amount;
+    saveUsersDB(_dbDep);
+    if(currentUser&&currentUser.id===_depUid){ currentUser.wallet=_dbDep[_depUid].wallet; saveUser(); updateWalletDisplay(); }
   }
   localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
   const card = document.getElementById('fin_'+id);
@@ -7090,8 +7557,9 @@ function adminRejectWithdraw(id){
   const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
   const idx = withs.findIndex(w=>w.id===id);
   if(idx<0) return;
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===withs[idx].userId){ u.wallet=(u.wallet||0)+(withs[idx].amount||0); localStorage.setItem('kd_user',JSON.stringify(u)); if(currentUser&&currentUser.id===u.id){currentUser.wallet=u.wallet;updateWalletDisplay();} }
+  const _dbWit = getUsersDB();
+  const _witUid = withs[idx].userId;
+  if(_dbWit[_witUid]){ _dbWit[_witUid].wallet=(_dbWit[_witUid].wallet||0)+(withs[idx].amount||0); saveUsersDB(_dbWit); if(currentUser&&currentUser.id===_witUid){currentUser.wallet=_dbWit[_witUid].wallet;saveUser();updateWalletDisplay();} }
   withs.splice(idx,1);
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
   const card = document.getElementById('fin_'+id);
@@ -7111,12 +7579,9 @@ function adminApproveSellerCard(userId){
   delete apps[idx].idCardImg;
   delete apps[idx].selfieImg;
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===userId){
-    u.isSeller=true; u.sellerPending=false; u.sellerWA=waNum;
-    localStorage.setItem('kd_user',JSON.stringify(u));
-    if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;updateProfileUI();}
-  }
+  const _dbSC = getUsersDB();
+  if(_dbSC[userId]){ _dbSC[userId].isSeller=true; _dbSC[userId].sellerPending=false; _dbSC[userId].sellerWA=waNum; saveUsersDB(_dbSC); }
+  if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;saveUser();updateProfileUI();}
   const card = document.getElementById('seller_'+userId);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('✅ ອະນຸມັດຜູ້ຂາຍ '+apps[idx].name+' ສຳເລັດ!');
@@ -7128,8 +7593,9 @@ function adminRejectSellerCard(userId){
   if(idx<0) return;
   apps[idx].status='rejected';
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
-  const u = JSON.parse(localStorage.getItem('kd_user')||'null');
-  if(u && u.id===userId){ u.sellerPending=false; u.sellerRejected=true; localStorage.setItem('kd_user',JSON.stringify(u)); if(currentUser&&currentUser.id===userId){currentUser.sellerPending=false;currentUser.sellerRejected=true;updateProfileUI();} }
+  const _dbRC = getUsersDB();
+  if(_dbRC[userId]){ _dbRC[userId].sellerPending=false; _dbRC[userId].sellerRejected=true; saveUsersDB(_dbRC); }
+  if(currentUser&&currentUser.id===userId){currentUser.sellerPending=false;currentUser.sellerRejected=true;saveUser();updateProfileUI();}
   const card = document.getElementById('seller_'+userId);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('❌ ປະຕິເສດຄຳຂໍຜູ້ຂາຍ');
