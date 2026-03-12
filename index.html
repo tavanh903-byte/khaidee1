@@ -657,7 +657,163 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .update-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
 .update-popup{background:linear-gradient(135deg,#0a0a0a,#1a1200);border:1.5px solid var(--gold);border-radius:20px;padding:28px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 40px rgba(201,168,76,.3)}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ══════════════════════════════════════════
+// 🗄️  SUPABASE CONFIG
+// ══════════════════════════════════════════
+const SUPA_URL = 'https://homqmtkiziariocverjk.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvbXFtdGtpemlhcmlvY3ZlcmprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzEwOTAsImV4cCI6MjA4ODE0NzA5MH0.Lt-f9dCgxPPENtVx3wJgHkiSREf_OwXWvH4N-ixx1lg';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ══════════════════════════════════════════
+// 🔄  SUPABASE DATA LAYER
+// ══════════════════════════════════════════
+
+// ── Users ──
+async function sbGetUser(id){
+  const {data} = await supa.from('kd_users').select('*').eq('id',id).single();
+  return data;
+}
+async function sbSaveUser(user){
+  const row = {
+    id: user.id, name: user.name||'', username: user.user||user.username||'',
+    password: user.pass||'', phone: user.phone||'', email: user.email||'',
+    wallet: user.wallet||0, is_seller: !!user.isSeller, is_admin: !!user.isAdmin,
+    avatar_img: user.avatarImg||null, cover_img: user.coverImg||null,
+    shop_name: user.shopName||null, shop_desc: user.shopDesc||null,
+    rank: user.rank||0, crown: user.crown||null, updated_at: new Date().toISOString()
+  };
+  await supa.from('kd_users').upsert(row);
+}
+async function sbGetAllUsers(){
+  const {data} = await supa.from('kd_users').select('*');
+  return (data||[]).map(r=>sbRowToUser(r));
+}
+function sbRowToUser(r){
+  return {
+    id:r.id, name:r.name, user:r.username, pass:r.password,
+    phone:r.phone, email:r.email, wallet:r.wallet||0,
+    isSeller:r.is_seller, isAdmin:r.is_admin,
+    avatarImg:r.avatar_img, coverImg:r.cover_img,
+    shopName:r.shop_name, shopDesc:r.shop_desc,
+    rank:r.rank, crown:r.crown
+  };
+}
+
+// ── Products ──
+async function sbLoadProducts(){
+  const {data} = await supa.from('kd_products').select('*').order('created_at',{ascending:false});
+  return (data||[]).map(r=>({
+    id:r.id, name:r.name, price:r.price, cat:r.category,
+    emoji:r.emoji, desc:r.description, qty:r.qty||0, sold:r.sold||0,
+    seller:r.seller_name, sellerId:r.seller_id,
+    img:r.image_img, isGame:r.is_game, gameType:r.game_type
+  }));
+}
+async function sbSaveProduct(p){
+  await supa.from('kd_products').upsert({
+    id:p.id, name:p.name, price:p.price, category:p.cat,
+    emoji:p.emoji, description:p.desc, qty:p.qty||0, sold:p.sold||0,
+    seller_id:p.sellerId||'', seller_name:p.seller||'',
+    image_img:p.img||null, is_game:!!p.isGame, game_type:p.gameType||null
+  });
+}
+async function sbDeleteProduct(id){
+  await supa.from('kd_products').delete().eq('id',id);
+}
+
+// ── Orders ──
+async function sbLoadOrders(){
+  const {data} = await supa.from('kd_orders').select('*').order('created_at',{ascending:false});
+  return (data||[]).map(r=>({
+    id:r.id, buyerId:r.buyer_id, buyerName:r.buyer_name,
+    sellerId:r.seller_id, productId:r.product_id, name:r.product_name,
+    qty:r.qty, total:r.total, status:r.status,
+    shippingStatus:r.shipping_status, trackingNumber:r.tracking_number,
+    note:r.note, date:r.created_at
+  }));
+}
+async function sbSaveOrder(o){
+  await supa.from('kd_orders').upsert({
+    id:o.id, buyer_id:o.buyerId||o.userId||'', buyer_name:o.buyerName||o.userName||'',
+    seller_id:o.sellerId||'', product_id:o.productId||o.id||'',
+    product_name:o.name||o.productName||'', qty:o.qty||1, total:o.total||o.price||0,
+    status:o.status||'pending', shipping_status:o.shippingStatus||null,
+    tracking_number:o.trackingNumber||null, note:o.note||null,
+    updated_at: new Date().toISOString()
+  });
+}
+
+// ── Deposits ──
+async function sbSaveDeposit(d){
+  await supa.from('kd_deposits').upsert({
+    id:d.id, user_id:d.userId, user_name:d.userName,
+    amount:d.amount, slip_img:d.slipImg||null, status:d.status||'pending'
+  });
+}
+async function sbLoadDeposits(){
+  const {data} = await supa.from('kd_deposits').select('*').order('created_at',{ascending:false});
+  return (data||[]).map(r=>({id:r.id,userId:r.user_id,userName:r.user_name,amount:r.amount,slipImg:r.slip_img,status:r.status,date:r.created_at}));
+}
+async function sbUpdateDepositStatus(id, status){
+  await supa.from('kd_deposits').update({status}).eq('id',id);
+}
+
+// ── Withdrawals ──
+async function sbSaveWithdrawal(w){
+  await supa.from('kd_withdrawals').upsert({
+    id:w.id, user_id:w.userId, user_name:w.userName,
+    amount:w.amount, fee:w.fee||0, net:w.net||0, qr_img:w.qrImg||null, status:w.status||'pending'
+  });
+}
+async function sbLoadWithdrawals(){
+  const {data} = await supa.from('kd_withdrawals').select('*').order('created_at',{ascending:false});
+  return (data||[]).map(r=>({id:r.id,userId:r.user_id,userName:r.user_name,amount:r.amount,fee:r.fee,net:r.net,qrImg:r.qr_img,status:r.status,date:r.created_at}));
+}
+async function sbUpdateWithdrawalStatus(id, status){
+  await supa.from('kd_withdrawals').update({status}).eq('id',id);
+}
+
+// ── Game Orders ──
+async function sbSaveGameOrder(o){
+  await supa.from('kd_game_orders').upsert({
+    id:o.id, user_id:o.userId, user_name:o.userName,
+    game:o.game, game_id:o.gameId, package_label:o.pkg,
+    price:o.price, account_info:o.accountInfo||'', note:o.note||'', status:o.status||'pending'
+  });
+}
+
+// ── App Settings ──
+async function sbGetSetting(key){
+  const {data} = await supa.from('kd_app_settings').select('value').eq('key',key).single();
+  return data?.value||null;
+}
+async function sbSetSetting(key, value){
+  await supa.from('kd_app_settings').upsert({key, value, updated_at: new Date().toISOString()});
+}
+
+// ── SYNC: Load all data from Supabase into memory ──
+async function syncFromSupabase(){
+  try{
+    const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders()]);
+    if(prods.length > 0){
+      products = prods;
+      localStorage.setItem('kd_products', JSON.stringify(products));
+    }
+    if(ords.length > 0){
+      orders = ords;
+      localStorage.setItem('kd_orders', JSON.stringify(orders));
+    }
+    // Load update info
+    const updateInfo = await sbGetSetting('update_info');
+    if(updateInfo) localStorage.setItem('kd_update_info', updateInfo);
+    console.log('✅ Synced from Supabase');
+  } catch(e){
+    console.warn('⚠️ Supabase sync failed, using localStorage:', e);
+  }
+}
+
 // ── Auto-update checker ──
 (function(){
   const CURRENT_VER = '202603111854';
@@ -2616,7 +2772,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
 
 <!-- ADMIN EDIT USER MODAL -->
 <div class="popup-overlay" id="adminEditUserModal" style="display:none">
-  <div class="popup-box">
+  <div class="popup-box" style="max-height:90vh;overflow-y:auto;padding-bottom:16px">
     <div class="modal-title">✏️ ແກ້ໄຂຂໍ້ມູນຜູ້ໃຊ້</div>
     <div id="adminEditUserContent"></div>
   </div>
@@ -2736,14 +2892,13 @@ let currentUser = null;
 
 function saveUser(){
   if(!currentUser) return;
-  // Save to indexed DB
   const db = getUsersDB();
   db[currentUser.id] = {...currentUser};
   saveUsersDB(db);
-  // Keep kd_user snapshot (backward compat)
   localStorage.setItem('kd_user', JSON.stringify(currentUser));
-  // Session pointer
   localStorage.setItem('kd_session', currentUser.id);
+  // Sync to Supabase
+  sbSaveUser(currentUser).catch(e=>console.warn('sbSaveUser:',e));
 }
 
 let products = JSON.parse(localStorage.getItem('kd_products') || '[]');
@@ -2788,20 +2943,29 @@ window.onload = () => setTimeout(launchApp, 5000);
 setTimeout(launchApp, 6500);
 
 function initApp() {
-  // Re-verify session is still valid (covers PWA cache edge cases)
-  if(!currentUser){
-    currentUser = restoreSession();
-  }
+  if(!currentUser){ currentUser = restoreSession(); }
   renderProducts(products);
   updateWalletDisplay();
   updateProfileUI();
   renderBillsPage();
   checkUpdateOnLoad();
+  // Sync from Supabase in background
+  syncFromSupabase().then(()=>{
+    renderProducts(products);
+    renderBillsPage();
+  });
 }
 
 
-function saveProducts(){localStorage.setItem('kd_products',JSON.stringify(products));}
-function saveOrders(){localStorage.setItem('kd_orders',JSON.stringify(orders));}
+function saveProducts(){
+  localStorage.setItem('kd_products',JSON.stringify(products));
+  // Sync each product to Supabase
+  products.forEach(p=>sbSaveProduct(p).catch(e=>console.warn('sbSaveProduct:',e)));
+}
+function saveOrders(){
+  localStorage.setItem('kd_orders',JSON.stringify(orders));
+  orders.forEach(o=>sbSaveOrder(o).catch(e=>console.warn('sbSaveOrder:',e)));
+}
 // saveUser is defined above in USER DATABASE SYSTEM
 function _saveUserCompat(){ saveUser(); } // alias for any legacy calls
 function saveChat(){localStorage.setItem('kd_chat',JSON.stringify(chatMsgs));}
@@ -8231,6 +8395,7 @@ function adminApproveDeposit(id){
     if(currentUser&&currentUser.id===_depUid){ currentUser.wallet=_dbDep[_depUid].wallet; saveUser(); updateWalletDisplay(); }
   }
   localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
+  sbUpdateDepositStatus(id,'approved').catch(e=>console.warn('sbApproveDeposit:',e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('✅ ອະນຸມັດຝາກ +'+Number(amount).toLocaleString()+' ກີບ | Admin Wallet: '+Number(adminSysWallet).toLocaleString());
@@ -8345,6 +8510,8 @@ function doDeposit(){
         status:'pending'
       });
       localStorage.setItem('kd_deposit_requests', JSON.stringify(deps));
+      // Sync to Supabase
+      sbSaveDeposit(deps[deps.length-1]).catch(e=>console.warn('sbSaveDeposit:',e));
       addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt});
       waDeposit(currentUser, amt);
       closeModal('depositModal');
@@ -8397,6 +8564,7 @@ function doWithdraw(){
     const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
     withs.push({id:'WDR-'+Date.now(),userId:currentUser.id,userName:currentUser.name,amount:amt,fee,net,feeRate,qrImg,date:new Date().toLocaleString(),status:'pending',type:'withdraw'});
     localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
+    sbSaveWithdrawal(withs[withs.length-1]).catch(e=>console.warn('sbSaveWithdrawal:',e));
     addAdminNotification('withdraw',{user:currentUser.name,amount:amt});
     waWithdraw(currentUser, amt, fee, net, feeRate);
     closeModal('withdrawModal');
@@ -8977,6 +9145,7 @@ function adminPublishUpdate(){
   const changes = changesRaw ? changesRaw.split('\n').map(l=>l.trim()).filter(Boolean) : [];
   const info = { ver, note: note||'ມີການອັບເດດໃໝ່!', changes, publishedAt: new Date().toISOString() };
   localStorage.setItem('kd_update_info', JSON.stringify(info));
+  sbSetSetting('update_info', JSON.stringify(info)).catch(e=>console.warn('sbSetSetting:',e));
   // Reset seen so all users see popup
   localStorage.removeItem(KD_UPDATE_KEY);
   const statusEl = document.getElementById('aupStatus');
