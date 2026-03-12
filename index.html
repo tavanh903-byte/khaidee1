@@ -794,8 +794,20 @@ async function sbSetSetting(key, value){
 }
 
 // ── SYNC: Load all data from Supabase into memory ──
+// ลบสินค้าจำลองออกจาก Supabase ด้วย (รันครั้งเดียว)
+async function clearDemoProductsFromSupabase(){
+  const demoIds = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010','PRD-011','PRD-012'];
+  try{
+    await supa.from('kd_products').delete().in('id', demoIds);
+    // Also delete products with no seller_id
+    await supa.from('kd_products').delete().is('seller_id','').not('is_game','eq',true);
+    console.log('✅ Demo products cleared from Supabase');
+  }catch(e){ console.warn('clearDemo:',e); }
+}
+
 async function syncFromSupabase(){
   try{
+    await clearDemoProductsFromSupabase();
     const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders()]);
     if(prods.length > 0){
       products = prods;
@@ -1651,9 +1663,14 @@ async function syncFromSupabase(){
         </div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
-      <div class="chat-input-bar">
-        <input class="chat-input" id="chatMsgInput" placeholder="ພິມຂໍ້ຄວາມ..." onkeydown="if(event.key==='Enter')sendChatMsg()">
-        <button class="chat-send" onclick="sendChatMsg()">➤</button>
+            <div class="chat-input-bar" style="flex-wrap:wrap;gap:4px">
+        <div style="display:flex;align-items:center;gap:4px;width:100%">
+          <button class="chat-send" style="background:rgba(201,168,76,.15);font-size:16px;padding:0 10px" onclick="document.getElementById('chatMediaInput').click()" title="ແນບຮູບ/ວີດີໂອ">📎</button>
+          <input class="chat-input" id="chatMsgInput" placeholder="ພິມຂໍ້ຄວາມ..." onkeydown="if(event.key==='Enter')sendChatMsg()" style="flex:1">
+          <button class="chat-send" onclick="sendChatMsg()">➤</button>
+        </div>
+        <input type="file" id="chatMediaInput" accept="image/*,video/*" multiple style="display:none" onchange="previewChatMedia()">
+        <div id="chatMediaPreview" style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0;width:100%"></div>
       </div>
     </div>
   </div>
@@ -1988,8 +2005,8 @@ async function syncFromSupabase(){
     </div>
     <div class="info-box" style="font-size:12px;line-height:1.9">
       💰 <strong style="color:var(--gold)">ຖອນຂັ້ນຕ່ຳ 50,000 ກີບ</strong><br>
-      📊 ຖອນ 50,000 – 490,000 ກີບ: ຫັກ <strong style="color:#f99">10%</strong> ຄ່າເວັບ<br>
-      🎁 ຖອນ 500,000 – 1,000,000 ກີບ: ຫັກ <strong style="color:#0c6">5%</strong> ຄ່າເວັບ<br>
+      📊 ຄ່າທຳນຽມ ID ເກມ: ຫັກ <strong style="color:#f99">5%</strong> ຂອງຍອດຂາຍ + ຄ່າຖອນ <strong style="color:#f99">700 ກີບ</strong><br>
+      📌 ຖອນທຸກຍອດ: ຄ່າທຳນຽມ <strong style="color:#0c6">700 ກີບ</strong> ຕໍ່ຄັ້ງ<br>
       ⏰ ຍອດຂາຍ ID ເກມ: ຖອນໄດ້ຫຼັງ <strong style="color:#f90">24 ຊົ່ວໂມງ</strong> ຫຼັງຂາຍ<br>
       ✅ ຍອດຂາຍທົ່ວໄປ: ຖອນໄດ້ທັນທີ ຫຼັງເງິນເຂົ້າ Wallet<br>
       ⏳ ໂອນພາຍໃນ 30 ນາທີ – 1 ຊົ່ວໂມງ<br>
@@ -2133,13 +2150,13 @@ async function syncFromSupabase(){
 
     <!-- ── ຮູບພາບ & ວີດີໂອ ── -->
     <div class="form-group">
-      <label class="form-label" id="sellImgLabel">📸 ຮູບພາບ (ສູງສຸດ <span id="sellImgLimit">10</span> ຮູບ)</label>
+      <label class="form-label" id="sellImgLabel">📸 ຮູບ/ວີດີໂອ (ສູງສຸດ <span id="sellImgLimit">10</span> ໄຟລ)</label>
       <div class="upload-box" onclick="document.getElementById('sellImgInput').click()" style="min-height:70px">
-        📸 ກົດເພື່ອອັດໂຫລດຮູບ (ເລືອກໄດ້ຫລາຍຮູບ)
+        📸🎬 ກົດເພື່ອອັດໂຫລດຮູບ / ວີດີໂອ (ເລືອກໄດ້ຫລາຍໄຟລ)
         <div id="sellImgPreview" class="upload-preview" style="margin-top:8px"></div>
       </div>
-      <input type="file" id="sellImgInput" multiple accept="image/*" style="display:none" onchange="previewSellImages()">
-      <div style="margin-top:4px;font-size:11px;color:var(--text2)">💡 ສິນຄ້າທົ່ວໄປ: 10 ຮູບ | ID ເກມ: 20 ຮູບ</div>
+      <input type="file" id="sellImgInput" multiple accept="image/*,video/*" style="display:none" onchange="previewSellImages()">
+      <div style="margin-top:4px;font-size:11px;color:var(--text2)">💡 ສິນຄ້າທົ່ວໄປ: 10 ໄຟລ (ຮູບ/ວີດີໂອ) | ID ເກມ: 20 ໄຟລ</div>
     </div>
 
     <!-- ── ລິ້ງວີດີໂອ ── -->
@@ -2205,7 +2222,7 @@ async function syncFromSupabase(){
       ⏰ ຍອດຂາຍ ID ເກມ ຈະຖອນໄດ້ຫຼັງ 24 ຊົ່ວໂມງ ຫຼັງການຂາຍ
     </div>
     <div class="form-group">
-      <label class="form-label">ຮູບພາບ/ວິດີໂອ (ສູງສຸດ 10)</label>
+      <label class="form-label">ຮູບ/ວີດີໂອ (ສູງສຸດ 20 ໄຟລ)</label>
       <div class="upload-box" onclick="document.getElementById('gameImgInput').click()">
         📸 ອັດໂຫລດ
         <div id="gameImgPreview" class="upload-preview"></div>
@@ -2909,9 +2926,15 @@ function saveUser(){
 }
 
 let products = JSON.parse(localStorage.getItem('kd_products') || '[]');
-// Clear demo products on first load (one-time migration)
-if(products.length > 0 && products.some(p=>['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009'].includes(p.id))){
-  products = products.filter(p=>!['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009'].includes(p.id));
+// ลบสินค้าจำลองทั้งหมดถาวร
+const _demoIds = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010','PRD-011','PRD-012'];
+if(products.some(p=>_demoIds.includes(p.id))){
+  products = products.filter(p=>!_demoIds.includes(p.id));
+  localStorage.setItem('kd_products', JSON.stringify(products));
+}
+// ลบสินค้าที่ไม่มี sellerId (สินค้าจำลองเก่า)
+if(products.some(p=>!p.sellerId && !p.isGame)){
+  products = products.filter(p=>p.sellerId || p.isGame);
   localStorage.setItem('kd_products', JSON.stringify(products));
 }
 let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
@@ -2987,6 +3010,12 @@ function initApp() {
   updateProfileUI();
   renderBillsPage();
   checkUpdateOnLoad();
+  // Clear demo products permanently
+  const _demoIds2 = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010'];
+  products = products.filter(p=>!_demoIds2.includes(p.id) && (p.sellerId||p.isGame));
+  saveProducts();
+  renderProducts(products);
+
   // Load credentials + sync data from Supabase
   loadAdminCredentials().then(()=>{
     return syncFromSupabase();
@@ -3483,6 +3512,19 @@ function submitGeneralOrder(){
   // Update product sold
   const idx = products.findIndex(x=>x.id===p.id);
   if(idx>=0){products[idx].sold=(products[idx].sold||0)+qty;saveProducts();}
+  // Pay seller: game/ID gets 95% (5% commission), general gets 100%
+  if(p.sellerId && p.sellerId !== 'admin'){
+    const isGameProd = p.cat==='game'||p.cat==='game_id'||p.isGame;
+    const commission = isGameProd ? 0.05 : 0;
+    const sellerPay = Math.round(total * (1 - commission));
+    const db = getUsersDB();
+    if(db[p.sellerId]){
+      db[p.sellerId].wallet = (db[p.sellerId].wallet||0) + sellerPay;
+      saveUsersDB(db);
+      sbSaveUser(db[p.sellerId]).catch(e=>console.warn('sbSellerPay:',e));
+      if(currentUser&&currentUser.id===p.sellerId){ currentUser.wallet=db[p.sellerId].wallet; updateWalletDisplay(); }
+    }
+  }
   waNewOrder(currentUser, order);
   waNotifySeller(order);
   closeModal('orderModal');
@@ -6197,9 +6239,16 @@ function renderChatMsgs(room){
     const isMine = m.uid===currentUser?.id;
     const av = getAvatarHtml(m.uid, m.name, 30);
     const deleted = m.deleted;
+    const mediaHtml = (!deleted && m.media && m.media.length) ? m.media.map(med=>{
+      if(med.type && med.type.startsWith('video/')){
+        return `<video src="${med.data}" style="max-width:200px;max-height:160px;border-radius:10px;display:block;margin-top:4px" controls muted loop playsinline></video>`;
+      } else {
+        return `<img src="${med.data}" style="max-width:200px;max-height:160px;border-radius:10px;display:block;margin-top:4px;cursor:pointer" onclick="this.requestFullscreen&&this.requestFullscreen()">`;
+      }
+    }).join('') : '';
     const msgContent = deleted
       ? `<div style="font-style:italic;color:rgba(255,255,255,.3);font-size:12px">🚫 ຂໍ້ຄວາມຖືກລຶບແລ້ວ</div>`
-      : `<div class="msg-bubble ${isMine?'msg-mine':'msg-other'}" style="white-space:pre-line" oncontextmenu="showMsgMenu(event,${idx},'${room}')" ontouchstart="startMsgHold(${idx},'${room}')" ontouchend="cancelMsgHold()">${m.text}${m.edited?'<span style="font-size:9px;opacity:.5;margin-left:4px">(ແກ້ໄຂ)</span>':''}</div>`;
+      : `<div class="msg-bubble ${isMine?'msg-mine':'msg-other'}" style="white-space:pre-line" oncontextmenu="showMsgMenu(event,${idx})">${m.text||''}${mediaHtml}</div>`;
     if(isMine){
       return `<div id="msg_${idx}" style="display:flex;flex-direction:row-reverse;align-items:flex-end;gap:6px;margin-bottom:8px">
         ${av}
@@ -6222,28 +6271,82 @@ function renderChatMsgs(room){
   container.scrollTop = container.scrollHeight;
 }
 
+
+// ── Chat Media Preview ──
+function previewChatMedia(){
+  const files = document.getElementById('chatMediaInput').files;
+  const prev = document.getElementById('chatMediaPreview');
+  prev.innerHTML='';
+  if(!files.length) return;
+  Array.from(files).forEach(f=>{
+    const wrap = document.createElement('div');
+    wrap.style.cssText='position:relative;display:inline-block';
+    if(f.type.startsWith('video/')){
+      const vid = document.createElement('video');
+      vid.src=URL.createObjectURL(f);
+      vid.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid rgba(201,168,76,.4)';
+      vid.muted=true;
+      wrap.appendChild(vid);
+    } else {
+      const img = document.createElement('img');
+      img.src=URL.createObjectURL(f);
+      img.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid rgba(201,168,76,.4)';
+      wrap.appendChild(img);
+    }
+    const x = document.createElement('div');
+    x.innerHTML='×';x.style.cssText='position:absolute;top:-4px;right:-4px;background:#f44;color:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer';
+    x.onclick=()=>wrap.remove();
+    wrap.appendChild(x);
+    prev.appendChild(wrap);
+  });
+}
+
 function sendChatMsg(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
   const input = document.getElementById('chatMsgInput');
   const text = input.value.trim();
-  if(!text) return;
+  const mediaInput = document.getElementById('chatMediaInput');
+  const mediaFiles = mediaInput ? Array.from(mediaInput.files) : [];
+  if(!text && !mediaFiles.length) return;
   if(!chatMsgs[currentChat]) chatMsgs[currentChat]=[];
-  chatMsgs[currentChat].push({uid:currentUser.id,name:currentUser.name,text,time:new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'})});
-  // Auto-reply if admin room
-  if(currentChat && currentChat.startsWith('admin_')){
-    const adminName = ADMIN_PROFILES.find(a=>'admin_'+a.id===currentChat)?.name||'Admin';
-    setTimeout(()=>{
-      chatMsgs[currentChat].push({
-        uid:'admin',name:adminName,
-        text:'ຄຳຮ້ອງຂອງທ່ານຈະຖືກຕວດສອບໃນໄວໆນີ້ 🙏\nຖ້າຫາກທ່ານມີບັນຫາທີ່ດ່ວນ ໂປຣດຕິດຕໍ່:\n📱 WhatsApp: 020-549-66168\n💚 Line: @khaidee_lao\n📘 Facebook: P\'Seng SaenDy',
-        time:new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'})
-      });
-      saveChat(); renderChatMsgs(currentChat);
-    },1200);
+
+  const pushMsg = (mediaDataList=[]) => {
+    chatMsgs[currentChat].push({
+      uid:currentUser.id, name:currentUser.name, text,
+      media: mediaDataList,
+      time:new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'})
+    });
+    // Auto-reply if admin room
+    if(currentChat && currentChat.startsWith('admin_')){
+      const adminName = ADMIN_PROFILES.find(a=>'admin_'+a.id===currentChat)?.name||'Admin';
+      setTimeout(()=>{
+        chatMsgs[currentChat].push({
+          uid:'admin',name:adminName,
+          text:'ຄຳຮ້ອງຂອງທ່ານຈະຖືກຕວດສອບໃນໄວໆນີ້ 🙏\nຖ້າຫາກທ່ານມີບັນຫາທີ່ດ່ວນ ໂປຣດຕິດຕໍ່:\n📱 WhatsApp: 020-549-66168\n💚 Line: khaidee',
+          time:new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'})
+        });
+        saveChat(); renderChatMsgs(currentChat);
+      },1200);
+    }
+    saveChat();
+    input.value='';
+    if(mediaInput){ mediaInput.value=''; }
+    const prev = document.getElementById('chatMediaPreview');
+    if(prev) prev.innerHTML='';
+    renderChatMsgs(currentChat);
+  };
+
+  if(mediaFiles.length){
+    // Read all files as base64
+    const promises = mediaFiles.map(f=>new Promise(res=>{
+      const r=new FileReader();
+      r.onload=e=>res({type:f.type,data:e.target.result,name:f.name});
+      r.readAsDataURL(f);
+    }));
+    Promise.all(promises).then(pushMsg);
+  } else {
+    pushMsg([]);
   }
-  saveChat();
-  input.value='';
-  renderChatMsgs(currentChat);
 }
 
 function startNewChat(){
@@ -6302,14 +6405,20 @@ function previewFiles(inputId, previewId){
   const files = document.getElementById(inputId).files;
   const prev = document.getElementById(previewId);
   prev.innerHTML='';
-  Array.from(files).slice(0,10).forEach(f=>{
+  Array.from(files).slice(0,20).forEach(f=>{
     const div = document.createElement('div');
     div.className='upload-preview-item';
-    if(f.type.startsWith('image/')){
+    if(f.type.startsWith('video/')){
+      const vid = document.createElement('video');
+      vid.src = URL.createObjectURL(f);
+      vid.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:8px';
+      vid.muted=true; vid.loop=true; vid.autoplay=true;
+      div.appendChild(vid);
+    } else {
       const img = document.createElement('img');
       img.src = URL.createObjectURL(f);
       div.appendChild(img);
-    } else { div.innerHTML='🎬'; }
+    }
     prev.appendChild(div);
   });
 }
@@ -6328,13 +6437,22 @@ function previewSellImages(){
     const div = document.createElement('div');
     div.style.cssText='position:relative;display:inline-block;margin:3px';
     const img = document.createElement('img');
-    img.src = URL.createObjectURL(f);
-    img.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid rgba(201,168,76,.4)';
+    if(f.type.startsWith('video/')){
+      const vid = document.createElement('video');
+      vid.src = URL.createObjectURL(f);
+      vid.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid rgba(201,168,76,.4)';
+      vid.muted=true; vid.loop=true; vid.autoplay=true;
+      div.appendChild(vid);
+    } else {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid rgba(201,168,76,.4)';
     const del = document.createElement('div');
     del.innerHTML='×';
     del.style.cssText='position:absolute;top:-4px;right:-4px;background:#f44;color:#fff;border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px;font-size:12px;cursor:pointer;font-weight:900';
     del.onclick=()=>{ div.remove(); };
-    div.appendChild(img);
+      div.appendChild(img);
+    }
     div.appendChild(del);
     prev.appendChild(div);
   });
@@ -8654,11 +8772,10 @@ function calcWithdrawFee(){
   if(!prev) return;
   if(!amt){prev.style.display='none';return;}
   if(amt < 50000){prev.style.display='block';prev.innerHTML='<span style="color:#f66">⚠️ ຂັ້ນຕ່ຳ 50,000 ກີບ</span>';return;}
-  const feeRate = amt >= 500000 ? 0.05 : 0.10;
-  const fee = Math.round(amt*feeRate);
-  const net = amt-fee;
+  const fee = 700;
+  const net = amt - fee;
   prev.style.display='block';
-  prev.innerHTML=`💰 ຖອນ: <strong style="color:var(--gold)">${amt.toLocaleString()}</strong> ກີບ<br>📊 ຄ່າທຳນຽມ (${feeRate*100}%): <strong style="color:#f99">-${fee.toLocaleString()}</strong> ກີບ<br>✅ ຍອດທີ່ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ກີບ`;
+  prev.innerHTML=`💰 ຖອນ: <strong style="color:var(--gold)">${amt.toLocaleString()}</strong> ກີບ<br>📊 ຄ່າທຳນຽມ: <strong style="color:#f99">700 ກີບ</strong><br>✅ ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ກີບ`;
 }
 
 function doWithdraw(){
@@ -8667,9 +8784,8 @@ function doWithdraw(){
   const qr = document.getElementById('withdrawQRInput');
   if(!qr.files[0]){showNotif('ກະລຸນາອັດໂຫລດ QR code ກ່ອນ');return;}
   if((currentUser.wallet||0) < amt){showNotif('ຍອດ Wallet ບໍ່ພໍ');return;}
-  const feeRate = amt >= 500000 ? 0.05 : 0.10;
-  const fee = Math.round(amt*feeRate);
-  const net = amt-fee;
+  const fee = 700;
+  const net = amt - fee;
   const reader = new FileReader();
   reader.onload = function(e){
     const qrImg = e.target.result;
@@ -8708,89 +8824,89 @@ const TOPUP_GAMES = [
    featured:true, type:'uid', currency:'💎 Diamond',
    desc:'ເຕີມ Diamonds Free Fire ທຸກຍອດ',
    packages:[
-     {id:'f1',label:'30+3 💎',price:10000},
-     {id:'f2',label:'43+25 💎',price:17500},
-     {id:'f3',label:'137+35 💎 ⭐',price:39500},
-     {id:'f4',label:'231+79 💎',price:67500},
-     {id:'f5',label:'470+47 💎',price:111500},
-     {id:'f6',label:'627+63 💎',price:150000},
-     {id:'f7',label:'956+96 💎',price:221500},
-     {id:'f8',label:'1,637+164 💎',price:369000},
-     {id:'f9',label:'3,361+337 💎',price:734500},
-     {id:'f10',label:'ສະມາຊິກ ອາທິດ 🔥',price:25000},
-     {id:'f11',label:'ສະມາຊິກ ເດືອນ 🔥',price:50000},
-     {id:'f12',label:'ສະມາຊິກ Premium 🔥',price:221500},
-     {id:'f13',label:'Booyah Pass 🔥',price:68500},
+     {id:'f1',label:'30+3 💎',price:9500},
+     {id:'f2',label:'43+25 💎',price:16500},
+     {id:'f3',label:'137+35 💎 ⭐',price:37500},
+     {id:'f4',label:'231+79 💎',price:64500},
+     {id:'f5',label:'470+47 💎',price:106500},
+     {id:'f6',label:'627+63 💎',price:143000},
+     {id:'f7',label:'956+96 💎',price:211500},
+     {id:'f8',label:'1,637+164 💎',price:352000},
+     {id:'f9',label:'3,361+337 💎',price:701000},
+     {id:'f10',label:'ສະມາຊິກ ອາທິດ 🔥',price:24000},
+     {id:'f11',label:'ສະມາຊິກ ເດືອນ 🔥',price:47500},
+     {id:'f12',label:'ສະມາຊິກ Premium 🔥',price:211500},
+     {id:'f13',label:'Booyah Pass 🔥',price:65500},
    ]},
   {id:'mlbb',name:'Mobile Legends',short:'MLBB',
    img:'https://www.overtopup.com/assets/uploads/game/game-2.jpg',
    featured:true, type:'uid', currency:'💎 Diamond',
    desc:'ເຕີມ Diamond MLBB',
    packages:[
-     {id:'m1',label:'86 💎',price:31500},
-     {id:'m2',label:'172 💎',price:61500},
-     {id:'m3',label:'257 💎',price:89000},
-     {id:'m4',label:'344 💎',price:123000},
-     {id:'m5',label:'429 💎 ⭐',price:147500},
-     {id:'m6',label:'514 💎',price:174500},
-     {id:'m7',label:'600 💎',price:208000},
-     {id:'m8',label:'706 💎',price:230000},
-     {id:'m9',label:'963 💎',price:323000},
-     {id:'m10',label:'1,412 💎',price:469000},
-     {id:'m11',label:'2,901 💎',price:937500},
-     {id:'m12',label:'3,688 💎',price:1175000},
-     {id:'m13',label:'5,532 💎',price:1768000},
-     {id:'m14',label:'9,288 💎',price:2920000},
-     {id:'m15',label:'Weekly Pass',price:37500},
-     {id:'m16',label:'Twilight Pass',price:198000},
+     {id:'m1',label:'86 💎',price:30000},
+     {id:'m2',label:'172 💎',price:58500},
+     {id:'m3',label:'257 💎',price:85000},
+     {id:'m4',label:'344 💎',price:117500},
+     {id:'m5',label:'429 💎 ⭐',price:141000},
+     {id:'m6',label:'514 💎',price:166500},
+     {id:'m7',label:'600 💎',price:198500},
+     {id:'m8',label:'706 💎',price:219500},
+     {id:'m9',label:'963 💎',price:308500},
+     {id:'m10',label:'1,412 💎',price:447500},
+     {id:'m11',label:'2,901 💎',price:895000},
+     {id:'m12',label:'3,688 💎',price:1121500},
+     {id:'m13',label:'5,532 💎',price:1687500},
+     {id:'m14',label:'9,288 💎',price:2787500},
+     {id:'m15',label:'Weekly Pass',price:36000},
+     {id:'m16',label:'Twilight Pass',price:189000},
    ]},
   {id:'genshin',name:'Genshin Impact',short:'Genshin',
    img:'https://www.overtopup.com/assets/uploads/game/game-3.jpg',
    featured:true, type:'uid', currency:'💠 Genesis Crystal',
    desc:'ເຕີມ Genesis Crystal',
    packages:[
-     {id:'g1',label:'60 💠',price:22000},
-     {id:'g2',label:'300+30 💠',price:109000},
-     {id:'g3',label:'980+110 💠 ⭐',price:357000},
-     {id:'g4',label:'1980+260 💠',price:721000},
-     {id:'g5',label:'3280+600 💠',price:1193000},
-     {id:'g6',label:'6480+1600 💠',price:2354000},
+     {id:'g1',label:'60 💠',price:21000},
+     {id:'g2',label:'300+30 💠',price:104000},
+     {id:'g3',label:'980+110 💠 ⭐',price:341000},
+     {id:'g4',label:'1980+260 💠',price:688000},
+     {id:'g5',label:'3280+600 💠',price:1139000},
+     {id:'g6',label:'6480+1600 💠',price:2247000},
    ]},
   {id:'rov',name:'RoV Mobile',short:'RoV',
    img:'https://www.overtopup.com/assets/uploads/game/game-4.jpg',
    featured:true, type:'uid', currency:'🔶 Ruby',
    desc:'ເຕີມ Ruby RoV Mobile',
    packages:[
-     {id:'r1',label:'85 Ruby',price:22000},
-     {id:'r2',label:'172 Ruby ⭐',price:44000},
-     {id:'r3',label:'345 Ruby',price:87000},
-     {id:'r4',label:'520 Ruby',price:131000},
-     {id:'r5',label:'1090 Ruby',price:262000},
-     {id:'r6',label:'2195 Ruby',price:524000},
+     {id:'r1',label:'85 Ruby',price:21000},
+     {id:'r2',label:'172 Ruby ⭐',price:42000},
+     {id:'r3',label:'345 Ruby',price:83000},
+     {id:'r4',label:'520 Ruby',price:125000},
+     {id:'r5',label:'1090 Ruby',price:250000},
+     {id:'r6',label:'2195 Ruby',price:500000},
    ]},
   {id:'valorant',name:'Valorant',short:'Valorant',
    img:'https://www.overtopup.com/assets/uploads/game/game-18.jpg',
    featured:true, type:'uid', currency:'💳 VP',
    desc:'ເຕີມ Valorant Points',
    packages:[
-     {id:'v1',label:'475 VP',price:115000},
-     {id:'v2',label:'950 VP ⭐',price:220000},
-     {id:'v3',label:'1475 VP',price:335000},
-     {id:'v4',label:'2050 VP',price:458000},
-     {id:'v5',label:'3650 VP',price:780000},
-     {id:'v6',label:'5350 VP',price:1090000},
+     {id:'v1',label:'475 VP',price:110000},
+     {id:'v2',label:'950 VP ⭐',price:210000},
+     {id:'v3',label:'1475 VP',price:320000},
+     {id:'v4',label:'2050 VP',price:437000},
+     {id:'v5',label:'3650 VP',price:744500},
+     {id:'v6',label:'5350 VP',price:1040500},
    ]},
   {id:'honkai',name:'Honkai Star Rail',short:'Star Rail',
    img:'https://www.overtopup.com/assets/uploads/game/game-35.png',
    featured:true, type:'uid', currency:'🌟 Oneiric Shard',
    desc:'ເຕີມ Oneiric Shard',
    packages:[
-     {id:'h1',label:'60 🌟',price:22000},
-     {id:'h2',label:'300+30 🌟',price:109000},
-     {id:'h3',label:'980+110 🌟 ⭐',price:357000},
-     {id:'h4',label:'1980+260 🌟',price:721000},
-     {id:'h5',label:'3280+600 🌟',price:1193000},
-     {id:'h6',label:'6480+1600 🌟',price:2354000},
+     {id:'h1',label:'60 🌟',price:21000},
+     {id:'h2',label:'300+30 🌟',price:104000},
+     {id:'h3',label:'980+110 🌟 ⭐',price:341000},
+     {id:'h4',label:'1980+260 🌟',price:688000},
+     {id:'h5',label:'3280+600 🌟',price:1139000},
+     {id:'h6',label:'6480+1600 🌟',price:2247000},
    ]},
   // ---- ALL GAMES ----
   {id:'zzz',name:'Zenless Zone Zero',short:'ZZZ',
@@ -8798,160 +8914,160 @@ const TOPUP_GAMES = [
    featured:false, type:'uid', currency:'💠 Polychrome',
    desc:'ເຕີມ Polychrome ZZZ',
    packages:[
-     {id:'z1',label:'60 💠',price:22000},
-     {id:'z2',label:'300+30 💠',price:109000},
-     {id:'z3',label:'980+110 💠 ⭐',price:357000},
-     {id:'z4',label:'1980+260 💠',price:721000},
-     {id:'z5',label:'3280+600 💠',price:1193000},
+     {id:'z1',label:'60 💠',price:21000},
+     {id:'z2',label:'300+30 💠',price:104000},
+     {id:'z3',label:'980+110 💠 ⭐',price:341000},
+     {id:'z4',label:'1980+260 💠',price:688000},
+     {id:'z5',label:'3280+600 💠',price:1139000},
    ]},
   {id:'pubgm',name:'PUBG Mobile',short:'PUBG M',
    img:'https://www.overtopup.com/assets/uploads/game/game-6.jpg',
    featured:false, type:'uid', currency:'🪙 UC',
    desc:'ເຕີມ Unknown Cash PUBG M',
    packages:[
-     {id:'pu1',label:'60 UC',price:22000},
-     {id:'pu2',label:'325 UC ⭐',price:109000},
-     {id:'pu3',label:'660 UC',price:209000},
-     {id:'pu4',label:'1800 UC',price:551000},
-     {id:'pu5',label:'3850 UC',price:1111000},
-     {id:'pu6',label:'8100 UC',price:2222000},
+     {id:'pu1',label:'60 UC',price:21000},
+     {id:'pu2',label:'325 UC ⭐',price:104000},
+     {id:'pu3',label:'660 UC',price:199500},
+     {id:'pu4',label:'1800 UC',price:526000},
+     {id:'pu5',label:'3850 UC',price:1060500},
+     {id:'pu6',label:'8100 UC',price:2121000},
    ]},
   {id:'codm',name:'Call of Duty Mobile',short:'CoD Mobile',
    img:'https://www.overtopup.com/assets/image/game/call-of-dutymobile.jpeg',
    featured:false, type:'uid', currency:'💲 CP',
    desc:'ເຕີມ CoD Points',
    packages:[
-     {id:'c1',label:'80 CP',price:27500},
-     {id:'c2',label:'400 CP',price:133000},
-     {id:'c3',label:'800 CP ⭐',price:260000},
-     {id:'c4',label:'2000 CP',price:638000},
-     {id:'c5',label:'5000 CP',price:1540000},
+     {id:'c1',label:'80 CP',price:26000},
+     {id:'c2',label:'400 CP',price:127000},
+     {id:'c3',label:'800 CP ⭐',price:248000},
+     {id:'c4',label:'2000 CP',price:609000},
+     {id:'c5',label:'5000 CP',price:1470000},
    ]},
   {id:'wuthering',name:'Wuthering Waves',short:'WuWa',
    img:'https://www.overtopup.com/assets/image/game/wuthering-waves.png',
    featured:false, type:'idpass', currency:'🌊 Lunite',
    desc:'ເຕີມ Lunite Wuthering Waves',
    packages:[
-     {id:'w1',label:'60 🌊',price:22000},
-     {id:'w2',label:'300+30 🌊 ⭐',price:109000},
-     {id:'w3',label:'980+110 🌊',price:357000},
-     {id:'w4',label:'1980+260 🌊',price:721000},
+     {id:'w1',label:'60 🌊',price:21000},
+     {id:'w2',label:'300+30 🌊 ⭐',price:104000},
+     {id:'w3',label:'980+110 🌊',price:341000},
+     {id:'w4',label:'1980+260 🌊',price:688000},
    ]},
   {id:'roblox',name:'Robux (Roblox)',short:'Roblox',
    img:'https://www.overtopup.com/assets/uploads/game-id-pass/roblox.png',
    featured:false, type:'idpass', currency:'🟡 Robux',
    desc:'ເຕີມ Robux Roblox',
    packages:[
-     {id:'rb1',label:'80 Robux',price:27500},
-     {id:'rb2',label:'400 Robux',price:133000},
-     {id:'rb3',label:'800 Robux ⭐',price:260000},
-     {id:'rb4',label:'1700 Robux',price:524000},
-     {id:'rb5',label:'4500 Robux',price:1320000},
+     {id:'rb1',label:'80 Robux',price:26000},
+     {id:'rb2',label:'400 Robux',price:127000},
+     {id:'rb3',label:'800 Robux ⭐',price:248000},
+     {id:'rb4',label:'1700 Robux',price:500000},
+     {id:'rb5',label:'4500 Robux',price:1260000},
    ]},
   {id:'identityv',name:'Identity V',short:'Identity V',
    img:'https://www.overtopup.com/assets/uploads/game/game-17.jpg',
    featured:false, type:'uid', currency:'🖤 Echo',
    desc:'ເຕີມ Echo Identity V',
    packages:[
-     {id:'iv1',label:'60 Echo',price:22000},
-     {id:'iv2',label:'328 Echo ⭐',price:109000},
-     {id:'iv3',label:'688 Echo',price:220000},
-     {id:'iv4',label:'1888 Echo',price:579000},
+     {id:'iv1',label:'60 Echo',price:21000},
+     {id:'iv2',label:'328 Echo ⭐',price:104000},
+     {id:'iv3',label:'688 Echo',price:210000},
+     {id:'iv4',label:'1888 Echo',price:552500},
    ]},
   {id:'ragnarok',name:'Ragnarok Origin',short:'RO-O',
    img:'https://www.overtopup.com/assets/uploads/game/game-7.jpg',
    featured:false, type:'uid', currency:'💎 Tokens',
    desc:'ເຕີມ Ragnarok Origin',
    packages:[
-     {id:'ro1',label:'30 Tokens',price:22000},
-     {id:'ro2',label:'100 Tokens ⭐',price:66000},
-     {id:'ro3',label:'300 Tokens',price:187000},
-     {id:'ro4',label:'1000 Tokens',price:594000},
+     {id:'ro1',label:'30 Tokens',price:21000},
+     {id:'ro2',label:'100 Tokens ⭐',price:63000},
+     {id:'ro3',label:'300 Tokens',price:178500},
+     {id:'ro4',label:'1000 Tokens',price:567000},
    ]},
   {id:'lolpc',name:'LOL (PC)',short:'LOL PC',
    img:'https://www.overtopup.com/assets/uploads/game/game-40.jpg',
    featured:false, type:'uid', currency:'💰 RP',
    desc:'ເຕີມ Riot Points LOL',
    packages:[
-     {id:'lp1',label:'230 RP',price:44000},
-     {id:'lp2',label:'575 RP ⭐',price:109000},
-     {id:'lp3',label:'1380 RP',price:253000},
-     {id:'lp4',label:'2800 RP',price:495000},
-     {id:'lp5',label:'5000 RP',price:858000},
+     {id:'lp1',label:'230 RP',price:42000},
+     {id:'lp2',label:'575 RP ⭐',price:104000},
+     {id:'lp3',label:'1380 RP',price:241500},
+     {id:'lp4',label:'2800 RP',price:472500},
+     {id:'lp5',label:'5000 RP',price:819000},
    ]},
   {id:'lolwr',name:'Wild Rift',short:'Wild Rift',
    img:'https://www.overtopup.com/assets/uploads/game/game-41.jpg',
    featured:false, type:'uid', currency:'💰 Wild Cores',
    desc:'ເຕີມ Wild Cores',
    packages:[
-     {id:'wc1',label:'100 WC',price:22000},
-     {id:'wc2',label:'500 WC ⭐',price:105000},
-     {id:'wc3',label:'1000 WC',price:205000},
-     {id:'wc4',label:'3000 WC',price:594000},
+     {id:'wc1',label:'100 WC',price:21000},
+     {id:'wc2',label:'500 WC ⭐',price:100000},
+     {id:'wc3',label:'1000 WC',price:195500},
+     {id:'wc4',label:'3000 WC',price:567000},
    ]},
   {id:'bloodstrike',name:'Blood Strike',short:'Blood Strike',
    img:'https://www.overtopup.com/assets/uploads/game/game-37.jpg',
    featured:false, type:'uid', currency:'🩸 BC',
    desc:'ເຕີມ Blood Currency',
    packages:[
-     {id:'bs1',label:'60 BC',price:22000},
-     {id:'bs2',label:'300 BC ⭐',price:105000},
-     {id:'bs3',label:'1000 BC',price:330000},
+     {id:'bs1',label:'60 BC',price:21000},
+     {id:'bs2',label:'300 BC ⭐',price:100000},
+     {id:'bs3',label:'1000 BC',price:315000},
    ]},
   {id:'efootball',name:'eFootball PES',short:'eFootball',
    img:'https://www.overtopup.com/assets/uploads/game-id-pass/efootball-pes-2023-ios.png',
    featured:false, type:'idpass', currency:'⚽ Coins',
    desc:'ເຕີມ eFootball Coins',
    packages:[
-     {id:'ef1',label:'300 Coins',price:66000},
-     {id:'ef2',label:'500 Coins ⭐',price:105000},
-     {id:'ef3',label:'1000 Coins',price:203000},
-     {id:'ef4',label:'2000 Coins',price:396000},
+     {id:'ef1',label:'300 Coins',price:63000},
+     {id:'ef2',label:'500 Coins ⭐',price:100000},
+     {id:'ef3',label:'1000 Coins',price:194000},
+     {id:'ef4',label:'2000 Coins',price:378000},
    ]},
   {id:'harrypotter',name:'Harry Potter: Magic Awakened',short:'HP:MA',
    img:'https://www.overtopup.com/assets/uploads/game/game-27.jpg',
    featured:false, type:'uid', currency:'⚡ Gems',
    desc:'ເຕີມ HP Magic Awakened',
    packages:[
-     {id:'hp1',label:'60 Gems',price:22000},
-     {id:'hp2',label:'300+30 Gems ⭐',price:109000},
-     {id:'hp3',label:'980+110 Gems',price:357000},
+     {id:'hp1',label:'60 Gems',price:21000},
+     {id:'hp2',label:'300+30 Gems ⭐',price:104000},
+     {id:'hp3',label:'980+110 Gems',price:341000},
    ]},
   {id:'slamdunk',name:'Slam Dunk',short:'Slam Dunk',
    img:'https://www.overtopup.com/assets/uploads/game/game-23.jpg',
    featured:false, type:'uid', currency:'🏀 Gems',
    desc:'ເຕີມ Slam Dunk',
    packages:[
-     {id:'sd1',label:'68 Gems',price:22000},
-     {id:'sd2',label:'348 Gems ⭐',price:109000},
-     {id:'sd3',label:'688 Gems',price:209000},
+     {id:'sd1',label:'68 Gems',price:21000},
+     {id:'sd2',label:'348 Gems ⭐',price:104000},
+     {id:'sd3',label:'688 Gems',price:199500},
    ]},
   {id:'afkjourney',name:'AFK Journey',short:'AFK Journey',
    img:'https://www.overtopup.com/assets/uploads/game/game-54.png',
    featured:false, type:'uid', currency:'💎 Diamonds',
    desc:'ເຕີມ AFK Journey',
    packages:[
-     {id:'aj1',label:'60 💎',price:22000},
-     {id:'aj2',label:'300 💎 ⭐',price:105000},
-     {id:'aj3',label:'1000 💎',price:330000},
+     {id:'aj1',label:'60 💎',price:21000},
+     {id:'aj2',label:'300 💎 ⭐',price:100000},
+     {id:'aj3',label:'1000 💎',price:315000},
    ]},
   {id:'lineage',name:'Lineage2M',short:'Lineage2M',
    img:'https://www.overtopup.com/assets/image/game/lineage2m.png',
    featured:false, type:'uid', currency:'💠 NCoin',
    desc:'ເຕີມ Lineage2M',
    packages:[
-     {id:'ln1',label:'100 NC',price:55000},
-     {id:'ln2',label:'300 NC ⭐',price:161000},
-     {id:'ln3',label:'600 NC',price:308000},
+     {id:'ln1',label:'100 NC',price:52500},
+     {id:'ln2',label:'300 NC ⭐',price:153500},
+     {id:'ln3',label:'600 NC',price:294000},
    ]},
   {id:'deltaforce',name:'Delta Force',short:'Delta Force',
    img:'https://www.overtopup.com/assets/image/game/delta-force-garena.png',
    featured:false, type:'uid', currency:'💲 DF Coins',
    desc:'ເຕີມ Delta Force Garena',
    packages:[
-     {id:'df1',label:'60 Coins',price:22000},
-     {id:'df2',label:'300 Coins ⭐',price:105000},
-     {id:'df3',label:'980 Coins',price:330000},
+     {id:'df1',label:'60 Coins',price:21000},
+     {id:'df2',label:'300 Coins ⭐',price:100000},
+     {id:'df3',label:'980 Coins',price:315000},
    ]},
 ];
 
