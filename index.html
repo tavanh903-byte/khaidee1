@@ -2131,16 +2131,23 @@ async function syncFromSupabase(){
       ✅ ຫຼັງລູກຄ້າຮັບຂອງ ພາຍໃນ 1-2 ຊົ່ວໂມງ ເງິນຈະເຂົ້າ Wallet ຂອງທ່ານ
     </div>
 
-    <!-- ── ຮູບພາບ ── -->
+    <!-- ── ຮູບພາບ & ວີດີໂອ ── -->
     <div class="form-group">
-      <label class="form-label">📸 ຮູບພາບ (ສູງສຸດ 5)</label>
-      <div class="upload-box" onclick="document.getElementById('sellImgInput').click()">
-        📸 ອັດໂຫລດຮູບສິນຄ້າ
-        <div id="sellImgPreview" class="upload-preview"></div>
+      <label class="form-label" id="sellImgLabel">📸 ຮູບພາບ (ສູງສຸດ <span id="sellImgLimit">10</span> ຮູບ)</label>
+      <div class="upload-box" onclick="document.getElementById('sellImgInput').click()" style="min-height:70px">
+        📸 ກົດເພື່ອອັດໂຫລດຮູບ (ເລືອກໄດ້ຫລາຍຮູບ)
+        <div id="sellImgPreview" class="upload-preview" style="margin-top:8px"></div>
       </div>
-      <input type="file" id="sellImgInput" multiple accept="image/*" style="display:none" onchange="previewFiles('sellImgInput','sellImgPreview')">
+      <input type="file" id="sellImgInput" multiple accept="image/*" style="display:none" onchange="previewSellImages()">
+      <div style="margin-top:4px;font-size:11px;color:var(--text2)">💡 ສິນຄ້າທົ່ວໄປ: 10 ຮູບ | ID ເກມ: 20 ຮູບ</div>
     </div>
 
+    <!-- ── ລິ້ງວີດີໂອ ── -->
+    <div class="form-group">
+      <label class="form-label">🎬 ລິ້ງວີດີໂອ (YouTube / TikTok) <span style="font-size:10px;color:var(--text2)">ທາງເລືອກ</span></label>
+      <input class="form-input" id="sellVideoUrl" placeholder="https://youtube.com/... ຫລື https://tiktok.com/...">
+      <div style="margin-top:4px;font-size:11px;color:var(--text2)">💡 ວາງລິ້ງ YouTube ຫລື TikTok ກໍ່ໄດ້</div>
+    </div>
     <!-- ── ຊື່ & ລາຍລະອຽດ ── -->
     <div class="form-group">
       <label class="form-label">ຊື່ສິນຄ້າ <span style="color:#f66">*</span></label>
@@ -2902,6 +2909,11 @@ function saveUser(){
 }
 
 let products = JSON.parse(localStorage.getItem('kd_products') || '[]');
+// Clear demo products on first load (one-time migration)
+if(products.length > 0 && products.some(p=>['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009'].includes(p.id))){
+  products = products.filter(p=>!['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009'].includes(p.id));
+  localStorage.setItem('kd_products', JSON.stringify(products));
+}
 let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
 let chatMsgs = JSON.parse(localStorage.getItem('kd_chat') || '{}');
 let currentChat = null;
@@ -3193,6 +3205,30 @@ function showProductDetail(id){
 
   const gallery = imgs.length ? buildCarousel(imgs) : `<div style="text-align:center;font-size:72px;padding:24px 0">${p.emoji||'📦'}</div>`;
 
+  // Video embed
+  let videoHtml = '';
+  if(p.videoUrl){
+    const vu = p.videoUrl.trim();
+    let embedUrl = '';
+    if(vu.includes('youtube.com/watch')){
+      const vid = new URLSearchParams(vu.split('?')[1]).get('v');
+      if(vid) embedUrl = 'https://www.youtube.com/embed/'+vid;
+    } else if(vu.includes('youtu.be/')){
+      embedUrl = 'https://www.youtube.com/embed/'+vu.split('youtu.be/')[1].split('?')[0];
+    } else if(vu.includes('tiktok.com')){
+      embedUrl = vu; // TikTok shows as link
+    }
+    if(embedUrl && embedUrl.includes('youtube')){
+      videoHtml = `<div style="margin:10px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(201,168,76,.3)">
+        <iframe src="${embedUrl}" style="width:100%;height:200px;border:none" allowfullscreen loading="lazy"></iframe>
+      </div>`;
+    } else if(vu){
+      videoHtml = `<div style="margin:10px 0;padding:10px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:10px;text-align:center">
+        🎬 <a href="${vu}" target="_blank" style="color:var(--gold);font-size:13px">ເບິ່ງວີດີໂອສິນຄ້າ ↗</a>
+      </div>`;
+    }
+  }
+
   const related = products.filter(x=>x.id!==id&&(x.cat===p.cat||(x.isGame&&p.isGame))).slice(0,6);
   const relatedHtml = related.length ? `
   <div style="margin-top:20px;border-top:1px solid var(--gray2);padding-top:16px">
@@ -3225,12 +3261,21 @@ function showProductDetail(id){
       <div style="font-size:12px;color:var(--gold);margin-bottom:6px;font-weight:700">✍️ ຂຽນລີວິວ</div>
       <div style="display:flex;gap:6px;margin-bottom:8px">${[1,2,3,4,5].map(n=>`<span style="font-size:22px;cursor:pointer" onclick="setReviewStar(${n},'${id}')" id="star_${id}_${n}">☆</span>`).join('')}</div>
       <textarea class="form-input" id="reviewText_${id}" rows="2" placeholder="ຂຽນຄຳຄິດເຫັນ..." style="margin-bottom:8px"></textarea>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <label style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--gold)">
+          📷 ໃສ່ຮູບ/ວີດີໂອ
+          <input type="file" id="reviewMedia_${id}" accept="image/*,video/*" multiple style="display:none" onchange="previewReviewMedia('${id}')">
+        </label>
+        <span id="reviewMediaCount_${id}" style="font-size:11px;color:var(--text2)"></span>
+      </div>
+      <div id="reviewMediaPreview_${id}" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
       <button class="btn btn-gold" style="width:100%;font-size:13px;padding:8px" onclick="submitReview('${id}')">📤 ສົ່ງລີວິວ</button>
     </div>` : '<div style="font-size:12px;color:var(--text2);text-align:center;padding:8px">ເຂົ້າລະບົບເພື່ອຂຽນລີວິວ</div>'}
   </div>`;
 
   const html = `
     ${gallery}
+    ${videoHtml}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
       <div style="flex:1">
         <div style="font-size:11px;color:var(--text2)">ID: #${p.id}</div>
@@ -5220,7 +5265,7 @@ function submitSellerApply(){
 function showSellProduct(){
   if(!currentUser?.isSeller){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
   // Reset all fields
-  ['sellName','sellDesc','sellPrice','sellQty'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['sellName','sellDesc','sellPrice','sellQty','sellVideoUrl'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const catEl=document.getElementById('sellCat');if(catEl)catEl.value='';
   const dynEl=document.getElementById('sellDynamicFields');if(dynEl)dynEl.innerHTML='';
   const prev=document.getElementById('sellImgPreview');if(prev)prev.innerHTML='';
@@ -5244,6 +5289,10 @@ let sellCustomTags = [];
 function onSellCatChange(){
   const cat = document.getElementById('sellCat').value;
   const container = document.getElementById('sellDynamicFields');
+  // Update image limit label
+  const isGame = cat==='game'||cat==='game_id'||cat.startsWith('game');
+  const limitEl = document.getElementById('sellImgLimit');
+  if(limitEl) limitEl.textContent = isGame ? '20' : '10';
   sellSelectedColors=[]; sellSelectedSizes=[]; sellSelectedStorages=[]; sellCondition=''; sellCustomTags=[];
   if(!cat){ container.innerHTML=''; return; }
 
@@ -5666,12 +5715,16 @@ function submitSellProduct(){
   const id = 'PRD-'+Date.now().toString().slice(-6);
   const imgFiles = document.getElementById('sellImgInput').files;
 
+  const isGameCat = cat==='game'||cat==='game_id'||cat.startsWith('game');
+  const MAX_IMGS = isGameCat ? 20 : 10;
+  const videoUrl = (document.getElementById('sellVideoUrl')?.value||'').trim();
+
   const readImgsCompressed = (files, cb) => {
-    const imgs=[], total=Math.min(files.length,5);
+    const imgs=[], total=Math.min(files.length, MAX_IMGS);
     if(!total){cb(imgs);return;}
     let done=0;
-    Array.from(files).slice(0,5).forEach(f=>{
-      compressImage(f,600,600,0.6,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+    Array.from(files).slice(0, MAX_IMGS).forEach(f=>{
+      compressImage(f,800,800,0.7,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
   readImgsCompressed(imgFiles, imgs=>{
@@ -5681,6 +5734,7 @@ function submitSellProduct(){
       price, qty, emoji, sold: 0,
       seller: currentUser.name, sellerId: currentUser.id,
       images: imgs,
+      videoUrl: videoUrl||null,
       postedAt: new Date().toISOString(),
       ...extra
     };
@@ -6255,11 +6309,39 @@ function previewFiles(inputId, previewId){
       const img = document.createElement('img');
       img.src = URL.createObjectURL(f);
       div.appendChild(img);
-    } else {
-      div.innerHTML='🎬';
-    }
+    } else { div.innerHTML='🎬'; }
     prev.appendChild(div);
   });
+}
+
+function previewSellImages(){
+  const cat = document.getElementById('sellCat')?.value||'';
+  const isGame = cat==='game'||cat==='game_id';
+  const MAX = isGame ? 20 : 10;
+  document.getElementById('sellImgLimit').textContent = MAX;
+  const files = document.getElementById('sellImgInput').files;
+  const prev = document.getElementById('sellImgPreview');
+  prev.innerHTML='';
+  const selected = Array.from(files).slice(0, MAX);
+  if(files.length > MAX) showNotif('⚠️ ເລືອກໄດ້ສູງສຸດ '+MAX+' ຮູບ (ຕັດຮູບທີ່ເກີນອອກ)');
+  selected.forEach((f,i)=>{
+    const div = document.createElement('div');
+    div.style.cssText='position:relative;display:inline-block;margin:3px';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.style.cssText='width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid rgba(201,168,76,.4)';
+    const del = document.createElement('div');
+    del.innerHTML='×';
+    del.style.cssText='position:absolute;top:-4px;right:-4px;background:#f44;color:#fff;border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px;font-size:12px;cursor:pointer;font-weight:900';
+    del.onclick=()=>{ div.remove(); };
+    div.appendChild(img);
+    div.appendChild(del);
+    prev.appendChild(div);
+  });
+  const cnt = document.createElement('div');
+  cnt.style.cssText='font-size:11px;color:var(--text2);margin-top:4px;width:100%';
+  cnt.textContent = selected.length+'/'+MAX+' ຮູບ';
+  prev.appendChild(cnt);
 }
 
 // ============ PAGE SWITCHING ============
