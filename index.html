@@ -641,6 +641,21 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .pin-box{width:42px;height:52px;text-align:center;font-size:22px;font-weight:700;background:var(--dark3);border:2px solid var(--gray2);border-radius:12px;color:var(--text);outline:none;font-family:'Sarabun',sans-serif;transition:border-color .2s}
 .pin-box:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.2)}
 .pin-box.filled{border-color:var(--gold)}
+
+/* ── Update notification styles ── */
+@keyframes pulse-gold {
+  0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.7);background:rgba(201,168,76,.25)}
+  50%{box-shadow:0 0 0 8px rgba(201,168,76,0);background:rgba(201,168,76,.4)}
+}
+@keyframes pulse-dot {
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.4);opacity:.7}
+}
+#updateBtn{animation:pulse-gold 1.8s infinite;display:none}
+#updateBtn.has-update{display:flex!important}
+.update-dot{width:8px;height:8px;background:#ff4444;border-radius:50%;animation:pulse-dot 1s infinite;display:inline-block;margin-left:4px}
+.update-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.update-popup{background:linear-gradient(135deg,#0a0a0a,#1a1200);border:1.5px solid var(--gold);border-radius:20px;padding:28px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 40px rgba(201,168,76,.3)}
 </style>
 <script>
 // ── Auto-update checker ──
@@ -660,6 +675,22 @@ select.form-input{-webkit-appearance:none;appearance:none}
 </head>
 <body>
 <div class="notif-container" id="notifContainer"></div>
+
+<!-- ══ UPDATE POPUP ══ -->
+<div class="update-popup-overlay" id="updatePopup" style="display:none">
+  <div class="update-popup">
+    <div style="font-size:48px;margin-bottom:8px">🚀</div>
+    <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:6px">NEW UPDATE</div>
+    <div style="font-size:22px;font-weight:900;color:#fff;font-family:'Cinzel Decorative',serif;margin-bottom:4px" id="updatePopupVer">v1.0</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6" id="updatePopupNote">ມີການອັບເດດໃໝ່!</div>
+    <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:18px;text-align:left;max-height:160px;overflow-y:auto" id="updatePopupChanges"></div>
+    <button onclick="dismissUpdatePopup()" style="width:100%;background:linear-gradient(135deg,var(--gold),#f0d080);color:#000;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer;font-family:'Sarabun',sans-serif">
+      ✅ ຮັບຊາບ — ໄດ້ເລີຍ!
+    </button>
+    <div style="margin-top:10px;font-size:10px;color:var(--text2)">ກົດ OK ເພື່ອປິດ</div>
+  </div>
+</div>
+
 
 <!-- SPLASH -->
 <div id="splash">
@@ -840,6 +871,9 @@ select.form-input{-webkit-appearance:none;appearance:none}
       </div>
       <span class="logo-text">ຂາຍດີ</span>
     </div>
+    <button id="updateBtn" onclick="showUpdatePopup()" style="display:none;align-items:center;gap:5px;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.5);color:var(--gold);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+      🆕 ອັບເດດ<span class="update-dot"></span>
+    </button>
     <div class="wallet-btn" onclick="showWallet()">
       💰 <span class="wallet-amount" id="walletDisplay">0 ກີບ</span>
     </div>
@@ -2762,6 +2796,7 @@ function initApp() {
   updateWalletDisplay();
   updateProfileUI();
   renderBillsPage();
+  checkUpdateOnLoad();
 }
 
 
@@ -6993,8 +7028,9 @@ const WA_ADMIN = '8562054966168';
 const WA_SITE  = 'tavanh903-byte.github.io/khaidee1';
 
 function sendWANotif(msg){
+  const text = Array.isArray(msg) ? msg.join('\n') : msg;
   setTimeout(()=>{
-    window.open('https://wa.me/'+WA_ADMIN+'?text='+encodeURIComponent(msg),'_blank');
+    window.open('https://wa.me/'+WA_ADMIN+'?text='+encodeURIComponent(text),'_blank');
   }, 300);
 }
 
@@ -7506,7 +7542,7 @@ function switchAdminTab(tab){
 
 function renderAdminTab(tab){
   const c = document.getElementById('adminContent');
-  if(tab==='overview') c.innerHTML = renderAdminOverview();
+  if(tab==='overview') c.innerHTML = renderAdminOverview() + renderAdminUpdateAnnounce();
   else if(tab==='search') c.innerHTML = renderAdminSearch();
   else if(tab==='users') c.innerHTML = renderAdminUsers();
   else if(tab==='products') c.innerHTML = renderAdminProducts();
@@ -8283,21 +8319,52 @@ function doDeposit(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
   const slip = document.getElementById('depositSlipInput');
   if(!slip.files[0]){showNotif('ກະລຸນາອັດໂຫລດສລິບກ່ອນ ຈຶ່ງຈະຢືນຢັນໄດ້');return;}
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const slipImg = e.target.result;
-    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-    deps.push({id:'DEP-'+Date.now(),userId:currentUser.id,userName:currentUser.name,amount:amt,slipImg,date:new Date().toLocaleString(),status:'pending',type:'deposit'});
-    localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
-    addAdminNotification('deposit',{user:currentUser.name,amount:amt});
-    waDeposit(currentUser, amt);
-    closeModal('depositModal');
-    document.getElementById('depositAmt').value='';
-    document.getElementById('depositSlipPreview').innerHTML='';
-    document.getElementById('depositSlipInput').value='';
-    showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+amt.toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ');
+
+  const file = slip.files[0];
+  // Compress image before storing to avoid localStorage quota error
+  const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
+  img.onload = function(){
+    const canvas = document.createElement('canvas');
+    const MAX = 600;
+    let w = img.width, h = img.height;
+    if(w > MAX){ h = Math.round(h*MAX/w); w = MAX; }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    const slipImg = canvas.toDataURL('image/jpeg', 0.6);
+    URL.revokeObjectURL(objectUrl);
+    try {
+      const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+      deps.push({
+        id:'DEP-'+Date.now(),
+        userId:currentUser.id,
+        userName:currentUser.name||currentUser.user,
+        amount:amt,
+        slipImg,
+        date:new Date().toLocaleString(),
+        status:'pending'
+      });
+      localStorage.setItem('kd_deposit_requests', JSON.stringify(deps));
+      addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt});
+      waDeposit(currentUser, amt);
+      closeModal('depositModal');
+      document.getElementById('depositAmt').value='';
+      document.getElementById('depositSlipPreview').innerHTML='';
+      document.getElementById('depositSlipInput').value='';
+      showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+Number(amt).toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ');
+    } catch(err) {
+      if(err.name==='QuotaExceededError'){
+        showNotif('❌ ບໍ່ສາມາດບັນທຶກໄດ້: ຫນ່ວຍຄວາມຈຳເຕັມ ກາລຸນາລຶບຂໍ້ມູນເກົ່າ');
+      } else {
+        showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+err.message);
+        console.error('doDeposit error:', err);
+      }
+    }
   };
-  reader.readAsDataURL(slip.files[0]);
+  img.onerror = function(){
+    showNotif('❌ ບໍ່ສາມາດອ່ານໄຟລ໌ຮູບໄດ້ ກາລຸນາລອງໃໝ່');
+  };
+  img.src = objectUrl;
 }
 
 function calcWithdrawFee(){
@@ -8821,6 +8888,114 @@ function submitGameTopup(gameId){
 }
 
 // ============ MODALS ============
+
+
+// ══════════════════════════════════════════
+// 🚀 UPDATE ANNOUNCEMENT SYSTEM
+// ══════════════════════════════════════════
+const KD_UPDATE_KEY = 'kd_last_seen_update';
+
+function checkUpdateOnLoad(){
+  try {
+    const info = JSON.parse(localStorage.getItem('kd_update_info')||'null');
+    if(!info) return;
+    const seen = localStorage.getItem(KD_UPDATE_KEY);
+    if(seen !== info.ver){
+      // Show popup after splash
+      setTimeout(()=>{ showUpdatePopupData(info); }, 500);
+    }
+    // Always show blinking button if update exists
+    const btn = document.getElementById('updateBtn');
+    if(btn){ btn.classList.add('has-update'); btn.style.display='flex'; }
+  } catch(e){}
+}
+
+function showUpdatePopupData(info){
+  document.getElementById('updatePopupVer').textContent = info.ver || 'v1.0';
+  document.getElementById('updatePopupNote').textContent = info.note || 'ມີການອັບເດດໃໝ່!';
+  const changes = info.changes || [];
+  document.getElementById('updatePopupChanges').innerHTML = changes.length
+    ? changes.map(c=>`<div style="padding:4px 0;border-bottom:1px solid rgba(201,168,76,.1);font-size:12px;color:var(--text)">✦ ${c}</div>`).join('')
+    : '<div style="font-size:12px;color:var(--text2);text-align:center">ປັບປຸງລະບົບທົ່ວໄປ</div>';
+  document.getElementById('updatePopup').style.display = 'flex';
+}
+
+function showUpdatePopup(){
+  try {
+    const info = JSON.parse(localStorage.getItem('kd_update_info')||'null');
+    if(info) showUpdatePopupData(info);
+  } catch(e){}
+}
+
+function dismissUpdatePopup(){
+  try {
+    const info = JSON.parse(localStorage.getItem('kd_update_info')||'null');
+    if(info) localStorage.setItem(KD_UPDATE_KEY, info.ver);
+  } catch(e){}
+  document.getElementById('updatePopup').style.display = 'none';
+  // Hide button after dismissed
+  const btn = document.getElementById('updateBtn');
+  if(btn){ btn.classList.remove('has-update'); btn.style.display='none'; }
+}
+
+function renderAdminUpdateAnnounce(){
+  const info = JSON.parse(localStorage.getItem('kd_update_info')||'null') || {ver:'',note:'',changes:[]};
+  const changesVal = (info.changes||[]).join('\n');
+  return `
+  <div style="margin-top:14px;background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px">🚀 ປະກາດອັບເດດແອັບ</div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ເວີຊັ່ນ (e.g. v2.1)</label>
+      <input id="aupVer" value="${info.ver||''}" placeholder="v2.0" style="width:100%;background:var(--dark3);border:1px solid var(--gray2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:8px">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ຂໍ້ຄວາມສັ້ນ</label>
+      <input id="aupNote" value="${info.note||''}" placeholder="ອັບເດດໃໝ່ມາແລ້ວ!" style="width:100%;background:var(--dark3);border:1px solid var(--gray2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ລາຍການທີ່ອັບເດດ (ໜຶ່ງລາຍການຕໍ່ແຖວ)</label>
+      <textarea id="aupChanges" rows="4" placeholder="ເພີ່ມລະບົບ&#10;ແກ້ bug&#10;ປັບ UI" style="width:100%;background:var(--dark3);border:1px solid var(--gray2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;box-sizing:border-box;resize:vertical">${changesVal}</textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="adminPublishUpdate()" style="flex:1;background:linear-gradient(135deg,var(--gold),#f0d080);color:#000;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">
+        📢 ປະກາດໃຫ້ລູກຄ້າ
+      </button>
+      <button onclick="adminClearUpdate()" style="background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#ff6666;border-radius:10px;padding:11px 14px;font-size:12px;cursor:pointer">
+        🗑️ ລຶບ
+      </button>
+    </div>
+    <div id="aupStatus" style="margin-top:8px;font-size:11px;color:var(--text2);text-align:center"></div>
+  </div>`;
+}
+
+
+function adminPublishUpdate(){
+  const ver = (document.getElementById('aupVer')?.value||'').trim();
+  const note = (document.getElementById('aupNote')?.value||'').trim();
+  const changesRaw = (document.getElementById('aupChanges')?.value||'').trim();
+  if(!ver){ showNotif('⚠️ ກາລຸນາໃສ່ເວີຊັ່ນ'); return; }
+  const changes = changesRaw ? changesRaw.split('\n').map(l=>l.trim()).filter(Boolean) : [];
+  const info = { ver, note: note||'ມີການອັບເດດໃໝ່!', changes, publishedAt: new Date().toISOString() };
+  localStorage.setItem('kd_update_info', JSON.stringify(info));
+  // Reset seen so all users see popup
+  localStorage.removeItem(KD_UPDATE_KEY);
+  const statusEl = document.getElementById('aupStatus');
+  if(statusEl) statusEl.innerHTML = '<span style="color:#4caf50">✅ ປະກາດສຳເລັດ! ລູກຄ້າຈະເຫັນ Popup ຕອນເປີດແອັບ</span>';
+  showNotif('📢 ປະກາດອັບເດດສຳເລັດ!');
+  // Show update button immediately
+  const btn = document.getElementById('updateBtn');
+  if(btn){ btn.classList.add('has-update'); btn.style.display='flex'; }
+}
+
+function adminClearUpdate(){
+  localStorage.removeItem('kd_update_info');
+  localStorage.removeItem(KD_UPDATE_KEY);
+  const btn = document.getElementById('updateBtn');
+  if(btn){ btn.classList.remove('has-update'); btn.style.display='none'; }
+  const statusEl = document.getElementById('aupStatus');
+  if(statusEl) statusEl.innerHTML = '<span style="color:#ff6666">🗑️ ລຶບຂໍ້ຄວາມອັບເດດແລ້ວ</span>';
+  showNotif('🗑️ ລຶບຂໍ້ຄວາມອັບເດດແລ້ວ');
+}
 
 </script>
 <!-- PUBLIC PROFILE MODAL -->
