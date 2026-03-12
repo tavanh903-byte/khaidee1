@@ -264,7 +264,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .cart-fab:active{transform:scale(.93);box-shadow:0 0 0 4px rgba(10,10,10,.95),0 0 0 5px rgba(201,168,76,.3),0 4px 14px rgba(201,168,76,.4)}
 
 /* PAGE WRAPPER */
-.page{display:none;flex-direction:column;flex:1;padding-bottom:80px}
+.page{display:none;flex-direction:column;flex:1;padding-bottom:80px;overflow:hidden}
 .page.active{display:flex}
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
@@ -845,6 +845,38 @@ select.form-input{-webkit-appearance:none;appearance:none}
     </div>
   </div>
 
+  
+  <div class="page" id="page-topup">
+    <div class="page-header">
+      <button class="back-btn" onclick="switchPage('home')">←</button>
+      <div style="font-size:16px;font-weight:700;color:var(--gold)">🎮 ເຕີມເກມຍອດນິຍົມ</div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding-bottom:80px">
+      <!-- search -->
+      <div style="padding:12px 14px 4px">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="gameSearchInput" placeholder="ຄົ້ນຫາເກມ / ค้นหาเกม..." oninput="filterGames()" style="background:transparent;border:none;color:var(--text);font-size:14px;width:100%;outline:none">
+        </div>
+      </div>
+      <!-- featured row -->
+      <div style="padding:12px 14px 4px;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px">⭐ ເກມ Hot</div>
+      <div id="featuredGamesRow" style="display:flex;gap:10px;padding:0 14px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+      <!-- all games -->
+      <div style="padding:0 14px 4px;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px">🎮 ເກມທັງໝົດ</div>
+      <div id="allGamesGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px 20px"></div>
+    </div>
+  </div>
+
+  <!-- ===== GAME DETAIL / ORDER PAGE ===== -->
+  <div class="page" id="page-game-detail">
+    <div class="page-header">
+      <button class="back-btn" onclick="switchPage('topup')">←</button>
+      <div style="font-size:15px;font-weight:700;color:var(--gold)" id="gameDetailTitle">ເຕີມເກມ</div>
+    </div>
+    <div style="overflow-y:auto;flex:1" id="gameDetailBody"></div>
+  </div>
+
   <!-- HOME PAGE -->
   <div class="page active" id="page-home">
     <div class="search-wrap">
@@ -973,6 +1005,26 @@ select.form-input{-webkit-appearance:none;appearance:none}
           <div class="cat-icon-label">ສຳອາງ</div>
         </div>
         <!-- Other -->
+        <!-- 🎮 GAME TOPUP ICON -->
+        <div class="cat-icon-btn" id="caticon-topup" onclick="switchPage('topup')" style="position:relative">
+          <div class="cat-icon-img" style="background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 60%,#0a2040 100%);border:1.5px solid rgba(201,168,76,.5);position:relative;overflow:hidden">
+            <!-- game controller SVG -->
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+              <rect x="4" y="10" width="22" height="13" rx="5" fill="rgba(201,168,76,.15)" stroke="rgba(201,168,76,.6)" stroke-width="1.2"/>
+              <circle cx="10" cy="16" r="2.5" fill="rgba(201,168,76,.8)"/>
+              <circle cx="20" cy="16" r="2.5" fill="rgba(201,168,76,.8)"/>
+              <line x1="23" y1="14" x2="23" y2="18" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="21" y1="16" x2="25" y2="16" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
+              <rect x="12" y="14" width="6" height="2" rx="1" fill="rgba(201,168,76,.5)"/>
+              <path d="M11 8 Q15 5 19 8" stroke="rgba(201,168,76,.4)" stroke-width="1" fill="none"/>
+              <circle cx="15" cy="6" r="1.5" fill="rgba(201,168,76,.6)"/>
+            </svg>
+            <!-- gold glow -->
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 80%,rgba(201,168,76,.18),transparent 70%)"></div>
+          </div>
+          <div class="cat-icon-label" style="color:var(--gold);font-weight:700">ເຕີມເກມ</div>
+          <div style="position:absolute;top:2px;right:2px;background:#ff4444;color:#fff;font-size:7px;font-weight:900;padding:1px 4px;border-radius:8px;line-height:1.4">HOT</div>
+        </div>
         <div class="cat-icon-btn" id="caticon-other" onclick="filterCatIcon('other',this)">
           <div class="cat-icon-img" style="background:linear-gradient(135deg,#607d8b,#90a4ae)">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -988,34 +1040,6 @@ select.form-input{-webkit-appearance:none;appearance:none}
       </div>
     </div>
 
-    <!-- DIAMOND TOPUP — compact strip -->
-    <div style="display:flex;gap:8px;padding:10px 16px 4px">
-      <div onclick="switchPage('topup-mlbb')" style="flex:1;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0d0040,#220088);border:1px solid rgba(100,80,255,.3);border-radius:12px;padding:9px 12px;cursor:pointer;transition:.15s">
-        <svg width="28" height="28" viewBox="0 0 28 28">
-          <defs><linearGradient id="mlG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00ccff"/><stop offset="100%" stop-color="#6644ff"/></linearGradient></defs>
-          <polygon points="14,2 22,10 14,26 6,10" fill="url(#mlG)"/>
-          <polygon points="14,2 22,10 14,14" fill="rgba(255,255,255,.25)"/>
-          <polygon points="14,14 6,10 14,2" fill="rgba(0,0,0,.15)"/>
-        </svg>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#fff;line-height:1.2">Mobile Legends</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.5)">ເຕີມ Diamond</div>
-        </div>
-        <div style="margin-left:auto;color:#6644ff;font-size:16px;font-weight:700">›</div>
-      </div>
-      <div onclick="switchPage('topup-ff')" style="flex:1;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#2a0000,#7a0000);border:1px solid rgba(255,68,0,.3);border-radius:12px;padding:9px 12px;cursor:pointer;transition:.15s">
-        <svg width="28" height="28" viewBox="0 0 28 28">
-          <defs><linearGradient id="ffG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffcc00"/><stop offset="100%" stop-color="#ff4400"/></linearGradient></defs>
-          <path d="M14 2 Q16 8 22 6 Q18 12 22 16 Q16 14 14 26 Q12 14 6 16 Q10 12 6 6 Q12 8 14 2 Z" fill="url(#ffG)"/>
-          <path d="M14 8 Q15 12 18 11 Q16 14 18 16 Q15 15 14 22 Q13 15 10 16 Q12 14 10 11 Q13 12 14 8 Z" fill="rgba(255,255,255,.3)"/>
-        </svg>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#fff;line-height:1.2">Free Fire</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.5)">ເຕີມ Diamond</div>
-        </div>
-        <div style="margin-left:auto;color:#ff6600;font-size:16px;font-weight:700">›</div>
-      </div>
-    </div>
     <div class="section-title" id="sectionTitle">🛍️ ສິນຄ້າທັງໝົດ</div>
     <div class="products-grid" id="productsGrid"></div>
   </div>
@@ -1534,26 +1558,28 @@ select.form-input{-webkit-appearance:none;appearance:none}
         </div>
       </div>
 
-      <!-- 💎 Diamond Topup Section — แสดงให้ทุกคนเห็น -->
+      <!-- 🎮 Game Topup Banner -->
       <div style="padding:0 16px 8px">
-        <div class="section-title" style="padding:10px 0 8px">💎 ເຕີມ Diamond ເກມ</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div onclick="openDiamondTopupPublic('mlbb')" style="background:linear-gradient(135deg,#0d0050,#1a0099);border:1px solid rgba(100,80,255,.4);border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;position:relative;overflow:hidden">
-            <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(100,80,255,.2),transparent);border-radius:50%"></div>
-            <div style="font-size:28px;margin-bottom:4px">💎</div>
-            <div style="font-size:12px;font-weight:700;color:#a080ff">Mobile Legends</div>
-            <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">ເຕີມ Diamond MLBB</div>
-            <div style="margin-top:8px;background:rgba(100,80,255,.3);border-radius:8px;padding:4px 0;font-size:11px;color:#c0a0ff;font-weight:700">ເຕີມດຽວນີ້ →</div>
+        <div onclick="switchPage('topup')" style="border-radius:16px;overflow:hidden;cursor:pointer;background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 50%,#0a2040 100%);border:1px solid rgba(201,168,76,.45);box-shadow:0 4px 20px rgba(201,168,76,.18)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:3px">🎮 GAME TOP-UP</div>
+              <div style="font-size:18px;font-weight:900;color:#fff;font-family:'Cinzel Decorative',serif;line-height:1.25">ເຕີມເກມ<br><span style="color:var(--gold)">ຍອດນິຍົມ</span></div>
+              <div style="font-size:10px;color:var(--text2);margin-top:5px">FF • MLBB • Genshin • ROV • Valorant • +15 ເກມ</div>
+              <div style="display:inline-flex;align-items:center;gap:4px;background:var(--gold);color:#000;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:8px">ເຂົ້າເບິ່ງ →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-left:12px">
+              <img src="https://www.overtopup.com/assets/uploads/game/game-5.jpg" style="width:46px;height:46px;border-radius:10px;object-fit:cover;border:2px solid rgba(201,168,76,.5)" onerror="this.style.display='none'">
+              <img src="https://www.overtopup.com/assets/uploads/game/game-3.jpg" style="width:46px;height:46px;border-radius:10px;object-fit:cover;border:2px solid rgba(201,168,76,.5)" onerror="this.style.display='none'">
+              <img src="https://www.overtopup.com/assets/uploads/game/game-4.jpg" style="width:46px;height:46px;border-radius:10px;object-fit:cover;border:2px solid rgba(201,168,76,.5)" onerror="this.style.display='none'">
+              <img src="https://www.overtopup.com/assets/uploads/game/game-18.jpg" style="width:46px;height:46px;border-radius:10px;object-fit:cover;border:2px solid rgba(201,168,76,.5)" onerror="this.style.display='none'">
+            </div>
           </div>
-          <div onclick="openDiamondTopupPublic('ff')" style="background:linear-gradient(135deg,#3d0000,#880000);border:1px solid rgba(255,68,0,.4);border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;position:relative;overflow:hidden">
-            <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(255,68,0,.2),transparent);border-radius:50%"></div>
-            <div style="font-size:28px;margin-bottom:4px">🔥</div>
-            <div style="font-size:12px;font-weight:700;color:#ff8844">Free Fire</div>
-            <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">ເຕີມ Diamond FF</div>
-            <div style="margin-top:8px;background:rgba(255,68,0,.3);border-radius:8px;padding:4px 0;font-size:11px;color:#ffaa88;font-weight:700">ເຕີມດຽວນີ້ →</div>
+          <div style="background:rgba(201,168,76,.08);padding:5px 16px;font-size:10px;color:var(--text2);display:flex;gap:14px;border-top:1px solid rgba(201,168,76,.15)">
+            <span>✅ ຮາຄາຖືກ</span><span>⚡ ໄວ 24ຊມ.</span><span>🔒 ປອດໄພ 100%</span>
           </div>
         </div>
-        <!-- Seller setup — hidden by default, shown via updateDiamondSellerApplyBtn() -->
+        <!-- Seller setup -->
         <div id="diamondSellerApplyRow" style="display:none;margin-top:10px">
           <button onclick="openDiamondSellerSetup()" style="width:100%;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:12px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
             ⚙️ ຕັ້ງຄ່າຮ້ານ Diamond ຂອງຂ້ອຍ
@@ -6017,6 +6043,7 @@ function switchPage(name){
   const nav  = document.getElementById('nav-'+name);
   if(page) page.classList.add('active');
   if(nav)  nav.classList.add('active');
+  if(name==='topup') renderTopupGamesPage();
   if(name==='profile'){ updateProfileUI(); updateAdminDiamondUI(); updateSellerDiamondUI(); }
   if(name==='bills')        renderBillsPage();
   if(name==='cart')         renderCartPage();
@@ -8321,6 +8348,480 @@ window.addEventListener('load', ()=>{
   updateCartBadge();
   updateAdminNotifBadge();
 }, true);
+
+// ============================================================
+// 🎮  GAME TOPUP SYSTEM
+// ============================================================
+const TOPUP_GAMES = [
+  // ---- FEATURED (hot row) ----
+  {id:'ff',name:'Free Fire',short:'Free Fire',
+   img:'https://www.overtopup.com/assets/uploads/game/game-5.jpg',
+   featured:true, type:'uid', currency:'💎 Diamond',
+   desc:'ເຕີມ Diamonds Free Fire ທຸກຍອດ',
+   packages:[
+     {id:'f1',label:'30+3 💎',price:10000},
+     {id:'f2',label:'43+25 💎',price:17500},
+     {id:'f3',label:'137+35 💎 ⭐',price:39500},
+     {id:'f4',label:'231+79 💎',price:67500},
+     {id:'f5',label:'470+47 💎',price:111500},
+     {id:'f6',label:'627+63 💎',price:150000},
+     {id:'f7',label:'956+96 💎',price:221500},
+     {id:'f8',label:'1,637+164 💎',price:369000},
+     {id:'f9',label:'3,361+337 💎',price:734500},
+     {id:'f10',label:'ສະມາຊິກ ອາທິດ 🔥',price:25000},
+     {id:'f11',label:'ສະມາຊິກ ເດືອນ 🔥',price:50000},
+     {id:'f12',label:'ສະມາຊິກ Premium 🔥',price:221500},
+     {id:'f13',label:'Booyah Pass 🔥',price:68500},
+   ]},
+  {id:'mlbb',name:'Mobile Legends',short:'MLBB',
+   img:'https://www.overtopup.com/assets/uploads/game/game-2.jpg',
+   featured:true, type:'uid', currency:'💎 Diamond',
+   desc:'ເຕີມ Diamond MLBB',
+   packages:[
+     {id:'m1',label:'86 💎',price:31500},
+     {id:'m2',label:'172 💎',price:61500},
+     {id:'m3',label:'257 💎',price:89000},
+     {id:'m4',label:'344 💎',price:123000},
+     {id:'m5',label:'429 💎 ⭐',price:147500},
+     {id:'m6',label:'514 💎',price:174500},
+     {id:'m7',label:'600 💎',price:208000},
+     {id:'m8',label:'706 💎',price:230000},
+     {id:'m9',label:'963 💎',price:323000},
+     {id:'m10',label:'1,412 💎',price:469000},
+     {id:'m11',label:'2,901 💎',price:937500},
+     {id:'m12',label:'3,688 💎',price:1175000},
+     {id:'m13',label:'5,532 💎',price:1768000},
+     {id:'m14',label:'9,288 💎',price:2920000},
+     {id:'m15',label:'Weekly Pass',price:37500},
+     {id:'m16',label:'Twilight Pass',price:198000},
+   ]},
+  {id:'genshin',name:'Genshin Impact',short:'Genshin',
+   img:'https://www.overtopup.com/assets/uploads/game/game-3.jpg',
+   featured:true, type:'uid', currency:'💠 Genesis Crystal',
+   desc:'ເຕີມ Genesis Crystal',
+   packages:[
+     {id:'g1',label:'60 💠',price:22000},
+     {id:'g2',label:'300+30 💠',price:109000},
+     {id:'g3',label:'980+110 💠 ⭐',price:357000},
+     {id:'g4',label:'1980+260 💠',price:721000},
+     {id:'g5',label:'3280+600 💠',price:1193000},
+     {id:'g6',label:'6480+1600 💠',price:2354000},
+   ]},
+  {id:'rov',name:'RoV Mobile',short:'RoV',
+   img:'https://www.overtopup.com/assets/uploads/game/game-4.jpg',
+   featured:true, type:'uid', currency:'🔶 Ruby',
+   desc:'ເຕີມ Ruby RoV Mobile',
+   packages:[
+     {id:'r1',label:'85 Ruby',price:22000},
+     {id:'r2',label:'172 Ruby ⭐',price:44000},
+     {id:'r3',label:'345 Ruby',price:87000},
+     {id:'r4',label:'520 Ruby',price:131000},
+     {id:'r5',label:'1090 Ruby',price:262000},
+     {id:'r6',label:'2195 Ruby',price:524000},
+   ]},
+  {id:'valorant',name:'Valorant',short:'Valorant',
+   img:'https://www.overtopup.com/assets/uploads/game/game-18.jpg',
+   featured:true, type:'uid', currency:'💳 VP',
+   desc:'ເຕີມ Valorant Points',
+   packages:[
+     {id:'v1',label:'475 VP',price:115000},
+     {id:'v2',label:'950 VP ⭐',price:220000},
+     {id:'v3',label:'1475 VP',price:335000},
+     {id:'v4',label:'2050 VP',price:458000},
+     {id:'v5',label:'3650 VP',price:780000},
+     {id:'v6',label:'5350 VP',price:1090000},
+   ]},
+  {id:'honkai',name:'Honkai Star Rail',short:'Star Rail',
+   img:'https://www.overtopup.com/assets/uploads/game/game-35.png',
+   featured:true, type:'uid', currency:'🌟 Oneiric Shard',
+   desc:'ເຕີມ Oneiric Shard',
+   packages:[
+     {id:'h1',label:'60 🌟',price:22000},
+     {id:'h2',label:'300+30 🌟',price:109000},
+     {id:'h3',label:'980+110 🌟 ⭐',price:357000},
+     {id:'h4',label:'1980+260 🌟',price:721000},
+     {id:'h5',label:'3280+600 🌟',price:1193000},
+     {id:'h6',label:'6480+1600 🌟',price:2354000},
+   ]},
+  // ---- ALL GAMES ----
+  {id:'zzz',name:'Zenless Zone Zero',short:'ZZZ',
+   img:'https://www.overtopup.com/assets/uploads/game/game-51.png',
+   featured:false, type:'uid', currency:'💠 Polychrome',
+   desc:'ເຕີມ Polychrome ZZZ',
+   packages:[
+     {id:'z1',label:'60 💠',price:22000},
+     {id:'z2',label:'300+30 💠',price:109000},
+     {id:'z3',label:'980+110 💠 ⭐',price:357000},
+     {id:'z4',label:'1980+260 💠',price:721000},
+     {id:'z5',label:'3280+600 💠',price:1193000},
+   ]},
+  {id:'pubgm',name:'PUBG Mobile',short:'PUBG M',
+   img:'https://www.overtopup.com/assets/uploads/game/game-6.jpg',
+   featured:false, type:'uid', currency:'🪙 UC',
+   desc:'ເຕີມ Unknown Cash PUBG M',
+   packages:[
+     {id:'pu1',label:'60 UC',price:22000},
+     {id:'pu2',label:'325 UC ⭐',price:109000},
+     {id:'pu3',label:'660 UC',price:209000},
+     {id:'pu4',label:'1800 UC',price:551000},
+     {id:'pu5',label:'3850 UC',price:1111000},
+     {id:'pu6',label:'8100 UC',price:2222000},
+   ]},
+  {id:'codm',name:'Call of Duty Mobile',short:'CoD Mobile',
+   img:'https://www.overtopup.com/assets/image/game/call-of-dutymobile.jpeg',
+   featured:false, type:'uid', currency:'💲 CP',
+   desc:'ເຕີມ CoD Points',
+   packages:[
+     {id:'c1',label:'80 CP',price:27500},
+     {id:'c2',label:'400 CP',price:133000},
+     {id:'c3',label:'800 CP ⭐',price:260000},
+     {id:'c4',label:'2000 CP',price:638000},
+     {id:'c5',label:'5000 CP',price:1540000},
+   ]},
+  {id:'wuthering',name:'Wuthering Waves',short:'WuWa',
+   img:'https://www.overtopup.com/assets/image/game/wuthering-waves.png',
+   featured:false, type:'idpass', currency:'🌊 Lunite',
+   desc:'ເຕີມ Lunite Wuthering Waves',
+   packages:[
+     {id:'w1',label:'60 🌊',price:22000},
+     {id:'w2',label:'300+30 🌊 ⭐',price:109000},
+     {id:'w3',label:'980+110 🌊',price:357000},
+     {id:'w4',label:'1980+260 🌊',price:721000},
+   ]},
+  {id:'roblox',name:'Robux (Roblox)',short:'Roblox',
+   img:'https://www.overtopup.com/assets/uploads/game-id-pass/roblox.png',
+   featured:false, type:'idpass', currency:'🟡 Robux',
+   desc:'ເຕີມ Robux Roblox',
+   packages:[
+     {id:'rb1',label:'80 Robux',price:27500},
+     {id:'rb2',label:'400 Robux',price:133000},
+     {id:'rb3',label:'800 Robux ⭐',price:260000},
+     {id:'rb4',label:'1700 Robux',price:524000},
+     {id:'rb5',label:'4500 Robux',price:1320000},
+   ]},
+  {id:'identityv',name:'Identity V',short:'Identity V',
+   img:'https://www.overtopup.com/assets/uploads/game/game-17.jpg',
+   featured:false, type:'uid', currency:'🖤 Echo',
+   desc:'ເຕີມ Echo Identity V',
+   packages:[
+     {id:'iv1',label:'60 Echo',price:22000},
+     {id:'iv2',label:'328 Echo ⭐',price:109000},
+     {id:'iv3',label:'688 Echo',price:220000},
+     {id:'iv4',label:'1888 Echo',price:579000},
+   ]},
+  {id:'ragnarok',name:'Ragnarok Origin',short:'RO-O',
+   img:'https://www.overtopup.com/assets/uploads/game/game-7.jpg',
+   featured:false, type:'uid', currency:'💎 Tokens',
+   desc:'ເຕີມ Ragnarok Origin',
+   packages:[
+     {id:'ro1',label:'30 Tokens',price:22000},
+     {id:'ro2',label:'100 Tokens ⭐',price:66000},
+     {id:'ro3',label:'300 Tokens',price:187000},
+     {id:'ro4',label:'1000 Tokens',price:594000},
+   ]},
+  {id:'lolpc',name:'LOL (PC)',short:'LOL PC',
+   img:'https://www.overtopup.com/assets/uploads/game/game-40.jpg',
+   featured:false, type:'uid', currency:'💰 RP',
+   desc:'ເຕີມ Riot Points LOL',
+   packages:[
+     {id:'lp1',label:'230 RP',price:44000},
+     {id:'lp2',label:'575 RP ⭐',price:109000},
+     {id:'lp3',label:'1380 RP',price:253000},
+     {id:'lp4',label:'2800 RP',price:495000},
+     {id:'lp5',label:'5000 RP',price:858000},
+   ]},
+  {id:'lolwr',name:'Wild Rift',short:'Wild Rift',
+   img:'https://www.overtopup.com/assets/uploads/game/game-41.jpg',
+   featured:false, type:'uid', currency:'💰 Wild Cores',
+   desc:'ເຕີມ Wild Cores',
+   packages:[
+     {id:'wc1',label:'100 WC',price:22000},
+     {id:'wc2',label:'500 WC ⭐',price:105000},
+     {id:'wc3',label:'1000 WC',price:205000},
+     {id:'wc4',label:'3000 WC',price:594000},
+   ]},
+  {id:'bloodstrike',name:'Blood Strike',short:'Blood Strike',
+   img:'https://www.overtopup.com/assets/uploads/game/game-37.jpg',
+   featured:false, type:'uid', currency:'🩸 BC',
+   desc:'ເຕີມ Blood Currency',
+   packages:[
+     {id:'bs1',label:'60 BC',price:22000},
+     {id:'bs2',label:'300 BC ⭐',price:105000},
+     {id:'bs3',label:'1000 BC',price:330000},
+   ]},
+  {id:'efootball',name:'eFootball PES',short:'eFootball',
+   img:'https://www.overtopup.com/assets/uploads/game-id-pass/efootball-pes-2023-ios.png',
+   featured:false, type:'idpass', currency:'⚽ Coins',
+   desc:'ເຕີມ eFootball Coins',
+   packages:[
+     {id:'ef1',label:'300 Coins',price:66000},
+     {id:'ef2',label:'500 Coins ⭐',price:105000},
+     {id:'ef3',label:'1000 Coins',price:203000},
+     {id:'ef4',label:'2000 Coins',price:396000},
+   ]},
+  {id:'harrypotter',name:'Harry Potter: Magic Awakened',short:'HP:MA',
+   img:'https://www.overtopup.com/assets/uploads/game/game-27.jpg',
+   featured:false, type:'uid', currency:'⚡ Gems',
+   desc:'ເຕີມ HP Magic Awakened',
+   packages:[
+     {id:'hp1',label:'60 Gems',price:22000},
+     {id:'hp2',label:'300+30 Gems ⭐',price:109000},
+     {id:'hp3',label:'980+110 Gems',price:357000},
+   ]},
+  {id:'slamdunk',name:'Slam Dunk',short:'Slam Dunk',
+   img:'https://www.overtopup.com/assets/uploads/game/game-23.jpg',
+   featured:false, type:'uid', currency:'🏀 Gems',
+   desc:'ເຕີມ Slam Dunk',
+   packages:[
+     {id:'sd1',label:'68 Gems',price:22000},
+     {id:'sd2',label:'348 Gems ⭐',price:109000},
+     {id:'sd3',label:'688 Gems',price:209000},
+   ]},
+  {id:'afkjourney',name:'AFK Journey',short:'AFK Journey',
+   img:'https://www.overtopup.com/assets/uploads/game/game-54.png',
+   featured:false, type:'uid', currency:'💎 Diamonds',
+   desc:'ເຕີມ AFK Journey',
+   packages:[
+     {id:'aj1',label:'60 💎',price:22000},
+     {id:'aj2',label:'300 💎 ⭐',price:105000},
+     {id:'aj3',label:'1000 💎',price:330000},
+   ]},
+  {id:'lineage',name:'Lineage2M',short:'Lineage2M',
+   img:'https://www.overtopup.com/assets/image/game/lineage2m.png',
+   featured:false, type:'uid', currency:'💠 NCoin',
+   desc:'ເຕີມ Lineage2M',
+   packages:[
+     {id:'ln1',label:'100 NC',price:55000},
+     {id:'ln2',label:'300 NC ⭐',price:161000},
+     {id:'ln3',label:'600 NC',price:308000},
+   ]},
+  {id:'deltaforce',name:'Delta Force',short:'Delta Force',
+   img:'https://www.overtopup.com/assets/image/game/delta-force-garena.png',
+   featured:false, type:'uid', currency:'💲 DF Coins',
+   desc:'ເຕີມ Delta Force Garena',
+   packages:[
+     {id:'df1',label:'60 Coins',price:22000},
+     {id:'df2',label:'300 Coins ⭐',price:105000},
+     {id:'df3',label:'980 Coins',price:330000},
+   ]},
+];
+
+let currentGameId = null;
+let selectedGamePackage = null;
+
+function renderTopupGamesPage(){
+  const featRow  = document.getElementById('featuredGamesRow');
+  const allGrid  = document.getElementById('allGamesGrid');
+  if(!featRow||!allGrid) return;
+
+  const featured = TOPUP_GAMES.filter(g=>g.featured);
+  featRow.innerHTML = featured.map(g=>`
+    <div onclick="openGameDetail('${g.id}')" style="flex-shrink:0;width:88px;text-align:center;cursor:pointer">
+      <div style="width:80px;height:80px;border-radius:16px;overflow:hidden;border:2px solid rgba(201,168,76,.4);position:relative;margin:0 auto 6px">
+        <img src="${g.img}" style="width:100%;height:100%;object-fit:cover"
+          onerror="this.parentElement.innerHTML='<div style=width:100%;height:100%;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:30px>🎮</div>'">
+        <div style="position:absolute;top:3px;right:3px;background:rgba(201,168,76,.95);color:#000;font-size:7px;font-weight:700;padding:2px 5px;border-radius:8px">HOT</div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.2">${g.short}</div>
+      <div style="font-size:9px;color:var(--text2);margin-top:1px">${g.packages.length} ຍອດ</div>
+    </div>`).join('');
+
+  _renderAllGamesGrid(TOPUP_GAMES);
+}
+
+function _renderAllGamesGrid(list){
+  const allGrid = document.getElementById('allGamesGrid');
+  if(!allGrid) return;
+  allGrid.innerHTML = list.map(g=>`
+    <div onclick="openGameDetail('${g.id}')"
+      style="cursor:pointer;background:var(--dark2);border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.06);transition:.2s"
+      onmouseover="this.style.borderColor='rgba(201,168,76,.4)'"
+      onmouseout="this.style.borderColor='rgba(255,255,255,.06)'">
+      <div style="height:78px;overflow:hidden;position:relative">
+        <img src="${g.img}" style="width:100%;height:100%;object-fit:cover"
+          onerror="this.parentElement.innerHTML='<div style=height:78px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:32px>🎮</div>'">
+        ${g.featured?'<div style="position:absolute;top:4px;right:4px;background:rgba(201,168,76,.9);color:#000;font-size:7px;font-weight:700;padding:2px 5px;border-radius:8px">⭐</div>':''}
+      </div>
+      <div style="padding:7px 8px">
+        <div style="font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.short}</div>
+        <div style="font-size:9px;color:var(--gold);margin-top:2px">${g.packages.length} ແພັກ</div>
+      </div>
+    </div>`).join('');
+}
+
+function filterGames(){
+  const q = (document.getElementById('gameSearchInput')?.value||'').toLowerCase().trim();
+  const list = q ? TOPUP_GAMES.filter(g=>g.name.toLowerCase().includes(q)||g.short.toLowerCase().includes(q)) : TOPUP_GAMES;
+  _renderAllGamesGrid(list);
+}
+
+function openGameDetail(gameId){
+  const game = TOPUP_GAMES.find(g=>g.id===gameId);
+  if(!game) return;
+  currentGameId = gameId;
+  selectedGamePackage = null;
+  document.getElementById('gameDetailTitle').textContent = game.name;
+  const body = document.getElementById('gameDetailBody');
+  body.innerHTML = `
+    <!-- Hero Banner -->
+    <div style="position:relative;height:170px;overflow:hidden">
+      <img src="${game.img}" style="width:100%;height:100%;object-fit:cover"
+        onerror="this.style.background='var(--dark3)';this.style.display='block'">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(10,10,10,.92))"></div>
+      <div style="position:absolute;bottom:14px;left:16px;right:16px">
+        <div style="font-size:20px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.9)">${game.name}</div>
+        <div style="font-size:12px;color:var(--gold);margin-top:2px">${game.currency}</div>
+      </div>
+      <div style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border-radius:20px;padding:4px 10px;font-size:10px;color:#fff;border:1px solid rgba(255,255,255,.15)">
+        ${game.type==='uid'?'🆔 UID':'🔑 ID+Pass'}
+      </div>
+    </div>
+
+    <!-- Packages -->
+    <div style="padding:16px 14px 8px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">💎 ເລືອກຍອດທີ່ຕ້ອງການ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="pkgGrid">
+        ${game.packages.map(p=>`
+          <div id="pkg_${p.id}" onclick="selectPkg('${gameId}','${p.id}')"
+            class="game-pkg-card">
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${p.label}</div>
+            <div style="font-size:14px;font-weight:900;color:var(--gold);margin-top:5px">${Number(p.price).toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--text2)">ກີບ</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Account Info -->
+    <div style="padding:0 14px 16px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">📝 ຂໍ້ມູນບັນຊີ</div>
+      ${game.type==='uid'?`
+        <input class="form-input" id="gameUid" placeholder="UID / Player ID *" style="margin-bottom:8px">
+        <input class="form-input" id="gameServer" placeholder="Server (ຖ້າມີ / ถ้ามี)" style="margin-bottom:8px">
+      `:`
+        <input class="form-input" id="gameEmail" placeholder="Email / ID *" style="margin-bottom:8px">
+        <input class="form-input" id="gamePass" placeholder="Password *" style="margin-bottom:8px;font-family:monospace;letter-spacing:1px">
+      `}
+      <textarea class="form-input" id="gameNote" rows="2" placeholder="ໝາຍເຫດ / หมายเหตุ (ຖ້າມີ)" style="margin-bottom:12px;resize:none"></textarea>
+
+      <!-- Summary -->
+      <div id="orderSummary" style="display:none;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.35);border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">📋 ສະຫຼຸບການສັ່ງ</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:13px;color:var(--text)" id="sumGame">${game.name}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text)" id="sumPkg">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text2)">ລາຄາ</span>
+          <span style="font-size:18px;font-weight:900;color:var(--gold)" id="sumPrice">-</span>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" style="width:100%;padding:14px;font-size:15px;font-weight:700"
+        onclick="submitGameTopup('${gameId}')">✅ ຢືນຢັນສັ່ງເຕີມ</button>
+      <div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px;line-height:1.6">
+        ⏱ ດຳເນີນການ 5–30 ນາທີ<br>ຕິດຕໍ່ Admin ທາງ Chat ຫາກລ່າຊ້າ
+      </div>
+    </div>`;
+
+  switchPage('game-detail');
+}
+
+function selectPkg(gameId, pkgId){
+  const game = TOPUP_GAMES.find(g=>g.id===gameId);
+  if(!game) return;
+  const pkg = game.packages.find(p=>p.id===pkgId);
+  if(!pkg) return;
+  selectedGamePackage = pkg;
+  // highlight
+  document.querySelectorAll('.game-pkg-card').forEach(el=>{
+    el.style.borderColor='rgba(255,255,255,.08)';
+    el.style.background='var(--dark2)';
+  });
+  const el = document.getElementById('pkg_'+pkgId);
+  if(el){ el.style.borderColor='var(--gold)'; el.style.background='rgba(201,168,76,.1)'; }
+  // summary
+  const sum = document.getElementById('orderSummary');
+  if(sum){
+    sum.style.display='block';
+    document.getElementById('sumPkg').textContent  = pkg.label;
+    document.getElementById('sumPrice').textContent = Number(pkg.price).toLocaleString()+' ກີບ';
+  }
+}
+
+function submitGameTopup(gameId){
+  if(!currentUser){ showNotif('❌ ກາລຸນາເຂົ້າລະບົບກ່ອນ'); return; }
+  if(!selectedGamePackage){ showNotif('⚠️ ກາລຸນາເລືອກຍອດທີ່ຕ້ອງການ'); return; }
+  const game = TOPUP_GAMES.find(g=>g.id===gameId);
+  if(!game) return;
+
+  let accountInfo = '';
+  if(game.type==='uid'){
+    const uid = (document.getElementById('gameUid')?.value||'').trim();
+    if(!uid){ showNotif('⚠️ ກາລຸນາໃສ່ UID / Player ID'); return; }
+    const srv = (document.getElementById('gameServer')?.value||'').trim();
+    accountInfo = 'UID: '+uid+(srv?' | Server: '+srv:'');
+  } else {
+    const em  = (document.getElementById('gameEmail')?.value||'').trim();
+    const pw  = (document.getElementById('gamePass')?.value||'').trim();
+    if(!em||!pw){ showNotif('⚠️ ກາລຸນາໃສ່ Email ແລະ Password'); return; }
+    accountInfo = 'ID: '+em+' | Pass: '+pw;
+  }
+  const note = (document.getElementById('gameNote')?.value||'').trim();
+  const bal  = currentUser.wallet||0;
+
+  if(bal < selectedGamePackage.price){
+    showNotif('❌ ຍອດ Wallet ບໍ່ພໍ | ກາລຸນາເຕີມເງິນກ່ອນ');
+    return;
+  }
+  if(!confirm(`ຢືນຢັນສັ່ງ:\n${game.name} — ${selectedGamePackage.label}\nລາຄາ: ${Number(selectedGamePackage.price).toLocaleString()} ກີບ\n${accountInfo}`)) return;
+
+  currentUser.wallet = bal - selectedGamePackage.price;
+  saveUser();
+
+  const orders = JSON.parse(localStorage.getItem('kd_diamond_orders')||'[]');
+  orders.push({
+    id: 'GT-'+Date.now(),
+    type: 'game_topup',
+    game: game.name,
+    gameId: game.id,
+    pkg: selectedGamePackage.label,
+    price: selectedGamePackage.price,
+    accountInfo, note,
+    userId: currentUser.id,
+    userName: currentUser.name||currentUser.user,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  });
+  localStorage.setItem('kd_diamond_orders', JSON.stringify(orders));
+
+  const adminNotifs = JSON.parse(localStorage.getItem('kd_admin_notifs')||'[]');
+  adminNotifs.unshift({id:'N-'+Date.now(),type:'diamond',
+    msg:`🎮 ສັ່ງເຕີມ ${game.name} | ${selectedGamePackage.label} | ${currentUser.name||currentUser.user}`,
+    time:new Date().toISOString(),read:false});
+  localStorage.setItem('kd_admin_notifs',JSON.stringify(adminNotifs));
+
+  // WA notification to admin
+  const _waMsg = encodeURIComponent(
+    '🎮 *ມີການສັ່ງເຕີມເກມໃໝ່!*\n' +
+    '━━━━━━━━━━━━━━━━\n' +
+    '🕹️ ເກມ: ' + game.name + '\n' +
+    '📦 ຍອດ: ' + selectedGamePackage.label + '\n' +
+    '💰 ລາຄາ: ' + Number(selectedGamePackage.price).toLocaleString() + ' ກີບ\n' +
+    '👤 ຜູ້ສັ່ງ: ' + (currentUser.name||currentUser.user) + '\n' +
+    '🆔 ' + accountInfo + '\n' +
+    (note ? '📝 ໝາຍເຫດ: ' + note + '\n' : '') +
+    '⏰ ' + new Date().toLocaleString('th-TH') + '\n' +
+    '━━━━━━━━━━━━━━━━\n' +
+    '📲 ກາລຸນາດໍາເນີນການດ່ວນ!'
+  );
+  window.open('https://wa.me/8562054966168?text='+_waMsg,'_blank');
+  showNotif('✅ ສັ່ງເຕີມສຳເລັດ! Admin ຈະດຳເນີນການ 5–30 ນາທີ');
+  selectedGamePackage = null;
+  switchPage('topup');
+}
+
+// ============ MODALS ============
+
 </script>
 <!-- PUBLIC PROFILE MODAL -->
 <div class="pub-profile-modal" id="pubProfileModal">
