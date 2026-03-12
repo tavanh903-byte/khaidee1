@@ -2942,6 +2942,32 @@ window.onload = () => setTimeout(launchApp, 5000);
 // Hard fallback at 6.5s
 setTimeout(launchApp, 6500);
 
+
+// ══════════════════════════════════════════
+// 🔒 LOAD ADMIN CREDENTIALS FROM SUPABASE
+// ══════════════════════════════════════════
+let _credsLoaded = false;
+let FRONT_PASS = ''; // login password for owner accounts
+
+async function loadAdminCredentials(){
+  if(_credsLoaded) return;
+  try{
+    const {data, error} = await supa.from('kd_admin_credentials').select('key,value');
+    if(error || !data) return;
+    data.forEach(row=>{
+      if(row.key==='front_pass')  FRONT_PASS = row.value;
+      if(row.key==='back_pass')   ADMIN_BACK_PASS = row.value;
+      if(row.key==='diamond_pass') DIAMOND_SELLER_PASS = row.value;
+    });
+    // Apply front_pass to OWNER_ACCOUNTS
+    OWNER_ACCOUNTS.forEach(o=>{ o.pass = FRONT_PASS; });
+    _credsLoaded = true;
+    console.log('🔒 Credentials loaded securely');
+  } catch(e){
+    console.warn('loadAdminCredentials failed:', e);
+  }
+}
+
 function initApp() {
   if(!currentUser){ currentUser = restoreSession(); }
   renderProducts(products);
@@ -2949,8 +2975,10 @@ function initApp() {
   updateProfileUI();
   renderBillsPage();
   checkUpdateOnLoad();
-  // Sync from Supabase in background
-  syncFromSupabase().then(()=>{
+  // Load credentials + sync data from Supabase
+  loadAdminCredentials().then(()=>{
+    return syncFromSupabase();
+  }).then(()=>{
     renderProducts(products);
     renderBillsPage();
   });
@@ -4636,9 +4664,9 @@ function fpResetPassword(){
 
 // Pre-set owner accounts that don't need registration
 const OWNER_ACCOUNTS = [
-  {id:'USR-99999',name:'Tavanh999',user:'tavanh999',pass:'@Seng95736599',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'👑',rank:1},
-  {id:'USR-88888',name:'Tavanh991',user:'tavanh991',pass:'@Seng95736599',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'💎',rank:2},
-  {id:'USR-77777',name:'Tavanh992',user:'tavanh992',pass:'@Seng95736599',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'🪙',rank:3},
+  {id:'USR-99999',name:'Tavanh999',user:'tavanh999',pass:'', wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'👑',rank:1},
+  {id:'USR-88888',name:'Tavanh991',user:'tavanh991',pass:'',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'💎',rank:2},
+  {id:'USR-77777',name:'Tavanh992',user:'tavanh992',pass:'',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'🪙',rank:3},
 ];
 
 // ── Restore login session — bulletproof 3-layer restore ──
@@ -6584,7 +6612,7 @@ function openDiamondTopupPublic(game){
 // ═══════════════════════════════════════════════════════════
 // DIAMOND SELLER SETUP — password gate + management
 // ═══════════════════════════════════════════════════════════
-const DIAMOND_SELLER_PASS = '@Seng54966168';
+let DIAMOND_SELLER_PASS = ''; // loaded from Supabase at runtime
 
 function openDiamondSellerSetup(){
   if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
@@ -7631,9 +7659,11 @@ document.addEventListener('keydown',e=>{
 });
 
 // ============ ADMIN PANEL ============
+// 🔒 Admin passwords loaded from Supabase at runtime (not stored in HTML)
+let ADMIN_BACK_PASS = ''; // loaded from Supabase
 const ADMIN_USERS = [
-  {user:'Tavanh999', pass:'@Seng54966168'},
-  {user:'tavanh999', pass:'@Seng54966168'}
+  {user:'Tavanh999'},
+  {user:'tavanh999'}
 ];
 let adminLoggedIn = false;
 let adminUsername = '';
@@ -7670,8 +7700,10 @@ function closeAdminPanel(){
 function doAdminLogin(){
   const u = document.getElementById('adminUser').value.trim();
   const p = document.getElementById('adminPass').value.trim();
-  const match = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase() && a.pass===p);
+  // Check against password loaded from Supabase
+  const match = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase()) && p===ADMIN_BACK_PASS;
   if(!match){showNotif('❌ Username ຫຼື Password ບໍ່ຖືກ');return;}
+  const _fakeMatch = true; // skip original check below
   adminLoggedIn = true;
   adminUsername = u;
   closeModal('adminLoginModal');
