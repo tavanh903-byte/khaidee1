@@ -8829,11 +8829,14 @@ window.addEventListener('load', ()=>{
 // 🎮  GAME TOPUP SYSTEM
 // ============================================================
 const TOPUP_GAMES = [
-  // ---- FEATURED (hot row) ----
-  {id:'ff',name:'Free Fire',short:'Free Fire',
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔥 เกมยอดนิยม
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  {id:'ff', name:'Free Fire', short:'Free Fire',
    img:'https://www.overtopup.com/assets/uploads/game/game-5.jpg',
    featured:true, type:'uid', currency:'💎 Diamond',
-   desc:'ເຕີມ Diamonds Free Fire ທຸກຍອດ',
+   desc:'ເຕີມ Diamond Free Fire ທຸກຍອດ',
+   howto:'1️⃣ ເລືອກຍອດ Diamond ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ UID ຂອງທ່ານ (ເບິ່ງໃນໂປຣໄຟລ໌ເກມ)\n3️⃣ ໃສ່ Server (ຖ້າມີ)\n4️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 1-5 ນາທີ Diamond ເຂົ້າ✅',
    packages:[
      {id:'f1',label:'30+3 💎',price:9500},
      {id:'f2',label:'43+25 💎',price:16500},
@@ -8849,10 +8852,12 @@ const TOPUP_GAMES = [
      {id:'f12',label:'ສະມາຊິກ Premium 🔥',price:211500},
      {id:'f13',label:'Booyah Pass 🔥',price:65500},
    ]},
-  {id:'mlbb',name:'Mobile Legends',short:'MLBB',
+
+  {id:'mlbb', name:'Mobile Legends', short:'MLBB',
    img:'https://www.overtopup.com/assets/uploads/game/game-2.jpg',
    featured:true, type:'uid', currency:'💎 Diamond',
-   desc:'ເຕີມ Diamond MLBB',
+   desc:'ເຕີມ Diamond MLBB ທຸກຍອດ',
+   howto:'1️⃣ ເລືອກຍອດ Diamond ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ User ID ແລະ Zone ID (ເບິ່ງຢູ່ໜ້າໂປຣໄຟລ໌ MLBB)\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 1-5 ນາທີ Diamond ເຂົ້າ✅\n💡 Zone ID ຢູ່ຕໍາ User ID ໃນວົງເລັບ ເຊັ່ນ (1234)',
    packages:[
      {id:'m1',label:'86 💎',price:30000},
      {id:'m2',label:'172 💎',price:58500},
@@ -8871,214 +8876,127 @@ const TOPUP_GAMES = [
      {id:'m15',label:'Weekly Pass',price:36000},
      {id:'m16',label:'Twilight Pass',price:189000},
    ]},
-  {id:'genshin',name:'Genshin Impact',short:'Genshin',
+
+  {id:'pubgm', name:'PUBG Mobile', short:'PUBG',
+   img:'https://www.overtopup.com/assets/uploads/game/game-10.jpg',
+   featured:true, type:'uid', currency:'💠 UC',
+   desc:'ເຕີມ UC PUBG Mobile',
+   howto:'1️⃣ ເລືອກຍອດ UC ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Player ID (ເບິ່ງໃນໂປຣໄຟລ໌ PUBG)\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-15 ນາທີ UC ເຂົ້າ✅',
+   packages:[
+     {id:'p1',label:'60 UC',price:21000},
+     {id:'p2',label:'325 UC ⭐',price:104000},
+     {id:'p3',label:'660 UC',price:208000},
+     {id:'p4',label:'1,800 UC',price:555000},
+     {id:'p5',label:'3,850 UC',price:1110000},
+     {id:'p6',label:'8,100 UC',price:2220000},
+   ]},
+
+  {id:'codm', name:'Call of Duty Mobile', short:'CODM',
+   img:'https://www.overtopup.com/assets/uploads/game/game-11.jpg',
+   featured:true, type:'uid', currency:'💰 CP',
+   desc:'ເຕີມ CP Call of Duty Mobile',
+   howto:'1️⃣ ເລືອກຍອດ CP ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Player ID (ກົດ Share ໃນໂປຣໄຟລ໌ CODM ຈະເຫັນ ID)\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-15 ນາທີ CP ເຂົ້າ✅',
+   packages:[
+     {id:'c1',label:'80 CP',price:18000},
+     {id:'c2',label:'400 CP ⭐',price:88000},
+     {id:'c3',label:'880 CP',price:176000},
+     {id:'c4',label:'2,000 CP',price:396000},
+     {id:'c5',label:'4,000 CP',price:792000},
+     {id:'c6',label:'Battle Pass',price:154000},
+   ]},
+
+  {id:'genshin', name:'Genshin Impact', short:'Genshin',
    img:'https://www.overtopup.com/assets/uploads/game/game-3.jpg',
    featured:true, type:'uid', currency:'💠 Genesis Crystal',
-   desc:'ເຕີມ Genesis Crystal',
+   desc:'ເຕີມ Genesis Crystal Genshin Impact',
+   howto:'1️⃣ ເລືອກຍອດ Crystal ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ UID Genshin (ເບິ່ງມຸມຂວາລຸ່ມໃນເກມ)\n3️⃣ ເລືອກ Server: Asia / America / Europe\n4️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-30 ນາທີ Crystal ເຂົ້າ✅',
    packages:[
      {id:'g1',label:'60 💠',price:21000},
-     {id:'g2',label:'300+30 💠',price:104000},
-     {id:'g3',label:'980+110 💠 ⭐',price:341000},
-     {id:'g4',label:'1980+260 💠',price:688000},
-     {id:'g5',label:'3280+600 💠',price:1139000},
-     {id:'g6',label:'6480+1600 💠',price:2247000},
+     {id:'g2',label:'300+30 💠 ⭐',price:104000},
+     {id:'g3',label:'980+110 💠',price:341000},
+     {id:'g4',label:'1,980+260 💠',price:688000},
+     {id:'g5',label:'3,280+600 💠',price:1139000},
+     {id:'g6',label:'6,480+1,600 💠',price:2247000},
    ]},
-  {id:'rov',name:'RoV Mobile',short:'RoV',
+
+  {id:'honkai', name:'Honkai Star Rail', short:'HSR',
+   img:'https://www.overtopup.com/assets/uploads/game/game-15.jpg',
+   featured:true, type:'uid', currency:'💠 Oneiric Shard',
+   desc:'ເຕີມ Oneiric Shard Honkai Star Rail',
+   howto:'1️⃣ ເລືອກຍອດ Shard ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ UID Honkai Star Rail (ເບິ່ງໃນໂປຣໄຟລ໌ເກມ)\n3️⃣ ເລືອກ Server: Asia / America / Europe\n4️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-30 ນາທີ Shard ເຂົ້າ✅',
+   packages:[
+     {id:'h1',label:'60 💠',price:21000},
+     {id:'h2',label:'300+30 💠 ⭐',price:104000},
+     {id:'h3',label:'980+110 💠',price:341000},
+     {id:'h4',label:'1,980+260 💠',price:688000},
+     {id:'h5',label:'3,280+600 💠',price:1139000},
+     {id:'h6',label:'6,480+1,600 💠',price:2247000},
+   ]},
+
+  {id:'valorant', name:'Valorant', short:'Valorant',
+   img:'https://www.overtopup.com/assets/uploads/game/game-18.jpg',
+   featured:false, type:'email', currency:'💰 VP',
+   desc:'ເຕີມ Valorant Points',
+   howto:'1️⃣ ເລືອກຍອດ VP ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Email ແລະ Password Riot Account\n⚠️ ຂໍ້ມູນຈະຖືກລຶບທັນທີຫຼັງເຕີມ\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ທີມງານຈະເຕີມໃຫ້ທ່ານ✅',
+   packages:[
+     {id:'v1',label:'475 VP',price:35000},
+     {id:'v2',label:'1,000 VP ⭐',price:70000},
+     {id:'v3',label:'2,050 VP',price:140000},
+     {id:'v4',label:'3,650 VP',price:245000},
+     {id:'v5',label:'5,350 VP',price:350000},
+     {id:'v6',label:'11,000 VP',price:700000},
+   ]},
+
+  {id:'rov', name:'RoV Mobile', short:'RoV',
    img:'https://www.overtopup.com/assets/uploads/game/game-4.jpg',
-   featured:true, type:'uid', currency:'🔶 Ruby',
+   featured:false, type:'uid', currency:'🔶 Ruby',
    desc:'ເຕີມ Ruby RoV Mobile',
+   howto:'1️⃣ ເລືອກຍອດ Ruby ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Player ID RoV (ເບິ່ງໃນໂປຣໄຟລ໌ RoV)\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-10 ນາທີ Ruby ເຂົ້າ✅',
    packages:[
      {id:'r1',label:'85 Ruby',price:21000},
      {id:'r2',label:'172 Ruby ⭐',price:42000},
      {id:'r3',label:'345 Ruby',price:83000},
      {id:'r4',label:'520 Ruby',price:125000},
-     {id:'r5',label:'1090 Ruby',price:250000},
-     {id:'r6',label:'2195 Ruby',price:500000},
+     {id:'r5',label:'1,090 Ruby',price:250000},
+     {id:'r6',label:'2,195 Ruby',price:500000},
    ]},
-  {id:'valorant',name:'Valorant',short:'Valorant',
-   img:'https://www.overtopup.com/assets/uploads/game/game-18.jpg',
-   featured:true, type:'uid', currency:'💳 VP',
-   desc:'ເຕີມ Valorant Points',
-   packages:[
-     {id:'v1',label:'475 VP',price:110000},
-     {id:'v2',label:'950 VP ⭐',price:210000},
-     {id:'v3',label:'1475 VP',price:320000},
-     {id:'v4',label:'2050 VP',price:437000},
-     {id:'v5',label:'3650 VP',price:744500},
-     {id:'v6',label:'5350 VP',price:1040500},
-   ]},
-  {id:'honkai',name:'Honkai Star Rail',short:'Star Rail',
-   img:'https://www.overtopup.com/assets/uploads/game/game-35.png',
-   featured:true, type:'uid', currency:'🌟 Oneiric Shard',
-   desc:'ເຕີມ Oneiric Shard',
-   packages:[
-     {id:'h1',label:'60 🌟',price:21000},
-     {id:'h2',label:'300+30 🌟',price:104000},
-     {id:'h3',label:'980+110 🌟 ⭐',price:341000},
-     {id:'h4',label:'1980+260 🌟',price:688000},
-     {id:'h5',label:'3280+600 🌟',price:1139000},
-     {id:'h6',label:'6480+1600 🌟',price:2247000},
-   ]},
-  // ---- ALL GAMES ----
-  {id:'zzz',name:'Zenless Zone Zero',short:'ZZZ',
-   img:'https://www.overtopup.com/assets/uploads/game/game-51.png',
-   featured:false, type:'uid', currency:'💠 Polychrome',
-   desc:'ເຕີມ Polychrome ZZZ',
-   packages:[
-     {id:'z1',label:'60 💠',price:21000},
-     {id:'z2',label:'300+30 💠',price:104000},
-     {id:'z3',label:'980+110 💠 ⭐',price:341000},
-     {id:'z4',label:'1980+260 💠',price:688000},
-     {id:'z5',label:'3280+600 💠',price:1139000},
-   ]},
-  {id:'pubgm',name:'PUBG Mobile',short:'PUBG M',
-   img:'https://www.overtopup.com/assets/uploads/game/game-6.jpg',
-   featured:false, type:'uid', currency:'🪙 UC',
-   desc:'ເຕີມ Unknown Cash PUBG M',
-   packages:[
-     {id:'pu1',label:'60 UC',price:21000},
-     {id:'pu2',label:'325 UC ⭐',price:104000},
-     {id:'pu3',label:'660 UC',price:199500},
-     {id:'pu4',label:'1800 UC',price:526000},
-     {id:'pu5',label:'3850 UC',price:1060500},
-     {id:'pu6',label:'8100 UC',price:2121000},
-   ]},
-  {id:'codm',name:'Call of Duty Mobile',short:'CoD Mobile',
-   img:'https://www.overtopup.com/assets/image/game/call-of-dutymobile.jpeg',
-   featured:false, type:'uid', currency:'💲 CP',
-   desc:'ເຕີມ CoD Points',
-   packages:[
-     {id:'c1',label:'80 CP',price:26000},
-     {id:'c2',label:'400 CP',price:127000},
-     {id:'c3',label:'800 CP ⭐',price:248000},
-     {id:'c4',label:'2000 CP',price:609000},
-     {id:'c5',label:'5000 CP',price:1470000},
-   ]},
-  {id:'wuthering',name:'Wuthering Waves',short:'WuWa',
-   img:'https://www.overtopup.com/assets/image/game/wuthering-waves.png',
-   featured:false, type:'idpass', currency:'🌊 Lunite',
-   desc:'ເຕີມ Lunite Wuthering Waves',
-   packages:[
-     {id:'w1',label:'60 🌊',price:21000},
-     {id:'w2',label:'300+30 🌊 ⭐',price:104000},
-     {id:'w3',label:'980+110 🌊',price:341000},
-     {id:'w4',label:'1980+260 🌊',price:688000},
-   ]},
-  {id:'roblox',name:'Robux (Roblox)',short:'Roblox',
-   img:'https://www.overtopup.com/assets/uploads/game-id-pass/roblox.png',
-   featured:false, type:'idpass', currency:'🟡 Robux',
+
+  {id:'roblox', name:'Roblox', short:'Roblox',
+   img:'https://www.overtopup.com/assets/uploads/game/game-21.jpg',
+   featured:false, type:'email', currency:'🟡 Robux',
    desc:'ເຕີມ Robux Roblox',
+   howto:'1️⃣ ເລືອກຍອດ Robux ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Username Roblox ຂອງທ່ານ\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ທີມງານຈະ Gift Robux ໃຫ້ທ່ານ✅\n💡 ຕ້ອງ Accept ຄຳເຊີນຫຼັງຈາກໄດ້ຮັບແຈ້ງເຕືອນ',
    packages:[
-     {id:'rb1',label:'80 Robux',price:26000},
-     {id:'rb2',label:'400 Robux',price:127000},
-     {id:'rb3',label:'800 Robux ⭐',price:248000},
-     {id:'rb4',label:'1700 Robux',price:500000},
-     {id:'rb5',label:'4500 Robux',price:1260000},
+     {id:'rb1',label:'400 Robux',price:52000},
+     {id:'rb2',label:'800 Robux ⭐',price:104000},
+     {id:'rb3',label:'1,700 Robux',price:208000},
+     {id:'rb4',label:'4,500 Robux',price:520000},
+     {id:'rb5',label:'10,000 Robux',price:1040000},
    ]},
-  {id:'identityv',name:'Identity V',short:'Identity V',
-   img:'https://www.overtopup.com/assets/uploads/game/game-17.jpg',
-   featured:false, type:'uid', currency:'🖤 Echo',
-   desc:'ເຕີມ Echo Identity V',
+
+  {id:'bloodstrike', name:'Blood Strike', short:'Blood Strike',
+   img:'https://www.overtopup.com/assets/uploads/game/game-26.jpg',
+   featured:false, type:'uid', currency:'💎 Diamond',
+   desc:'ເຕີມ Diamond Blood Strike',
+   howto:'1️⃣ ເລືອກຍອດ Diamond ທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Player ID Blood Strike (ເບິ່ງໃນໂປຣໄຟລ໌ເກມ)\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-15 ນາທີ Diamond ເຂົ້າ✅',
    packages:[
-     {id:'iv1',label:'60 Echo',price:21000},
-     {id:'iv2',label:'328 Echo ⭐',price:104000},
-     {id:'iv3',label:'688 Echo',price:210000},
-     {id:'iv4',label:'1888 Echo',price:552500},
+     {id:'bs1',label:'60 💎',price:15000},
+     {id:'bs2',label:'300+30 💎 ⭐',price:72000},
+     {id:'bs3',label:'980 💎',price:230000},
+     {id:'bs4',label:'1,980 💎',price:450000},
+     {id:'bs5',label:'Battle Pass',price:120000},
    ]},
-  {id:'ragnarok',name:'Ragnarok Origin',short:'RO-O',
-   img:'https://www.overtopup.com/assets/uploads/game/game-7.jpg',
-   featured:false, type:'uid', currency:'💎 Tokens',
-   desc:'ເຕີມ Ragnarok Origin',
-   packages:[
-     {id:'ro1',label:'30 Tokens',price:21000},
-     {id:'ro2',label:'100 Tokens ⭐',price:63000},
-     {id:'ro3',label:'300 Tokens',price:178500},
-     {id:'ro4',label:'1000 Tokens',price:567000},
-   ]},
-  {id:'lolpc',name:'LOL (PC)',short:'LOL PC',
-   img:'https://www.overtopup.com/assets/uploads/game/game-40.jpg',
-   featured:false, type:'uid', currency:'💰 RP',
-   desc:'ເຕີມ Riot Points LOL',
-   packages:[
-     {id:'lp1',label:'230 RP',price:42000},
-     {id:'lp2',label:'575 RP ⭐',price:104000},
-     {id:'lp3',label:'1380 RP',price:241500},
-     {id:'lp4',label:'2800 RP',price:472500},
-     {id:'lp5',label:'5000 RP',price:819000},
-   ]},
-  {id:'lolwr',name:'Wild Rift',short:'Wild Rift',
-   img:'https://www.overtopup.com/assets/uploads/game/game-41.jpg',
-   featured:false, type:'uid', currency:'💰 Wild Cores',
-   desc:'ເຕີມ Wild Cores',
-   packages:[
-     {id:'wc1',label:'100 WC',price:21000},
-     {id:'wc2',label:'500 WC ⭐',price:100000},
-     {id:'wc3',label:'1000 WC',price:195500},
-     {id:'wc4',label:'3000 WC',price:567000},
-   ]},
-  {id:'bloodstrike',name:'Blood Strike',short:'Blood Strike',
-   img:'https://www.overtopup.com/assets/uploads/game/game-37.jpg',
-   featured:false, type:'uid', currency:'🩸 BC',
-   desc:'ເຕີມ Blood Currency',
-   packages:[
-     {id:'bs1',label:'60 BC',price:21000},
-     {id:'bs2',label:'300 BC ⭐',price:100000},
-     {id:'bs3',label:'1000 BC',price:315000},
-   ]},
-  {id:'efootball',name:'eFootball PES',short:'eFootball',
-   img:'https://www.overtopup.com/assets/uploads/game-id-pass/efootball-pes-2023-ios.png',
-   featured:false, type:'idpass', currency:'⚽ Coins',
-   desc:'ເຕີມ eFootball Coins',
-   packages:[
-     {id:'ef1',label:'300 Coins',price:63000},
-     {id:'ef2',label:'500 Coins ⭐',price:100000},
-     {id:'ef3',label:'1000 Coins',price:194000},
-     {id:'ef4',label:'2000 Coins',price:378000},
-   ]},
-  {id:'harrypotter',name:'Harry Potter: Magic Awakened',short:'HP:MA',
+
+  {id:'deltaforce', name:'Delta Force', short:'Delta Force',
    img:'https://www.overtopup.com/assets/uploads/game/game-27.jpg',
-   featured:false, type:'uid', currency:'⚡ Gems',
-   desc:'ເຕີມ HP Magic Awakened',
+   featured:false, type:'uid', currency:'💰 DF Coin',
+   desc:'ເຕີມ Delta Force',
+   howto:'1️⃣ ເລືອກຍອດທີ່ຕ້ອງການ\n2️⃣ ໃສ່ Player ID Delta Force\n3️⃣ ກົດ "ສັ່ງເຕີມ" — ລໍຖ້າ 5-15 ນາທີ Coin ເຂົ້າ✅',
    packages:[
-     {id:'hp1',label:'60 Gems',price:21000},
-     {id:'hp2',label:'300+30 Gems ⭐',price:104000},
-     {id:'hp3',label:'980+110 Gems',price:341000},
-   ]},
-  {id:'slamdunk',name:'Slam Dunk',short:'Slam Dunk',
-   img:'https://www.overtopup.com/assets/uploads/game/game-23.jpg',
-   featured:false, type:'uid', currency:'🏀 Gems',
-   desc:'ເຕີມ Slam Dunk',
-   packages:[
-     {id:'sd1',label:'68 Gems',price:21000},
-     {id:'sd2',label:'348 Gems ⭐',price:104000},
-     {id:'sd3',label:'688 Gems',price:199500},
-   ]},
-  {id:'afkjourney',name:'AFK Journey',short:'AFK Journey',
-   img:'https://www.overtopup.com/assets/uploads/game/game-54.png',
-   featured:false, type:'uid', currency:'💎 Diamonds',
-   desc:'ເຕີມ AFK Journey',
-   packages:[
-     {id:'aj1',label:'60 💎',price:21000},
-     {id:'aj2',label:'300 💎 ⭐',price:100000},
-     {id:'aj3',label:'1000 💎',price:315000},
-   ]},
-  {id:'lineage',name:'Lineage2M',short:'Lineage2M',
-   img:'https://www.overtopup.com/assets/image/game/lineage2m.png',
-   featured:false, type:'uid', currency:'💠 NCoin',
-   desc:'ເຕີມ Lineage2M',
-   packages:[
-     {id:'ln1',label:'100 NC',price:52500},
-     {id:'ln2',label:'300 NC ⭐',price:153500},
-     {id:'ln3',label:'600 NC',price:294000},
-   ]},
-  {id:'deltaforce',name:'Delta Force',short:'Delta Force',
-   img:'https://www.overtopup.com/assets/image/game/delta-force-garena.png',
-   featured:false, type:'uid', currency:'💲 DF Coins',
-   desc:'ເຕີມ Delta Force Garena',
-   packages:[
-     {id:'df1',label:'60 Coins',price:21000},
-     {id:'df2',label:'300 Coins ⭐',price:100000},
-     {id:'df3',label:'980 Coins',price:315000},
+     {id:'df1',label:'60 Coin',price:18000},
+     {id:'df2',label:'330 Coin ⭐',price:90000},
+     {id:'df3',label:'980 Coin',price:260000},
+     {id:'df4',label:'Battle Pass',price:130000},
    ]},
 ];
 
@@ -9172,8 +9090,12 @@ function openGameDetail(gameId){
       <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">📝 ຂໍ້ມູນບັນຊີ</div>
       ${game.type==='uid'?`
         <input class="form-input" id="gameUid" placeholder="UID / Player ID *" style="margin-bottom:8px">
-        <input class="form-input" id="gameServer" placeholder="Server (ຖ້າມີ / ถ้ามี)" style="margin-bottom:8px">
-      `:`
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="form-input" id="gameZone" placeholder="Zone ID" style="width:90px;flex-shrink:0;text-align:center">
+          <input class="form-input" id="gameServer" placeholder="Server (ຖ້າມີ)" style="flex:1">
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:-4px;margin-bottom:8px">💡 MLBB: Zone ID ຢູ່ໃນວົງເລັບ (1234) ຕໍ່ User ID — ເກມອື່ນຂ້າມໄດ້</div>
+      ` : `
         <input class="form-input" id="gameEmail" placeholder="Email / ID *" style="margin-bottom:8px">
         <input class="form-input" id="gamePass" placeholder="Password *" style="margin-bottom:8px;font-family:monospace;letter-spacing:1px">
       `}
@@ -9197,7 +9119,14 @@ function openGameDetail(gameId){
       <div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px;line-height:1.6">
         ⏱ ດຳເນີນການ 5–30 ນາທີ<br>ຕິດຕໍ່ Admin ທາງ Chat ຫາກລ່າຊ້າ
       </div>
-    </div>`;
+    </div>
+
+    ${game.howto ? `
+    <div style="margin-top:16px;background:rgba(201,168,76,.06);border:1.5px solid rgba(201,168,76,.25);border-radius:14px;padding:14px 16px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">📋 ວິທີເຕີມ</div>
+      <div style="font-size:12.5px;color:var(--text);line-height:2;white-space:pre-line">${game.howto}</div>
+    </div>` : ''}
+    `;
 
   switchPage('game-detail');
 }
@@ -9232,10 +9161,11 @@ function submitGameTopup(gameId){
 
   let accountInfo = '';
   if(game.type==='uid'){
-    const uid = (document.getElementById('gameUid')?.value||'').trim();
+    const uid  = (document.getElementById('gameUid')?.value||'').trim();
+    const zone = (document.getElementById('gameZone')?.value||'').trim();
+    const srv  = (document.getElementById('gameServer')?.value||'').trim();
     if(!uid){ showNotif('⚠️ ກາລຸນາໃສ່ UID / Player ID'); return; }
-    const srv = (document.getElementById('gameServer')?.value||'').trim();
-    accountInfo = 'UID: '+uid+(srv?' | Server: '+srv:'');
+    accountInfo = 'UID: '+uid+(zone?' | Zone: '+zone:'')+(srv?' | Server: '+srv:'');
   } else {
     const em  = (document.getElementById('gameEmail')?.value||'').trim();
     const pw  = (document.getElementById('gamePass')?.value||'').trim();
