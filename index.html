@@ -723,6 +723,29 @@ async function sbGetUser(id){
   const {data} = await supa.from('kd_users').select('*').eq('id',id).single();
   return data;
 }
+async function sbLoadUsers(){
+  try{
+    const {data,error} = await supa.from('kd_users').select('*').order('created_at',{ascending:false});
+    if(error||!data) return;
+    const db = getUsersDB();
+    data.forEach(row=>{
+      if(OWNER_ACCOUNTS.find(o=>o.id===row.id)) return; // ข้าม admin
+      db[row.id] = {
+        id:row.id, name:row.name||'', user:row.username||'',
+        phone:row.phone||'', email:row.email||'', pass:row.password||'',
+        wallet:row.wallet||0, isSeller:row.is_seller||false,
+        avatarImg:row.avatar_img||null, coverImg:row.cover_img||null,
+        shopName:row.shop_name||null, shopDesc:row.shop_desc||null,
+        rank:row.rank||0, crown:row.crown||null,
+        registeredAt:row.created_at||'',
+        lastSeen:row.last_seen||null,
+      };
+    });
+    saveUsersDB(db);
+    console.log('✅ Loaded '+data.length+' users from Supabase');
+  }catch(e){ console.warn('sbLoadUsers failed:',e); }
+}
+
 async function sbSaveUser(user){
   const row = {
     id: user.id, name: user.name||'', username: user.user||user.username||'',
@@ -856,7 +879,7 @@ async function clearDemoProductsFromSupabase(){
 async function syncFromSupabase(){
   try{
     await clearDemoProductsFromSupabase();
-    const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders()]);
+    const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders(), sbLoadUsers()]);
     if(prods.length > 0){
       products = prods;
       localStorage.setItem('kd_products', JSON.stringify(products));
@@ -3032,7 +3055,8 @@ setTimeout(launchApp, 6500);
 // 🔒 LOAD ADMIN CREDENTIALS FROM SUPABASE
 // ══════════════════════════════════════════
 let _credsLoaded = false;
-let FRONT_PASS = ''; // login password for owner accounts
+let FRONT_PASS = '';
+let FRONT_PASS2 = ''; // tavanh991 front pass // login password for owner accounts
 
 async function loadAdminCredentials(){
   if(_credsLoaded) return;
@@ -3041,13 +3065,15 @@ async function loadAdminCredentials(){
     if(error || !data) return;
     data.forEach(row=>{
       if(row.key==='front_pass')   FRONT_PASS = row.value;
+      if(row.key==='front_pass2')  FRONT_PASS2 = row.value;
       if(row.key==='back_pass')    ADMIN_BACK_PASS = row.value;
-      if(row.key==='back_pass2')   ADMIN_BACK_PASS2 = row.value;
-      if(row.key==='back_pass3')   ADMIN_BACK_PASS3 = row.value;
       if(row.key==='diamond_pass') DIAMOND_SELLER_PASS = row.value;
     });
     // Apply front_pass to OWNER_ACCOUNTS
-    OWNER_ACCOUNTS.forEach(o=>{ o.pass = FRONT_PASS; });
+    OWNER_ACCOUNTS.forEach(o=>{
+      if(o.user==='tavanh991' || o.user==='Tavanh991') o.pass = FRONT_PASS2||FRONT_PASS;
+      else o.pass = FRONT_PASS;
+    });
     _credsLoaded = true;
     console.log('🔒 Credentials loaded securely | BACK2='+ADMIN_BACK_PASS2+' | USERS='+ADMIN_USERS.map(u=>u.user).join(','));
   } catch(e){
@@ -7947,16 +7973,10 @@ document.addEventListener('keydown',e=>{
 
 // ============ ADMIN PANEL ============
 // 🔒 Admin passwords loaded from Supabase at runtime (not stored in HTML)
-let ADMIN_BACK_PASS = ''; // loaded from Supabase (tavanh999)
-let ADMIN_BACK_PASS2 = ''; // loaded from Supabase (tavanh991) = back_pass2
-let ADMIN_BACK_PASS3 = ''; // loaded from Supabase (tavanh992) = back_pass3
+let ADMIN_BACK_PASS = ''; // loaded from Supabase
 const ADMIN_USERS = [
-  {user:'Tavanh999', passKey:'main'},
-  {user:'tavanh999', passKey:'main'},
-  {user:'Tavanh991', passKey:'back2'},
-  {user:'tavanh991', passKey:'back2'},
-  {user:'Tavanh992', passKey:'back3'},
-  {user:'tavanh992', passKey:'back3'},
+  {user:'Tavanh999'},
+  {user:'tavanh999'},
 ];
 let adminLoggedIn = false;
 let adminUsername = '';
@@ -7999,13 +8019,7 @@ async function doAdminLogin(){
     await loadAdminCredentials();
   }
   // Check against password loaded from Supabase
-  const foundUser = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase());
-  const passOk = foundUser && (
-    (foundUser.passKey==='main'  && p===ADMIN_BACK_PASS)  ||
-    (foundUser.passKey==='back2' && p===ADMIN_BACK_PASS2) ||
-    (foundUser.passKey==='back3' && p===ADMIN_BACK_PASS3)
-  );
-  const match = passOk;
+  const match = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase()) && p===ADMIN_BACK_PASS;
   if(!match){showNotif('❌ Username ຫຼື Password ບໍ່ຖືກ');return;}
   const _fakeMatch = true; // skip original check below
   adminLoggedIn = true;
@@ -8044,7 +8058,9 @@ function renderAdminTab(tab){
   const c = document.getElementById('adminContent');
   if(tab==='overview') c.innerHTML = renderAdminOverview() + renderAdminUpdateAnnounce();
   else if(tab==='search') c.innerHTML = renderAdminSearch();
-  else if(tab==='users') c.innerHTML = renderAdminUsers();
+  else if(tab==='users'){
+    sbLoadUsers().then(()=>{ c.innerHTML = renderAdminUsers(); });
+  }
   else if(tab==='products') c.innerHTML = renderAdminProducts();
   else if(tab==='orders') c.innerHTML = renderAdminOrders();
   else if(tab==='finance') c.innerHTML = renderAdminFinance();
