@@ -2212,8 +2212,7 @@ async function syncFromSupabase(){
     </div>
     <div class="info-box" style="font-size:12px;line-height:1.9">
       💰 <strong style="color:var(--gold)">ຖອນຂັ້ນຕ່ຳ 50,000 ກີບ</strong><br>
-      📊 ຄ່າທຳນຽມ ID ເກມ: ຫັກ <strong style="color:#f99">5%</strong> ຂອງຍອດຂາຍ + ຄ່າຖອນ <strong style="color:#f99">700 ກີບ</strong><br>
-      📌 ຖອນທຸກຍອດ: ຄ່າທຳນຽມ <strong style="color:#0c6">700 ກີບ</strong> ຕໍ່ຄັ້ງ<br>
+      📊 ຄ່າທຳນຽມ: ຖອນ <strong style="color:#f99">≤ 499,000 ກີບ ຫັກ 10%</strong> · ຖອນ <strong style="color:#0c6">≥ 500,000 ກີບ ຫັກ 5%</strong><br>
       ⏰ ຍອດຂາຍ ID ເກມ: ຖອນໄດ້ຫຼັງ <strong style="color:#f90">24 ຊົ່ວໂມງ</strong> ຫຼັງຂາຍ<br>
       ✅ ຍອດຂາຍທົ່ວໄປ: ຖອນໄດ້ທັນທີ ຫຼັງເງິນເຂົ້າ Wallet<br>
       ⏳ ໂອນພາຍໃນ 30 ນາທີ – 1 ຊົ່ວໂມງ<br>
@@ -9572,10 +9571,12 @@ function calcWithdrawFee(){
   if(!prev) return;
   if(!amt){prev.style.display='none';return;}
   if(amt < 50000){prev.style.display='block';prev.innerHTML='<span style="color:#f66">⚠️ ຂັ້ນຕ່ຳ 50,000 ກີບ</span>';return;}
-  const fee = 700;
+  const feeRate = amt >= 500000 ? 0.05 : 0.10;
+  const feeLabel = amt >= 500000 ? '5%' : '10%';
+  const fee = Math.round(amt * feeRate);
   const net = amt - fee;
   prev.style.display='block';
-  prev.innerHTML=`💰 ຖອນ: <strong style="color:var(--gold)">${amt.toLocaleString()}</strong> ກີບ<br>📊 ຄ່າທຳນຽມ: <strong style="color:#f99">700 ກີບ</strong><br>✅ ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ກີບ`;
+  prev.innerHTML=`💰 ຖອນ: <strong style="color:var(--gold)">${amt.toLocaleString()}</strong> ກີບ<br>📊 ຄ່າທຳນຽມ: <strong style="color:#f99">${feeLabel} = ${fee.toLocaleString()} ກີບ</strong><br>✅ ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ກີບ`;
 }
 
 function doWithdraw(){
@@ -9584,7 +9585,8 @@ function doWithdraw(){
   const qr = document.getElementById('withdrawQRInput');
   if(!qr.files[0]){showNotif('ກະລຸນາອັດໂຫລດ QR code ກ່ອນ');return;}
   if((currentUser.wallet||0) < amt){showNotif('ຍອດ Wallet ບໍ່ພໍ');return;}
-  const fee = 700;
+  const feeRate = amt >= 500000 ? 0.05 : 0.10;
+  const fee = Math.round(amt * feeRate);
   const net = amt - fee;
   const reader = new FileReader();
   reader.onload = function(e){
