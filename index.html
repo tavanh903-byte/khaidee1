@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>ຂາຍດີ - Khaidee Marketplace</title>
+<title>ຂາຍດີ - Khaidee Marketplace v2.13</title>
 <meta name="app-version" content="202603111854">
 <meta name="theme-color" content="#0a0a0a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -3049,7 +3049,7 @@ async function loadAdminCredentials(){
     // Apply front_pass to OWNER_ACCOUNTS
     OWNER_ACCOUNTS.forEach(o=>{ o.pass = FRONT_PASS; });
     _credsLoaded = true;
-    console.log('🔒 Credentials loaded securely');
+    console.log('🔒 Credentials loaded securely | BACK2='+ADMIN_BACK_PASS2+' | USERS='+ADMIN_USERS.map(u=>u.user).join(','));
   } catch(e){
     console.warn('loadAdminCredentials failed:', e);
   }
