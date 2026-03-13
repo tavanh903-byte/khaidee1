@@ -1817,6 +1817,10 @@ async function syncFromSupabase(){
           <div class="icon">📦</div>
           <div>ປະຫວັດການສັ່ງຊື້</div>
         </div>
+        <div class="profile-icon-btn" onclick="showDepositWithdrawHistory()">
+          <div class="icon">💳</div>
+          <div>ປະຫວັດເງິນ</div>
+        </div>
         <div class="profile-icon-btn" onclick="showPersonalInfo()">
           <div class="icon">📝</div>
           <div>ໃສ່ຂໍ້ມູນ</div>
@@ -2997,6 +3001,42 @@ async function syncFromSupabase(){
   <div class="popup-box">
     <div id="billDetailContent"></div>
     <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:12px">ປິດ</button>
+  </div>
+</div>
+
+<!-- DEPOSIT/WITHDRAW HISTORY MODAL -->
+<div class="popup-overlay" id="finHistoryModal" style="display:none">
+  <div class="popup-box" style="padding:0;overflow:hidden;max-height:90vh;display:flex;flex-direction:column">
+    <!-- Header -->
+    <div style="padding:16px 16px 0;background:var(--dark2)">
+      <div class="modal-title" style="margin-bottom:12px">💳 ປະຫວັດການເງິນ</div>
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--gray)">
+        <div id="finTab-deposit" onclick="switchFinTab('deposit')"
+          style="flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;color:var(--gold);border-bottom:2px solid var(--gold);margin-bottom:-2px;transition:.2s">
+          📥 ເຕີມເງິນ
+        </div>
+        <div id="finTab-withdraw" onclick="switchFinTab('withdraw')"
+          style="flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s;display:none">
+          📤 ຖອນເງິນ
+        </div>
+      </div>
+    </div>
+    <!-- Content -->
+    <div id="finHistoryContent" style="overflow-y:auto;padding:14px;flex:1"></div>
+    <div style="padding:10px 16px;background:var(--dark2)">
+      <button class="btn btn-outline" onclick="closeModal('finHistoryModal')" style="width:100%">ປິດ</button>
+    </div>
+  </div>
+</div>
+
+<!-- FINANCE BILL DETAIL MODAL -->
+<div class="popup-overlay" id="finBillModal" style="display:none">
+  <div class="popup-box" style="padding:0;overflow:hidden">
+    <div id="finBillContent" style="max-height:85vh;overflow-y:auto"></div>
+    <div style="padding:10px 16px;background:var(--dark2)">
+      <button class="btn btn-outline" onclick="closeModal('finBillModal')" style="width:100%">ປິດ</button>
+    </div>
   </div>
 </div>
 
@@ -6129,6 +6169,140 @@ function showOrderHistory(){
   openModal('orderHistoryModal');
 }
 
+// ══════════════════════════════════════
+//  DEPOSIT / WITHDRAW HISTORY (Profile)
+// ══════════════════════════════════════
+let _finCurrentTab = 'deposit';
+
+function showDepositWithdrawHistory(){
+  if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
+  // Show withdraw tab only for sellers
+  const wTab = document.getElementById('finTab-withdraw');
+  if(wTab) wTab.style.display = currentUser.isSeller ? 'block' : 'none';
+  _finCurrentTab = 'deposit';
+  _renderFinTab('deposit');
+  openModal('finHistoryModal');
+}
+
+function switchFinTab(tab){
+  if(tab==='withdraw' && !currentUser.isSeller) return;
+  _finCurrentTab = tab;
+  // Update tab styles
+  const dTab = document.getElementById('finTab-deposit');
+  const wTab = document.getElementById('finTab-withdraw');
+  if(dTab){ dTab.style.color = tab==='deposit'?'var(--gold)':'var(--text2)'; dTab.style.borderBottomColor = tab==='deposit'?'var(--gold)':'transparent'; }
+  if(wTab){ wTab.style.color = tab==='withdraw'?'var(--gold)':'var(--text2)'; wTab.style.borderBottomColor = tab==='withdraw'?'var(--gold)':'transparent'; }
+  _renderFinTab(tab);
+}
+
+function _renderFinTab(tab){
+  const uid = currentUser.id;
+  const content = document.getElementById('finHistoryContent');
+  if(!content) return;
+
+  if(tab==='deposit'){
+    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]').filter(r=>r.userId===uid).reverse();
+    if(!deps.length){ content.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px">ຍັງບໍ່ມີປະຫວັດການເຕີມເງິນ</div>'; return; }
+    content.innerHTML = deps.map(r=>`
+      <div onclick="showFinBill('deposit','${r.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--dark3);border-radius:14px;margin-bottom:10px;cursor:pointer;border:1px solid ${r.status==='approved'?'rgba(12,180,100,.3)':r.status==='rejected'?'rgba(255,80,80,.3)':'rgba(201,168,76,.2)'};transition:.2s">
+        <div style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:${r.status==='approved'?'rgba(12,180,100,.15)':r.status==='rejected'?'rgba(255,80,80,.12)':'rgba(201,168,76,.1)'}">📥</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">ເຕີມເງິນ ${Number(r.amount).toLocaleString()} ກີບ</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${r.date}</div>
+          ${r.ref?`<div style="font-size:10px;color:var(--text2)">Ref: ${r.ref}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;${r.status==='approved'?'background:rgba(12,180,100,.15);color:#0cb464':r.status==='rejected'?'background:rgba(255,80,80,.12);color:#ff6666':'background:rgba(201,168,76,.12);color:var(--gold)'}">${r.status==='approved'?'✅ ສຳເລັດ':r.status==='rejected'?'❌ ຖືກປະຕິເສດ':'⏳ ລໍຖ້າ'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">ກົດເບິ່ງບິນ →</div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]').filter(r=>r.userId===uid).reverse();
+    if(!withs.length){ content.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px">ຍັງບໍ່ມີປະຫວັດການຖອນເງິນ</div>'; return; }
+    content.innerHTML = withs.map(r=>`
+      <div onclick="showFinBill('withdraw','${r.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--dark3);border-radius:14px;margin-bottom:10px;cursor:pointer;border:1px solid ${r.status==='approved'?'rgba(12,180,100,.3)':r.status==='rejected'?'rgba(255,80,80,.3)':'rgba(201,168,76,.2)'};transition:.2s">
+        <div style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:${r.status==='approved'?'rgba(12,180,100,.15)':r.status==='rejected'?'rgba(255,80,80,.12)':'rgba(201,168,76,.1)'}">📤</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">ຖອນເງິນ ${Number(r.amount).toLocaleString()} ກີບ</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${r.date}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;${r.status==='approved'?'background:rgba(12,180,100,.15);color:#0cb464':r.status==='rejected'?'background:rgba(255,80,80,.12);color:#ff6666':'background:rgba(201,168,76,.12);color:var(--gold)'}">${r.status==='approved'?'✅ ສຳເລັດ':r.status==='rejected'?'❌ ຖືກປະຕິເສດ':'⏳ ລໍຖ້າ'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">ກົດເບິ່ງບິນ →</div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function showFinBill(type, id){
+  const isDeposit = type==='deposit';
+  const list = JSON.parse(localStorage.getItem(isDeposit?'kd_deposit_requests':'kd_withdraw_requests')||'[]');
+  const r = list.find(x=>x.id===id);
+  if(!r) return;
+
+  const statusColor = r.status==='approved'?'#0cb464':r.status==='rejected'?'#ff6666':'var(--gold)';
+  const statusLabel = r.status==='approved'?'✅ ອະນຸມັດສຳເລັດ':r.status==='rejected'?'❌ ຖືກປະຕິເສດ':'⏳ ລໍຖ້າການອະນຸມັດ';
+  const statusBg    = r.status==='approved'?'rgba(12,180,100,.12)':r.status==='rejected'?'rgba(255,80,80,.1)':'rgba(201,168,76,.1)';
+
+  const feeRate = r.feeRate ? r.feeRate*100 : (r.fee&&r.amount?(r.fee/r.amount*100).toFixed(0):10);
+
+  const html = `
+    <div style="padding:20px 18px">
+      <!-- Bill Header -->
+      <div style="text-align:center;padding:20px 0 16px;border-bottom:1px dashed rgba(255,255,255,.1)">
+        <div style="font-size:40px;margin-bottom:8px">${isDeposit?'📥':'📤'}</div>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:2px">ຂາຍດີ</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">KHAIDEE MARKETPLACE</div>
+        <div style="margin-top:12px;display:inline-block;padding:6px 20px;border-radius:20px;background:${statusBg};font-size:13px;font-weight:700;color:${statusColor}">${statusLabel}</div>
+      </div>
+
+      <!-- Bill Body -->
+      <div style="margin:16px 0;border-bottom:1px dashed rgba(255,255,255,.1);padding-bottom:16px">
+        <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:12px;letter-spacing:1px">━━━ ລາຍລະອຽດ ━━━</div>
+        <div class="bill-detail-row"><span>ປະເພດ</span><span style="color:${isDeposit?'#0cb464':'var(--gold)'}">${isDeposit?'📥 ເຕີມເງິນ':'📤 ຖອນເງິນ'}</span></div>
+        <div class="bill-detail-row"><span>ເລກທີ</span><span style="font-size:11px">${r.id}</span></div>
+        <div class="bill-detail-row"><span>ຊື່</span><span>${r.userName||'-'}</span></div>
+        <div class="bill-detail-row"><span>ວັນທີ</span><span style="font-size:11px">${r.date}</span></div>
+        ${r.ref?`<div class="bill-detail-row"><span>Ref</span><span style="color:var(--accent)">${r.ref}</span></div>`:''}
+      </div>
+
+      <!-- Amount -->
+      <div style="margin:16px 0;border-bottom:1px dashed rgba(255,255,255,.1);padding-bottom:16px">
+        <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:12px;letter-spacing:1px">━━━ ຈຳນວນເງິນ ━━━</div>
+        <div class="bill-detail-row"><span>${isDeposit?'ເຕີມ':'ຖອນ'}</span><span style="color:var(--gold);font-size:15px;font-weight:700">${Number(r.amount).toLocaleString()} ກີບ</span></div>
+        ${!isDeposit&&r.fee?`
+        <div class="bill-detail-row"><span>ຄ່າທຳນຽມ (${feeRate}%)</span><span style="color:#f99">-${Number(r.fee).toLocaleString()} ກີບ</span></div>
+        <div class="bill-detail-row" style="border-bottom:none;padding-top:6px"><span style="font-weight:700;color:var(--text)">ໄດ້ຮັບ</span><span style="color:#0cb464;font-size:15px;font-weight:700">${Number(r.net||r.amount).toLocaleString()} ກີບ</span></div>
+        `:''}
+      </div>
+
+      ${isDeposit&&r.slipImg?`
+      <!-- Slip Image -->
+      <div style="margin:16px 0;border-bottom:1px dashed rgba(255,255,255,.1);padding-bottom:16px">
+        <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:10px;letter-spacing:1px">━━━ ສລິບໂອນ ━━━</div>
+        <div style="text-align:center"><img src="${r.slipImg}" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid rgba(255,255,255,.1)" onclick="adminViewImg('${r.slipImg}')"></div>
+      </div>`:''}
+
+      <!-- Status Note -->
+      <div style="background:${statusBg};border:1px solid ${statusColor}44;border-radius:12px;padding:12px;text-align:center;margin-top:8px">
+        <div style="font-size:12px;color:${statusColor};font-weight:700">${statusLabel}</div>
+        ${r.status==='pending'?'<div style="font-size:11px;color:var(--text2);margin-top:4px">ກະລຸນາລໍຖ້າ Admin ກວດສອບ (30 ນາທີ - 1 ຊົ່ວໂມງ)</div>':
+          r.status==='approved'?'<div style="font-size:11px;color:var(--text2);margin-top:4px">ເງິນ'+( isDeposit?'ເຂົ້າ Wallet ຂອງທ່ານແລ້ວ':'ອອກຈາກ Wallet ແລ້ວ')+'</div>':
+          '<div style="font-size:11px;color:var(--text2);margin-top:4px">ຄຳຂໍຖືກປະຕິເສດ — ກະລຸນາຕິດຕໍ່ Admin</div>'}
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align:center;margin-top:16px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.08)">
+        <div style="font-size:10px;color:var(--text2);letter-spacing:1px">ຂາຍດີ Marketplace · ຂອບໃຈທີ່ໃຊ້ບໍລິການ</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('finBillContent').innerHTML = html;
+  openModal('finBillModal');
+}
+
 function showPersonalInfo(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
   const s = currentUser.personalInfo||{};
@@ -8935,6 +9109,8 @@ function adminApproveDeposit(id){
   sbUpdateDepositStatus(id,'approved').catch(e=>console.warn('sbApproveDeposit:',e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
+  // Refresh user-facing history if open
+  if(document.getElementById('finHistoryModal')?.style.display!=='none') _renderFinTab(_finCurrentTab);
   showNotif('✅ ອະນຸມັດຝາກ +'+Number(amount).toLocaleString()+' ກີບ | Admin Wallet: '+Number(adminSysWallet).toLocaleString());
   updateAdminNotifBadge();
 }
@@ -8967,6 +9143,8 @@ function adminApproveWithdraw(id){
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
+  // Refresh user-facing history if open
+  if(document.getElementById('finHistoryModal')?.style.display!=='none') _renderFinTab(_finCurrentTab);
   showNotif('✅ ອະນຸມັດການຖອນ +'+Number(netAmount).toLocaleString()+' ກີບ | ກຳໄລ: +'+Number(feeAmount).toLocaleString()+' ກີບ');
   updateAdminNotifBadge();
 }
