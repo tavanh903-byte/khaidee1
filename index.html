@@ -704,6 +704,9 @@ body {
   backdrop-filter: blur(10px);
 }
 /* ─────────────────────────────────── */
+
+.dep-quick{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 6px;color:rgba(255,255,255,0.8);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font-lao);}
+.dep-quick:hover,.dep-quick.dep-active{background:rgba(201,168,76,0.2);border-color:var(--gold);color:var(--gold);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -2019,42 +2022,103 @@ async function syncFromSupabase(){
 
 <!-- DEPOSIT MODAL -->
 <div class="popup-overlay" id="depositModal" style="display:none">
-  <div class="popup-box" style="max-height:90vh;overflow-y:auto">
-    <div class="modal-title">⬇️ ເຕີມເງິນ Wallet</div>
-    <!-- QR Code Display -->
-    <div style="text-align:center;padding:16px;border:2px solid rgba(201,168,76,.4);border-radius:14px;background:#fff;margin-bottom:16px">
-      <div style="font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:10px">ເຕີມເງິນຜ່ານ LAO QR</div>
-      <div style="background:#f8f9fa;padding:12px;border-radius:10px;display:inline-block;border:1px solid #eee">
-        <img id="qrCodeImg" alt="LAO QR Code" style="width:200px;max-width:100%;height:auto;display:block;margin:0 auto;border-radius:6px">
-        <p style="margin-top:8px;font-size:11px;color:#888;font-family:sans-serif">[ ສະແກນເພື່ອໂອນເງິນ / สแกนเพื่อโอนเงิน ]</p>
+  <div class="popup-box" style="max-height:92vh;overflow-y:auto;padding:0">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#c0202a,#8a1010);padding:18px 20px 14px;border-radius:16px 16px 0 0;text-align:center">
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:2px">JDB Bank</div>
+      <div style="font-size:18px;font-weight:700;color:#fff">ຝາກເງິນ Wallet</div>
+    </div>
+
+    <div style="padding:16px">
+
+      <!-- Step 1: ใส่ยอด -->
+      <div id="dep-step1">
+        <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">ຂັ້ນຕອນທີ 1 — ເລືອກຈຳນວນ</div>
+
+        <!-- Quick amounts -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+          <button onclick="setDepositAmt(10000)"  class="dep-quick">10,000</button>
+          <button onclick="setDepositAmt(20000)"  class="dep-quick">20,000</button>
+          <button onclick="setDepositAmt(50000)"  class="dep-quick">50,000</button>
+          <button onclick="setDepositAmt(100000)" class="dep-quick">100,000</button>
+          <button onclick="setDepositAmt(200000)" class="dep-quick">200,000</button>
+          <button onclick="setDepositAmt(500000)" class="dep-quick">500,000</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;background:var(--dark3);border:1.5px solid rgba(201,168,76,0.3);border-radius:10px;padding:10px 14px;margin-bottom:16px">
+          <span style="font-size:12px;font-weight:700;color:var(--gold);background:rgba(201,168,76,0.15);padding:3px 8px;border-radius:5px;white-space:nowrap">LAK</span>
+          <input class="form-input" type="number" id="depositAmt" placeholder="ໃສ່ຈຳນວນ..." min="1000" step="1000"
+            style="background:none;border:none;padding:0;font-size:22px;font-weight:700;color:#fff;flex:1;outline:none"
+            oninput="syncDepositQuick()">
+        </div>
+
+        <button class="btn btn-gold" onclick="goDepStep2()" style="margin-bottom:8px">
+          ຕໍ່ໄປ → ເບິ່ງ QR ຈ່າຍ
+        </button>
+        <button class="btn btn-outline" onclick="closeModal('depositModal')">ຍົກເລີກ</button>
       </div>
-      <div style="margin-top:12px;text-align:left;padding:0 8px">
-        <p style="font-size:12px;color:#666;margin:4px 0;font-family:sans-serif">ຊື່ບັນຊີ / Account Name:</p>
-        <p style="font-weight:700;color:#1a1a1a;font-size:15px;font-family:sans-serif">SENGTAVANH BOUNXAISENG</p>
-        <hr style="border:0;border-top:1px solid #eee;margin:8px 0">
-        <p style="font-size:12px;color:#666;font-family:sans-serif">ສະກຸນເງິນ / Currency: <span style="color:#0066cc;font-weight:700">LAK (ກີບ)</span></p>
+
+      <!-- Step 2: QR + Upload Slip -->
+      <div id="dep-step2" style="display:none">
+        <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">ຂັ້ນຕອນທີ 2 — ສະແກນ QR ແລ້ວສົ່ງສລິບ</div>
+
+        <!-- Amount display -->
+        <div style="background:linear-gradient(135deg,rgba(192,32,42,0.25),rgba(140,10,20,0.3));border:1px solid rgba(192,32,42,0.4);border-radius:12px;padding:14px;text-align:center;margin-bottom:14px">
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:2px">ຈຳນວນທີ່ຕ້ອງໂອນ</div>
+          <div id="dep-amt-display" style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px"></div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">ກີບລາວ (LAK)</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;color:#4ade80;font-size:11px;margin-top:6px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            ການຊຳລະທີ່ປອດໄພ
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div style="background:#fff;border-radius:14px;padding:16px;text-align:center;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:#c0202a;margin-bottom:8px">JDB Bank · ສະແກນເພື່ອຈ່າຍ</div>
+          <img id="qrCodeImg" alt="QR Code" style="width:200px;max-width:100%;height:auto;display:block;margin:0 auto;border-radius:6px">
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;text-align:left">
+            <div style="font-size:11px;color:#888;margin-bottom:2px">ຊື່ບັນຊີ</div>
+            <div style="font-size:14px;font-weight:700;color:#1a1a1a">SENGTAVANH BOUNXAISENG</div>
+            <div style="font-size:11px;color:#0066cc;font-weight:600;margin-top:4px">JDB Bank · LAK</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.3);border-radius:8px;padding:10px 12px;font-size:12px;color:#ffc107;line-height:1.7;margin-bottom:12px">
+          1️⃣ ສະແກນ QR ດ້ວຍ JDB Mobile ຫຼືແອັບທະນາຄານ<br>
+          2️⃣ ໂອນຈຳນວນ <b id="dep-hint-amt"></b> ກີບ<br>
+          3️⃣ ຖ່າຍ Slip ແລ້ວອັດໂຫລດລຸ່ມນີ້
+        </div>
+
+        <!-- Reference Number -->
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">ເລກອ້າງອີງ (Reference/Transaction ID) *</div>
+          <input class="form-input" type="text" id="depositRef" placeholder="ເຊັ່ນ: TXN2024031800123"
+            style="font-size:14px;letter-spacing:0.5px"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">📋 ເບິ່ງໃນ SMS ຫຼືຫນ້າ JDB Mobile ຫຼັງໂອນ</div>
+        </div>
+
+        <!-- Upload Slip -->
+        <div style="margin-bottom:4px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">ອັດໂຫລດສລິບການໂອນ *</div>
+          <div class="upload-box" id="slipUploadBox" onclick="document.getElementById('depositSlipInput').click()" style="min-height:70px;border-style:dashed">
+            📎 ກົດເພື່ອເລືອກຮູບສລິບ
+            <div id="depositSlipPreview" style="margin-top:8px"></div>
+          </div>
+          <input type="file" id="depositSlipInput" accept="image/*" style="display:none" onchange="previewDepositSlip()">
+          <!-- Slip validation result -->
+          <div id="slipValidResult" style="margin-top:8px;font-size:12px;border-radius:8px;padding:8px 12px;display:none"></div>
+        </div>
+
+        <button class="btn btn-gold" id="depConfirmBtn" onclick="doDeposit()" style="margin-bottom:8px;opacity:0.4;pointer-events:none">
+          ✅ ຢືນຢັນສົ່ງສລິບ
+        </button>
+        <button class="btn btn-outline" onclick="goDepStep1()">← ປ່ຽນຈຳນວນ</button>
       </div>
+
     </div>
-    <div class="form-group">
-      <label class="form-label">ຈຳນວນເງິນທີ່ໂອນ (ກີບ)</label>
-      <input class="form-input" type="number" id="depositAmt" placeholder="10,000">
-    </div>
-    <div class="form-group">
-      <label class="form-label">ອັດໂຫລດສລິບການໂອນ</label>
-      <div class="upload-box" onclick="document.getElementById('depositSlipInput').click()" style="min-height:80px">
-        📎 ອັດໂຫລດສລິບ / Upload Slip
-        <div id="depositSlipPreview" style="margin-top:8px"></div>
-      </div>
-      <input type="file" id="depositSlipInput" accept="image/*" style="display:none" onchange="previewDepositSlip()">
-    </div>
-    <div class="info-box" style="font-size:12px;line-height:1.7">
-      ⚠️ ກະລຸນາໃສ່ຈຳນວນເງິນ ແລະສລິບທີ່ທ່ານໂອນ<br>
-      ⚠️ กรุณาใส่จํานวนเงินและสลิปที่ท่านโอน<br>
-      📋 ບັນຊີຂອງທ່ານຕ້ອງຕົງກັບໂປຣໄຟລທີ່ທ່ານສະໝັກໄວ້<br>
-      📋 บัญชีของท่านต้องตรงกับโปรไฟล์ที่ท่านสมัครไว้
-    </div>
-    <button class="btn btn-gold" onclick="doDeposit()" style="margin-bottom:8px">✅ ຢືນຢັນຝາກເງິນ</button>
-    <button class="btn btn-outline" onclick="closeModal('depositModal')">ຍົກເລີກ</button>
   </div>
 </div>
 
@@ -4102,20 +4166,15 @@ function updateWalletDisplay(){
 }
 function showDeposit(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
+  // reset to step1
+  const s1=document.getElementById('dep-step1'),s2=document.getElementById('dep-step2');
+  if(s1)s1.style.display='block';
+  if(s2)s2.style.display='none';
   openModal('depositModal');
   // Set QR image
   const img = document.getElementById('qrCodeImg');
   if(img && !img.src.startsWith('data:')) img.src = QR_B64;
 }
-function previewDepositSlip(){
-  const input = document.getElementById('depositSlipInput');
-  const prev = document.getElementById('depositSlipPreview');
-  if(input.files[0]){
-    const url = URL.createObjectURL(input.files[0]);
-    prev.innerHTML = '<img src="'+url+'" style="max-width:120px;border-radius:6px;margin-top:6px">';
-  }
-}
-// doDeposit and doWithdraw defined below in Admin section
 
 function showWithdraw(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
@@ -8687,12 +8746,17 @@ function renderAdminFinance(){
 
   <div style="font-size:13px;font-weight:700;color:#f90;margin-bottom:8px">⏳ ລໍຖ້າຢືນຢັນ — ຝາກ (${pendDeps.length})</div>
   ${pendDeps.length?pendDeps.slice().reverse().map(r=>`
-    <div class="admin-card" id="fin_${r.id}">
+    <div class="admin-card" id="fin_${r.id}" style="${r.slipWarning?'border:1.5px solid rgba(251,191,36,0.6)':''}">
+      ${r.slipWarning?`<div style="background:rgba(251,191,36,0.15);border-radius:6px;padding:5px 10px;font-size:11px;color:#fbbf24;margin-bottom:8px;font-weight:600">⚠️ ສລິບໜ້າສົງໄສ — ກວດສອບດ້ວຍຕົນເອງ</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div><span style="font-weight:700;font-size:13px">${r.userName||'?'}</span> <span style="font-size:10px;color:var(--text2)">${r.userId||''}</span></div>
         <span style="font-size:11px;color:var(--text2)">${r.date||''}</span>
       </div>
       <div class="admin-row"><span style="color:var(--text2)">💰 ຈຳນວນ</span><span style="color:var(--gold);font-weight:700">${Number(r.amount||0).toLocaleString()} ກີບ</span></div>
+      ${r.ref?`<div class="admin-row"><span style="color:var(--text2)">🔢 Ref ID</span><span style="color:#60a5fa;font-weight:600;font-size:12px;letter-spacing:0.5px">${r.ref}</span></div>`:'<div class="admin-row"><span style="color:var(--text2)">🔢 Ref ID</span><span style="color:#f87171;font-size:11px">ບໍ່ໄດ້ໃສ່</span></div>'}
+      ${r.slipScore?`<div class="admin-row"><span style="color:var(--text2)">🔍 Slip Score</span><span style="color:${r.slipScore>=60?'#4ade80':r.slipScore>=40?'#fbbf24':'#f87171'};font-size:11px">${r.slipScore>=60?'✅ ຜ່ານ':r.slipScore>=40?'⚠️ ໜ້າສົງໄສ':'❌ ໜ້າສົງໄສ'} (${r.slipScore}%)</span></div>`:''}
+      ${r.slipFileTime&&r.slipFileTime!=='-'?`<div class="admin-row"><span style="color:var(--text2)">📅 ເວລາຖ່າຍ</span><span style="font-size:11px;color:#a0c0ff">${r.slipFileTime}</span></div>`:''}
+      ${r.timeDiffMin!==null&&r.timeDiffMin!==undefined?`<div class="admin-row"><span style="color:var(--text2)">⏱ ຫ່າງ Upload</span><span style="font-size:11px;color:${r.timeDiffMin>10?'#f87171':'#4ade80'}">${r.timeDiffMin>10?'⚠️ '+r.timeDiffMin+' ນາທີ (ເກີນ 10 ນາທີ)':r.timeDiffMin+' ນາທີ ✅'}</span></div>`:''}
       ${r.slipImg?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);margin-bottom:4px">📎 ສລິບ:</div><img src="${r.slipImg}" class="slip-img" onclick="adminViewImg('${r.slipImg}')"></div>`:'<div style="font-size:11px;color:#f66;margin-top:6px">⚠️ ບໍ່ມີສລິບ</div>'}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <button class="btn btn-gold" style="font-size:12px;padding:6px" onclick="adminApproveDeposit('${r.id}')">✅ ອະນຸມັດ</button>
@@ -8830,12 +8894,351 @@ function adminRejectSellerCard(userId){
 }
 
 // Override doDeposit & doWithdraw to save image requests for admin
+
+function setDepositAmt(val){
+  document.getElementById('depositAmt').value = val;
+  syncDepositQuick();
+}
+function syncDepositQuick(){
+  const val = parseInt(document.getElementById('depositAmt').value)||0;
+  document.querySelectorAll('.dep-quick').forEach(b=>{
+    b.classList.toggle('dep-active', parseInt(b.textContent.replace(/,/g,''))===val);
+  });
+}
+function goDepStep2(){
+  const amt = parseInt(document.getElementById('depositAmt').value)||0;
+  if(!amt||amt<1000){showNotif('ໃສ່ຈຳນວນຢ່າງໜ້ອຍ 1,000 ກີບ');return;}
+  const fmt = amt.toLocaleString('en-US');
+  document.getElementById('dep-amt-display').textContent = fmt;
+  document.getElementById('dep-hint-amt').textContent = fmt;
+  document.getElementById('dep-step1').style.display='none';
+  document.getElementById('dep-step2').style.display='block';
+  // Set QR image
+  const img = document.getElementById('qrCodeImg');
+  if(img && !img.src.startsWith('data:')) img.src = QR_B64;
+}
+function goDepStep1(){
+  document.getElementById('dep-step2').style.display='none';
+  document.getElementById('dep-step1').style.display='block';
+}
+
+function getSlipHashes(){
+  try{return JSON.parse(localStorage.getItem('kd_slip_hashes')||'[]');}catch(e){return[];}
+}
+function saveSlipHash(h){
+  const hashes = getSlipHashes();
+  hashes.push({hash:h, date:new Date().toISOString()});
+  // เก็บแค่ 500 รายการล่าสุด
+  if(hashes.length>500) hashes.splice(0, hashes.length-500);
+  localStorage.setItem('kd_slip_hashes', JSON.stringify(hashes));
+}
+async function hashImage(dataUrl){
+  // Simple hash จาก pixel sampling — ป้องกัน duplicate ได้ดี
+  const str = dataUrl.slice(0,2000) + dataUrl.slice(-500) + dataUrl.length;
+  let hash = 0;
+  for(let i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash|=0;}
+  return 'H'+Math.abs(hash).toString(36).toUpperCase();
+}
+
+
+async function analyzeSlipImage(dataUrl){
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const W=120, H=180;
+      canvas.width=W; canvas.height=H;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img,0,0,W,H);
+      const data = ctx.getImageData(0,0,W,H).data;
+      const total = W*H;
+
+      let whitePx=0, darkPx=0, colorPx=0, totalBright=0;
+      // ตรวจแถบสีแดง/น้ำเงินที่ด้านบน (JDB slip มีแถบ banner)
+      const topData = ctx.getImageData(0,0,W,30).data;
+      let topColorful=0;
+      for(let i=0;i<topData.length;i+=4){
+        const r=topData[i],g=topData[i+1],b=topData[i+2];
+        const sat=Math.max(r,g,b)-Math.min(r,g,b);
+        if(sat>60) topColorful++;
+      }
+      const topColorPct = topColorful/(W*30);
+
+      for(let i=0;i<data.length;i+=4){
+        const r=data[i],g=data[i+1],b=data[i+2];
+        const bright=(r+g+b)/3;
+        totalBright+=bright;
+        if(bright>210) whitePx++;
+        if(bright<80) darkPx++;
+        const sat=Math.max(r,g,b)-Math.min(r,g,b);
+        if(sat>50) colorPx++;
+      }
+
+      const avgBright=totalBright/total;
+      const whitePct=whitePx/total;
+      const darkPct=darkPx/total;
+      const colorPct=colorPx/total;
+
+      // JDB/BCEL Slip: พื้นขาว/ฟ้าอ่อน + แถบสีด้านบน + มีตัวเลข
+      let score=0;
+      if(whitePct>0.30) score+=25;
+      else if(whitePct>0.20) score+=15;
+      if(darkPct>0.05) score+=20; // ตัวอักษร/เส้น
+      else if(darkPct>0.02) score+=10;
+      if(avgBright>140) score+=20;
+      else if(avgBright>110) score+=10;
+      if(topColorPct>0.15) score+=20; // มีแถบสีด้านบน เช่น JDB banner
+      if(colorPct<0.40) score+=15;
+      else if(colorPct<0.55) score+=5;
+
+      // ถ้า colorful มากเกิน = น่าจะเป็นรูปถ่ายธรรมชาติ ไม่ใช่ slip
+      const isNaturalPhoto = (colorPct > 0.60 && whitePct < 0.15);
+      if(isNaturalPhoto) score = Math.min(score, 20);
+
+      const likelySlip = score >= 45;
+      resolve({likelySlip, score, whitePct, darkPct, avgBright, colorPct, topColorPct});
+    };
+    img.onerror=()=>resolve({likelySlip:false,score:0});
+    img.src=dataUrl;
+  });
+}
+
+function extractSlipDateTime(dataUrl){
+  // ดึงเวลาจาก metadata ของรูป (EXIF) ถ้ามี
+  // หรือใช้เวลา file.lastModified แทน
+  return null; // จะรับจาก file object โดยตรง
+}
+
+function previewDepositSlip(){
+  const input = document.getElementById('depositSlipInput');
+  const prev = document.getElementById('depositSlipPreview');
+  const validEl = document.getElementById('slipValidResult');
+  const confirmBtn = document.getElementById('depConfirmBtn');
+
+  if(!input.files[0]) return;
+  const file = input.files[0];
+  const fileModifiedTime = file.lastModified; // เวลาที่รูปถ่าย/แก้ไขล่าสุด
+  const uploadTime = Date.now();
+
+  // ตรวจเวลา: ถ้ารูปถ่ายก่อนหน้านี้เกิน 30 นาที = อาจเป็นรูปเก่า
+  const timeDiffMs = uploadTime - fileModifiedTime;
+  const timeDiffMin = timeDiffMs / 60000;
+
+  prev.innerHTML='<div style="color:var(--text2);font-size:12px">⏳ ກຳລັງກວດສອບ...</div>';
+  if(validEl) validEl.style.display='none';
+  if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    const dataUrl = e.target.result;
+
+    // Compress
+    const imgEl = new Image();
+    imgEl.onload = async function(){
+      const canvas = document.createElement('canvas');
+      const MAX=700; let w=imgEl.width,h=imgEl.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(imgEl,0,0,w,h);
+      const compressed=canvas.toDataURL('image/jpeg',0.75);
+
+      // Preview
+      prev.innerHTML=`<img src="${compressed}" style="max-width:130px;border-radius:6px;border:2px solid var(--gold)">`;
+
+      if(validEl) validEl.style.display='block';
+
+      // ── 1. ตรวจ Duplicate Hash ──
+      const hash = await hashImage(compressed);
+      const existing = getSlipHashes();
+      const isDuplicate = existing.some(e=>e.hash===hash);
+      if(isDuplicate){
+        validEl.style.background='rgba(220,38,38,0.15)';
+        validEl.style.border='1px solid rgba(220,38,38,0.4)';
+        validEl.style.color='#f87171';
+        validEl.innerHTML='❌ ສລິບນີ້ຖືກໃຊ້ແລ້ວ! ບໍ່ສາມາດໃຊ້ສລິບເດີມຊ້ຳ';
+        return;
+      }
+
+      // ── 2. ตรวจ วัน/เดือน/ปี/เวลา ให้ตรงกับวันที่อัปโหลด ──
+      const fileDate = new Date(fileModifiedTime);
+      const nowDate  = new Date(uploadTime);
+      const isValidDate = fileModifiedTime > 1000000000000;
+
+      if(isValidDate){
+        const fileYear  = fileDate.getFullYear();
+        const fileMon   = fileDate.getMonth();
+        const fileDay   = fileDate.getDate();
+        const nowYear   = nowDate.getFullYear();
+        const nowMon    = nowDate.getMonth();
+        const nowDay    = nowDate.getDate();
+
+        // ── ตรวจปีไม่ตรง ──
+        if(fileYear !== nowYear){
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ປີໄຟລ໌: ${fileYear} ≠ ປີປັດຈຸບັນ: ${nowYear}<br>
+            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
+
+        // ── ตรวจเดือนไม่ตรง ──
+        if(fileMon !== nowMon){
+          const MONTHS=['ມ.ກ','ກ.ພ','ມີ.ນ','ເມ.ສ','ພ.ພ','ມິ.ຖ','ກ.ລ','ສ.ຫ','ກ.ຍ','ຕ.ລ','ພ.ຈ','ທ.ວ'];
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ເດືອນ: ${MONTHS[fileMon]} ≠ ເດືອນນີ້: ${MONTHS[nowMon]}<br>
+            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນເດືອນນີ້ເທົ່ານັ້ນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
+
+        // ── ตรวจวันไม่ตรง ──
+        if(fileDay !== nowDay){
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ວັນທີ: ${fileDay} ≠ ວັນທີປັດຈຸບັນ: ${nowDay}<br>
+            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
+
+        // ── ตรวจเวลาเกิน 10 นาที (ในวันเดียวกัน) ──
+        if(timeDiffMin > 10){
+          const mins = Math.round(timeDiffMin);
+          const timeStr = mins >= 60
+            ? `${Math.floor(mins/60)} ຊ.ຮ. ${mins%60} ນາທີ`
+            : `${mins} ນາທີ`;
+          const fileDateStr = fileDate.toLocaleString('lo-LA');
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບເກົ່າເກີນໄປ — ຖ່າຍໄວ້ ${timeStr} ກ່ອນ<br>
+            <span style="font-size:11px;opacity:0.8">ເວລາສລິບ: ${fileDateStr}<br>ກາລຸນາໃຊ້ສລິບພາຍໃນ 10 ນາທີຫຼັງໂອນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
+      }
+
+      // ── 3. ตรวจว่าเป็น Slip จริง ──
+      const analysis = await analyzeSlipImage(compressed);
+
+      if(!analysis.likelySlip || analysis.score < 35){
+        validEl.style.background='rgba(220,38,38,0.15)';
+        validEl.style.border='1px solid rgba(220,38,38,0.4)';
+        validEl.style.color='#f87171';
+        validEl.innerHTML=`❌ ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານ<br>
+          <span style="font-size:11px;opacity:0.8">ກາລຸນາຖ່າຍສລິບໂອນເງິນຈາກ JDB Mobile ໃໝ່</span>`;
+        if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+      } else if(analysis.score < 55){
+        validEl.style.background='rgba(234,179,8,0.12)';
+        validEl.style.border='1px solid rgba(234,179,8,0.35)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⚠️ ສລິບໜ້າສົງໄສ — Admin ຈະກວດສອບຄືນ<br>
+          <span style="font-size:11px;opacity:0.8">ສາມາດສົ່ງໄດ້ Admin ຈະພິຈາລະນາ</span>`;
+        if(confirmBtn){
+          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
+          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
+          confirmBtn.dataset.slipTime=fileModifiedTime;
+        }
+      } else {
+        // ✅ ผ่าน
+        const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
+        validEl.style.background='rgba(34,197,94,0.12)';
+        validEl.style.border='1px solid rgba(34,197,94,0.35)';
+        validEl.style.color='#4ade80';
+        validEl.innerHTML=`✅ ກວດສອບສລິບຜ່ານແລ້ວ — ສາມາດຢືນຢັນໄດ້${timeInfo}`;
+        if(confirmBtn){
+          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
+          confirmBtn.dataset.slipWarning='0'; confirmBtn.dataset.slipData=compressed;
+          confirmBtn.dataset.slipTime=fileModifiedTime;
+        }
+      }
+    };
+    imgEl.src=dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+
 function doDeposit(){
   const amt = parseInt(document.getElementById('depositAmt').value)||0;
   if(!amt||amt<1000){showNotif('ໃສ່ຈຳນວນທີ່ຖືກຕ້ອງ (ຢ່າງໜ້ອຍ 1,000 ກີບ)');return;}
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
-  const slip = document.getElementById('depositSlipInput');
-  if(!slip.files[0]){showNotif('ກະລຸນາອັດໂຫລດສລິບກ່ອນ ຈຶ່ງຈະຢືນຢັນໄດ້');return;}
+
+  const refInput = document.getElementById('depositRef');
+  const ref = refInput ? refInput.value.trim() : '';
+  if(!ref||ref.length<6){showNotif('ກາລຸນາໃສ່ເລກອ້າງອີງ (Reference ID) ຢ່າງໜ້ອຍ 6 ຕົວ');return;}
+
+  const confirmBtn = document.getElementById('depConfirmBtn');
+  const slipData = confirmBtn?.dataset?.slipData;
+  const slipHash = confirmBtn?.dataset?.slipHash;
+  const slipScore = parseInt(confirmBtn?.dataset?.slipScore||'0');
+  const slipWarning = confirmBtn?.dataset?.slipWarning==='1';
+
+  if(!slipData){showNotif('ກາລຸນາອັດໂຫລດສລິບກ່ອນ');return;}
+
+  // ตรวจ ref ซ้ำ
+  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+  const refDup = deps.find(d=>d.ref&&d.ref.toUpperCase()===ref.toUpperCase()&&d.status!=='rejected');
+  if(refDup){showNotif('❌ ເລກ Reference ນີ້ຖືກໃຊ້ແລ້ວ!');return;}
+
+  try{
+    const slipTime = parseInt(confirmBtn?.dataset?.slipTime||'0');
+    const uploadNow = Date.now();
+    const newDep = {
+      id:'DEP-'+Date.now(),
+      userId:currentUser.id,
+      userName:currentUser.name||currentUser.user,
+      amount:amt,
+      slipImg:slipData,
+      slipHash:slipHash||'',
+      slipScore:slipScore,
+      slipWarning:slipWarning,
+      ref:ref.toUpperCase(),
+      date:new Date().toLocaleString(),
+      slipFileTime: slipTime>0 ? new Date(slipTime).toLocaleString('lo-LA') : '-',
+      uploadTime: new Date(uploadNow).toLocaleString('lo-LA'),
+      timeDiffMin: slipTime>0 ? Math.round((uploadNow-slipTime)/60000) : null,
+      status:'pending'
+    };
+    deps.push(newDep);
+    localStorage.setItem('kd_deposit_requests', JSON.stringify(deps));
+
+    // บันทึก hash เพื่อตรวจ duplicate ครั้งหน้า
+    if(slipHash) saveSlipHash(slipHash);
+
+    sbSaveDeposit(newDep).catch(e=>console.warn('sbSaveDeposit:',e));
+
+    const notifMsg = slipWarning
+      ? '⚠️ [ສລິບໜ້າສົງໄສ] '+( currentUser.name||currentUser.user)+' ຝາກ '+Number(amt).toLocaleString()+' ກີບ · Ref:'+ref
+      : (currentUser.name||currentUser.user)+' ຝາກ '+Number(amt).toLocaleString()+' ກີບ · Ref:'+ref;
+    addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt, ref, warning:slipWarning});
+    waDeposit(currentUser, amt);
+
+    closeModal('depositModal');
+    document.getElementById('depositAmt').value='';
+    document.getElementById('depositSlipPreview').innerHTML='';
+    document.getElementById('depositSlipInput').value='';
+    if(refInput) refInput.value='';
+    if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';delete confirmBtn.dataset.slipData;}
+    document.getElementById('dep-step2').style.display='none';
+    document.getElementById('dep-step1').style.display='block';
+
+    showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+Number(amt).toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ','success');
+  } catch(err){
+    if(err.name==='QuotaExceededError'){
+      showNotif('❌ ຫນ່ວຍຄວາມຈຳເຕັມ ກາລຸນາລຶບຂໍ້ມູນເກົ່າ');
+    } else {
+      showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+err.message);
+    }
+  }
+}
 
   const file = slip.files[0];
   // Compress image before storing to avoid localStorage quota error
@@ -8874,17 +9277,6 @@ function doDeposit(){
     } catch(err) {
       if(err.name==='QuotaExceededError'){
         showNotif('❌ ບໍ່ສາມາດບັນທຶກໄດ້: ຫນ່ວຍຄວາມຈຳເຕັມ ກາລຸນາລຶບຂໍ້ມູນເກົ່າ');
-      } else {
-        showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+err.message);
-        console.error('doDeposit error:', err);
-      }
-    }
-  };
-  img.onerror = function(){
-    showNotif('❌ ບໍ່ສາມາດອ່ານໄຟລ໌ຮູບໄດ້ ກາລຸນາລອງໃໝ່');
-  };
-  img.src = objectUrl;
-}
 
 function calcWithdrawFee(){
   const amt = parseInt(document.getElementById('withdrawAmt').value)||0;
@@ -9485,7 +9877,9 @@ function adminClearUpdate(){
   if(statusEl) statusEl.innerHTML = '<span style="color:#ff6666">🗑️ ລຶບຂໍ້ຄວາມອັບເດດແລ້ວ</span>';
   showNotif('🗑️ ລຶບຂໍ້ຄວາມອັບເດດແລ້ວ');
 }
-
+}
+}
+}
 </script>
 <!-- PUBLIC PROFILE MODAL -->
 <div class="pub-profile-modal" id="pubProfileModal">
