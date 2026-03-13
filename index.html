@@ -3040,8 +3040,10 @@ async function loadAdminCredentials(){
     const {data, error} = await supa.from('kd_admin_credentials').select('key,value');
     if(error || !data) return;
     data.forEach(row=>{
-      if(row.key==='front_pass')  FRONT_PASS = row.value;
-      if(row.key==='back_pass')   ADMIN_BACK_PASS = row.value;
+      if(row.key==='front_pass')   FRONT_PASS = row.value;
+      if(row.key==='back_pass')    ADMIN_BACK_PASS = row.value;
+      if(row.key==='back_pass2')   ADMIN_BACK_PASS2 = row.value;
+      if(row.key==='back_pass3')   ADMIN_BACK_PASS3 = row.value;
       if(row.key==='diamond_pass') DIAMOND_SELLER_PASS = row.value;
     });
     // Apply front_pass to OWNER_ACCOUNTS
@@ -7945,10 +7947,16 @@ document.addEventListener('keydown',e=>{
 
 // ============ ADMIN PANEL ============
 // 🔒 Admin passwords loaded from Supabase at runtime (not stored in HTML)
-let ADMIN_BACK_PASS = ''; // loaded from Supabase
+let ADMIN_BACK_PASS = ''; // loaded from Supabase (tavanh999)
+let ADMIN_BACK_PASS2 = ''; // loaded from Supabase (tavanh991) = back_pass2
+let ADMIN_BACK_PASS3 = ''; // loaded from Supabase (tavanh992) = back_pass3
 const ADMIN_USERS = [
-  {user:'Tavanh999'},
-  {user:'tavanh999'}
+  {user:'Tavanh999', passKey:'main'},
+  {user:'tavanh999', passKey:'main'},
+  {user:'Tavanh991', passKey:'back2'},
+  {user:'tavanh991', passKey:'back2'},
+  {user:'Tavanh992', passKey:'back3'},
+  {user:'tavanh992', passKey:'back3'},
 ];
 let adminLoggedIn = false;
 let adminUsername = '';
@@ -7986,7 +7994,13 @@ function doAdminLogin(){
   const u = document.getElementById('adminUser').value.trim();
   const p = document.getElementById('adminPass').value.trim();
   // Check against password loaded from Supabase
-  const match = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase()) && p===ADMIN_BACK_PASS;
+  const foundUser = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase());
+  const passOk = foundUser && (
+    (foundUser.passKey==='main'  && p===ADMIN_BACK_PASS)  ||
+    (foundUser.passKey==='back2' && p===ADMIN_BACK_PASS2) ||
+    (foundUser.passKey==='back3' && p===ADMIN_BACK_PASS3)
+  );
+  const match = passOk;
   if(!match){showNotif('❌ Username ຫຼື Password ບໍ່ຖືກ');return;}
   const _fakeMatch = true; // skip original check below
   adminLoggedIn = true;
