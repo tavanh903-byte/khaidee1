@@ -7990,9 +7990,14 @@ function closeAdminPanel(){
   adminLoggedIn = false;
 }
 
-function doAdminLogin(){
+async function doAdminLogin(){
   const u = document.getElementById('adminUser').value.trim();
   const p = document.getElementById('adminPass').value.trim();
+  // Make sure credentials are loaded from Supabase first
+  if(!_credsLoaded) {
+    showNotif('⏳ ກຳລັງໂຫຼດ... ລອງໃໝ່ອີກຄັ້ງ');
+    await loadAdminCredentials();
+  }
   // Check against password loaded from Supabase
   const foundUser = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase());
   const passOk = foundUser && (
