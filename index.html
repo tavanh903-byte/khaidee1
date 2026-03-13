@@ -2945,7 +2945,7 @@ async function syncFromSupabase(){
           <span style="font-size:14px">💎</span>
           <div>
             <div style="font-size:9px;color:var(--text2);line-height:1">Admin Wallet</div>
-            <div style="font-size:13px;font-weight:700;color:var(--gold)" id="adminSysWalletDisplay">100,000,000 ກີບ</div>
+            <div style="font-size:13px;font-weight:700;color:var(--gold)" id="adminSysWalletDisplay">0 ກີບ</div>
           </div>
         </div>
         <button onclick="closeAdminPanel()" style="background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.4);color:#f99;border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700">✕ ອອກ</button>
@@ -7817,7 +7817,7 @@ function showWishlist(){
 // ============ ADMIN NOTIFICATIONS ============
 function adminResetSysWallet(){
   if(!confirm('ຕ້ອງການຕັ້ງຄ່າ Admin Wallet ໃໝ່ 100,000,000 ກີບ?\n(ຈະ reset ລາຍຮັບ/ລາຍຈ່າຍ/ກຳໄລ ດ້ວຍ)')){ return; }
-  adminSysWallet = 100000000;
+  adminSysWallet = 0;
   adminIncome  = 0;
   adminExpense = 0;
   adminProfit  = 0;
@@ -7826,7 +7826,7 @@ function adminResetSysWallet(){
   updateAdminSysWalletDisplay();
   updateAdminFinanceDisplay();
   renderAdminTab('overview');
-  showNotif('✅ ຕັ້ງ Admin Wallet ໃໝ່ 100,000,000 ກີບ');
+  showNotif('✅ ຕັ້ງ Admin Wallet ໃໝ່ 0 ກີບ');
 }
 
 function getDiamondPendingCount(){
@@ -8346,7 +8346,7 @@ function showAdminLogin(){
   openModal('adminLoginModal');
 }
 
-let adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
+let adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'0');
 let adminIncome  = parseInt(localStorage.getItem('kd_admin_income')||'0');   // ລາຍຮັບ (ເມື່ອ approve ຖອນ)
 let adminExpense = parseInt(localStorage.getItem('kd_admin_expense')||'0');  // ລາຍຈ່າຍ (ເມື່ອ approve ຝາກ)
 let adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');   // ກຳໄລ (ຄ່າທຳນຽມ)
@@ -8401,7 +8401,7 @@ async function doAdminLogin(){
   panel.style.display = 'flex';
   document.getElementById('adminWelcome').textContent = 'ຍິນດີຕ້ອນຮັບ '+u;
   // Reset to initial state
-  adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
+  adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'0');
   adminIncome  = parseInt(localStorage.getItem('kd_admin_income')||'0');
   adminExpense = parseInt(localStorage.getItem('kd_admin_expense')||'0');
   adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
@@ -8464,7 +8464,7 @@ function renderAdminOverview(){
   const registeredCnt = Object.keys(db).filter(id=>!OWNER_ACCOUNTS.find(o=>o.id===id)).length;
   const totalWallet = allUsers.reduce((s,u)=>s+(u.wallet||0),0);
   const totalSales = orders.reduce((s,o)=>s+(o.total||0),0);
-  const sysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
+  const sysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'0');
   const adminIncomeCur  = parseInt(localStorage.getItem('kd_admin_income')||'0');
   const adminExpenseCur = parseInt(localStorage.getItem('kd_admin_expense')||'0');
   const adminProfitCur  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
