@@ -275,7 +275,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .cart-fab:active{transform:scale(.93);box-shadow:0 0 0 4px rgba(10,10,10,.95),0 0 0 5px rgba(201,168,76,.3),0 4px 14px rgba(201,168,76,.4)}
 
 /* PAGE WRAPPER */
-.page{display:none;flex-direction:column;flex:1;padding-bottom:80px;overflow:hidden}
+.page{display:none;flex-direction:column;flex:1;padding-bottom:80px;overflow:hidden}#page-adminshop.active{overflow-y:auto}
 .page.active{display:flex}
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
@@ -1952,8 +1952,139 @@ async function syncFromSupabase(){
           </div>
         </div>
       </div>
+      <!-- 👑 Admin Official Shop Section (admin only) -->
+      <div id="adminOfficialShopSection" style="display:none;padding:0 16px 8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">👑 ຮ້ານ Admin Official</div>
+          <button onclick="openAdminOfficialShopManager()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">⚙️ ຈັດການຮ້ານ</button>
+        </div>
+        <div onclick="openAdminOfficialShopManager()" style="background:linear-gradient(135deg,#1a1200,#0d0d00);border:1.5px solid rgba(201,168,76,.45);border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,.12)">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+            <div id="adminShopBannerAvatarWrap" style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;border:2px solid rgba(201,168,76,.5)">
+              <img id="adminShopBannerAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+              <span id="adminShopBannerAvatarEmoji">👑</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:800;color:var(--gold)" id="adminShopBannerName">ຮ້ານ Official</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:2px" id="adminShopBannerDesc">ສິນຄ້າຄຸນນະພາບຈາກທີມ Admin</div>
+              <div style="display:flex;gap:8px;margin-top:5px;font-size:10px">
+                <span style="background:rgba(201,168,76,.15);color:var(--gold);padding:2px 8px;border-radius:8px" id="adminShopBannerProdCount">0 ສິນຄ້າ</span>
+                <span style="background:rgba(39,174,96,.15);color:#2ecc71;padding:2px 8px;border-radius:8px">✅ ຮ້ານຢັ້ງຢືນ</span>
+              </div>
+            </div>
+          </div>
+          <div style="background:rgba(201,168,76,.07);padding:6px 14px;border-top:1px solid rgba(201,168,76,.15);font-size:10px;color:var(--text2);display:flex;gap:12px">
+            <span>👑 Official Store</span><span>🔒 ສິນຄ້າຄຸ້ມຄ່າ</span><span>⭐ Admin Verified</span>
+          </div>
+        </div>
+      </div>
+
       <div style="padding:12px 16px">
         <button class="btn btn-danger" onclick="logoutUser()" style="font-size:13px;padding:8px">ອອກຈາກລະບົບ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ ADMIN OFFICIAL SHOP MANAGER PAGE ══════ -->
+  <div class="page" id="page-adminshop" style="display:none">
+    <div style="background:linear-gradient(135deg,#0a0a0a,#141400);border-bottom:1px solid rgba(201,168,76,.25);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button onclick="switchPage('profile')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;color:var(--gold)">👑 ຈັດການຮ້ານ Admin Official</div>
+          <div style="font-size:11px;color:var(--text2)">ແກ້ໄຂຂໍ້ມູນ, ຮູບ, ແລະ ສິນຄ້າ</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button id="admshopTab-info" onclick="switchAdmShopTab('info')" style="flex:1;padding:7px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000">🏪 ຂໍ້ມູນຮ້ານ</button>
+        <button id="admshopTab-products" onclick="switchAdmShopTab('products')" style="flex:1;padding:7px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text)">🗂️ ສິນຄ້າ</button>
+        <button id="admshopTab-add" onclick="switchAdmShopTab('add')" style="flex:1;padding:7px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text)">➕ ເພີ່ມສິນຄ້າ</button>
+      </div>
+    </div>
+    <div style="padding:16px;overflow-y:auto">
+
+      <!-- TAB: Shop Info -->
+      <div id="admshopContent-info">
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:14px">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:12px">🖼️ ຮູບໂລໂກ້ຮ້ານ</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:70px;height:70px;border-radius:16px;background:linear-gradient(135deg,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;border:2px solid rgba(201,168,76,.5);flex-shrink:0">
+              <img id="admShopLogoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+              <span id="admShopLogoEmoji">👑</span>
+            </div>
+            <div>
+              <label for="admShopLogoInput" style="display:inline-block;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer">📷 ເລືອກຮູບ</label>
+              <input type="file" id="admShopLogoInput" accept="image/*" style="display:none" onchange="previewAdmShopLogo()">
+              <div style="font-size:10px;color:var(--text2);margin-top:5px">JPG/PNG ສີ່ຫລ່ຽມຈັດຕຸລັດ</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:14px">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:12px">📝 ຂໍ້ມູນຮ້ານ</div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ຊື່ຮ້ານ</label>
+            <input id="admShopNameInput" class="form-input" placeholder="ຊື່ຮ້ານ Admin Official" value="ຮ້ານ Official" style="width:100%;box-sizing:border-box">
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ຄຳອະທິບາຍ</label>
+            <textarea id="admShopDescInput" class="form-input" placeholder="ອະທິບາຍຮ້ານ..." rows="3" style="width:100%;box-sizing:border-box;resize:none">ສິນຄ້າຄຸນນະພາບຈາກທີມ Admin</textarea>
+          </div>
+          <button onclick="saveAdmShopInfo()" style="width:100%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">💾 ບັນທຶກຂໍ້ມູນ</button>
+        </div>
+      </div>
+
+      <!-- TAB: Products list -->
+      <div id="admshopContent-products" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--text2)" id="admShopProdCount">ກຳລັງໂຫລດ...</div>
+          <button onclick="switchAdmShopTab('add')" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">➕ ເພີ່ມ</button>
+        </div>
+        <div id="admShopProdList" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+
+      <!-- TAB: Add/Edit product -->
+      <div id="admshopContent-add" style="display:none">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px">
+          <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px" id="admShopFormTitle">➕ ເພີ່ມສິນຄ້າໃໝ່</div>
+          <div style="margin-bottom:12px;text-align:center">
+            <div id="admProdImgPreview" style="width:100%;max-width:220px;height:160px;margin:0 auto;background:rgba(255,255,255,.05);border:2px dashed rgba(201,168,76,.3);border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer" onclick="document.getElementById('admProdImgInput').click()">
+              <img id="admProdImgShow" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+              <div id="admProdImgPlaceholder"><div style="font-size:32px">📷</div><div style="font-size:11px;color:var(--text2);margin-top:6px">ຄລິກເພື່ອເລືອກຮູບ</div></div>
+            </div>
+            <input type="file" id="admProdImgInput" accept="image/*" style="display:none" onchange="previewAdmProdImg()">
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ຊື່ສິນຄ້າ *</label>
+            <input id="admProdNameInput" class="form-input" placeholder="ຊື່ສິນຄ້າ" style="width:100%;box-sizing:border-box">
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ລາຄາ (₭) *</label>
+            <input id="admProdPriceInput" class="form-input" type="number" placeholder="0" style="width:100%;box-sizing:border-box">
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ໝວດໝູ່</label>
+            <select id="admProdCatInput" class="form-input" style="width:100%;box-sizing:border-box">
+              <option value="all">ທັງໝົດ</option>
+              <option value="clothes">ເສື້ອຜ້າ</option>
+              <option value="electronics">ໂທລະສັບ/ອີເລັກ</option>
+              <option value="home">ເຄື່ອງໃຊ້ໃນບ້ານ</option>
+              <option value="game">ID ເກມ</option>
+              <option value="shoes">ເກີບ</option>
+              <option value="bags">ກະເປົາ</option>
+              <option value="food">ອາຫານ</option>
+              <option value="cosmetics">ສຳອາງ</option>
+            </select>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ລາຍລະອຽດ</label>
+            <textarea id="admProdDescInput" class="form-input" placeholder="ລາຍລະອຽດ..." rows="3" style="width:100%;box-sizing:border-box;resize:none"></textarea>
+          </div>
+          <input type="hidden" id="admProdEditId" value="">
+          <div style="display:flex;gap:8px">
+            <button onclick="saveAdmShopProduct()" style="flex:1;background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">💾 ບັນທຶກ</button>
+            <button onclick="clearAdmProdForm()" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">✕ ລ້າງ</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -5038,6 +5169,215 @@ const ADMIN_SHOP_IDS = ['USR-99999','USR-88888','USR-77777'];
 function isAdminUser(uid){ return ADMIN_SHOP_IDS.includes(uid); }
 function getAdminShopProducts(){ return (typeof products!=='undefined'?products:[]).filter(p=>ADMIN_SHOP_IDS.includes(p.sellerId)&&!p.hidden); }
 
+// ══════════════════════════════════════════════
+// 👑 ADMIN OFFICIAL SHOP MANAGER
+// ══════════════════════════════════════════════
+const ADM_SHOP_KEY = 'kd_admin_shop_info';
+function loadAdmShopInfo(){
+  try{ return JSON.parse(localStorage.getItem(ADM_SHOP_KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveAdmShopInfoData(d){ localStorage.setItem(ADM_SHOP_KEY, JSON.stringify(d)); }
+
+function updateAdminShopBannerProfile(){
+  const sec = document.getElementById('adminOfficialShopSection');
+  if(!sec) return;
+  if(currentUser && currentUser.isAdmin){
+    sec.style.display = 'block';
+    const info = loadAdmShopInfo();
+    const nameEl = document.getElementById('adminShopBannerName');
+    const descEl = document.getElementById('adminShopBannerDesc');
+    const cntEl  = document.getElementById('adminShopBannerProdCount');
+    const img    = document.getElementById('adminShopBannerAvatarImg');
+    const emoji  = document.getElementById('adminShopBannerAvatarEmoji');
+    if(nameEl) nameEl.textContent = info.name || 'ຮ້ານ Official';
+    if(descEl) descEl.textContent = info.desc || 'ສິນຄ້າຄຸນນະພາບຈາກທີມ Admin';
+    const cnt = getAdminShopProducts().length;
+    if(cntEl) cntEl.textContent = cnt + ' ສິນຄ້າ';
+    if(img && emoji){
+      if(info.logo){ img.src=info.logo; img.style.display='block'; emoji.style.display='none'; }
+      else { img.style.display='none'; emoji.style.display=''; }
+    }
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+function openAdminOfficialShopManager(){
+  if(!currentUser || !currentUser.isAdmin){ showNotif('❌ ສະເພາະ Admin ເທົ່ານັ້ນ'); return; }
+  switchPage('adminshop');
+  const info = loadAdmShopInfo();
+  const ni = document.getElementById('admShopNameInput');
+  const di = document.getElementById('admShopDescInput');
+  if(ni) ni.value = info.name || 'ຮ້ານ Official';
+  if(di) di.value = info.desc || 'ສິນຄ້າຄຸນນະພາບຈາກທີມ Admin';
+  const img   = document.getElementById('admShopLogoImg');
+  const emoji = document.getElementById('admShopLogoEmoji');
+  if(img && emoji){
+    if(info.logo){ img.src=info.logo; img.style.display='block'; emoji.style.display='none'; }
+    else { img.style.display='none'; emoji.style.display=''; }
+  }
+  switchAdmShopTab('info');
+}
+
+function switchAdmShopTab(tab){
+  ['info','products','add'].forEach(t=>{
+    const btn = document.getElementById('admshopTab-'+t);
+    const cnt = document.getElementById('admshopContent-'+t);
+    if(btn){
+      if(t===tab){
+        btn.style.background='linear-gradient(135deg,var(--gold-dark),var(--gold))';
+        btn.style.border='none'; btn.style.color='#000';
+      } else {
+        btn.style.background='rgba(255,255,255,.07)';
+        btn.style.border='1px solid rgba(255,255,255,.12)'; btn.style.color='var(--text)';
+      }
+    }
+    if(cnt) cnt.style.display = t===tab ? 'block' : 'none';
+  });
+  if(tab==='products') renderAdmShopProdList();
+}
+
+function previewAdmShopLogo(){
+  const f = document.getElementById('admShopLogoInput').files[0];
+  if(!f) return;
+  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  smartCompressImage(f, 300, 300, (data)=>{
+    if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
+    const img   = document.getElementById('admShopLogoImg');
+    const emoji = document.getElementById('admShopLogoEmoji');
+    img.src=data; img.style.display='block'; emoji.style.display='none';
+    const info = loadAdmShopInfo(); info.logo = data; saveAdmShopInfoData(info);
+    updateAdminShopBannerProfile();
+    showNotif('✅ ບັນທຶກຮູບສຳເລັດ');
+  });
+}
+
+function saveAdmShopInfo(){
+  const name = (document.getElementById('admShopNameInput').value||'').trim();
+  const desc = (document.getElementById('admShopDescInput').value||'').trim();
+  if(!name){ showNotif('⚠️ ກະລຸນາໃສ່ຊື່ຮ້ານ'); return; }
+  const info = loadAdmShopInfo(); info.name = name; info.desc = desc;
+  saveAdmShopInfoData(info);
+  updateAdminShopBannerProfile();
+  showNotif('✅ ບັນທຶກຂໍ້ມູນຮ້ານສຳເລັດ');
+}
+
+function previewAdmProdImg(){
+  const f = document.getElementById('admProdImgInput').files[0];
+  if(!f) return;
+  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  smartCompressImage(f, 800, 800, (data)=>{
+    if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
+    const img = document.getElementById('admProdImgShow');
+    const ph  = document.getElementById('admProdImgPlaceholder');
+    img.src=data; img.style.display='block'; ph.style.display='none';
+    document.getElementById('admProdImgInput').dataset.compressed = data;
+  });
+}
+
+function clearAdmProdForm(){
+  document.getElementById('admProdEditId').value='';
+  document.getElementById('admProdNameInput').value='';
+  document.getElementById('admProdPriceInput').value='';
+  document.getElementById('admProdCatInput').value='all';
+  document.getElementById('admProdDescInput').value='';
+  const img = document.getElementById('admProdImgShow');
+  const ph  = document.getElementById('admProdImgPlaceholder');
+  img.src=''; img.style.display='none'; if(ph) ph.style.display='flex';
+  document.getElementById('admProdImgInput').value='';
+  delete document.getElementById('admProdImgInput').dataset.compressed;
+  document.getElementById('admShopFormTitle').textContent='➕ ເພີ່ມສິນຄ້າໃໝ່';
+}
+
+function saveAdmShopProduct(){
+  const name  = (document.getElementById('admProdNameInput').value||'').trim();
+  const price = parseFloat(document.getElementById('admProdPriceInput').value||0);
+  const cat   = document.getElementById('admProdCatInput').value;
+  const desc  = (document.getElementById('admProdDescInput').value||'').trim();
+  const imgData = document.getElementById('admProdImgInput').dataset.compressed || '';
+  const editId  = document.getElementById('admProdEditId').value;
+  if(!name){ showNotif('⚠️ ກະລຸນາໃສ່ຊື່ສິນຄ້າ'); return; }
+  if(!price || price<=0){ showNotif('⚠️ ກະລຸນາໃສ່ລາຄາ'); return; }
+  const sellerId = currentUser.id;
+  let prods = [...products];
+  if(editId){
+    const idx = prods.findIndex(p=>p.id===editId);
+    if(idx>=0){
+      prods[idx].name=name; prods[idx].price=price; prods[idx].category=cat; prods[idx].desc=desc;
+      if(imgData) prods[idx].img=imgData;
+    }
+    showNotif('✅ ແກ້ໄຂສິນຄ້າສຳເລັດ');
+  } else {
+    const newProd = {
+      id:'PROD-'+Date.now(), sellerId, sellerName:loadAdmShopInfo().name||'Admin Official',
+      name, price, category:cat, desc, img:imgData,
+      createdAt:new Date().toISOString(), sold:0, likes:0, hidden:false,
+    };
+    prods.unshift(newProd);
+    showNotif('✅ ເພີ່ມສິນຄ້າສຳເລັດ');
+  }
+  products=prods;
+  saveProducts();
+  renderProducts();
+  updateAdminShopBannerProfile();
+  clearAdmProdForm();
+  switchAdmShopTab('products');
+}
+
+function renderAdmShopProdList(){
+  const prods = products.filter(p=>ADMIN_SHOP_IDS.includes(p.sellerId));
+  const el    = document.getElementById('admShopProdList');
+  const cnt   = document.getElementById('admShopProdCount');
+  if(cnt) cnt.textContent = prods.length + ' ສິນຄ້າທັງໝົດ';
+  if(!el) return;
+  if(!prods.length){
+    el.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--text2)"><div style="font-size:40px">📦</div><div style="margin-top:10px">ຍັງບໍ່ມີສິນຄ້າ</div></div>';
+    return;
+  }
+  el.innerHTML = prods.map(p=>`
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;display:flex;align-items:center;gap:10px;padding:10px">
+      <div style="width:60px;height:60px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05);flex-shrink:0;display:flex;align-items:center;justify-content:center">
+        ${p.img ? `<img src="${p.img}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:24px">📦</span>'}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+        <div style="font-size:12px;color:var(--gold);margin-top:2px">${fmtPrice(p.price)}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">${p.category||'all'} • ຂາຍ ${p.sold||0}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+        <button onclick="admShopEditProd('${p.id}')" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">✏️ ແກ້</button>
+        <button onclick="admShopDeleteProd('${p.id}')" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">🗑️ ລົບ</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function admShopEditProd(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById('admProdEditId').value=id;
+  document.getElementById('admProdNameInput').value=p.name||'';
+  document.getElementById('admProdPriceInput').value=p.price||0;
+  document.getElementById('admProdCatInput').value=p.category||'all';
+  document.getElementById('admProdDescInput').value=p.desc||'';
+  const img=document.getElementById('admProdImgShow');
+  const ph=document.getElementById('admProdImgPlaceholder');
+  if(p.img){ img.src=p.img; img.style.display='block'; if(ph) ph.style.display='none'; }
+  else { img.style.display='none'; if(ph) ph.style.display='flex'; }
+  document.getElementById('admShopFormTitle').textContent='✏️ ແກ້ໄຂສິນຄ້າ';
+  switchAdmShopTab('add');
+}
+
+function admShopDeleteProd(id){
+  if(!confirm('ຕ້ອງການລຶບສິນຄ້ານີ້ບໍ?')) return;
+  products=products.filter(p=>p.id!==id);
+  saveProducts();
+  renderProducts();
+  updateAdminShopBannerProfile();
+  renderAdmShopProdList();
+  showNotif('🗑️ ລຶບສິນຄ້າສຳເລັດ');
+}
+
 // ── Restore login session — bulletproof 3-layer restore ──
 function restoreSession(){
   try{
@@ -5361,6 +5701,7 @@ function updateProfileUI(){
     const adminBtn = document.getElementById('adminChatBtn');
     if(adminBtn) adminBtn.style.display = currentUser.isAdmin ? 'flex' : 'none';
     updateAdminDiamondUI();
+    updateAdminShopBannerProfile();
     updateWalletDisplay();
     renderBillsPage();
     updateAdminNotifBadge();
