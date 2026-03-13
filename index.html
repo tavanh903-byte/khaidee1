@@ -732,7 +732,18 @@ async function sbLoadUsers(){
     if(error||!data) return;
     const db = getUsersDB();
     data.forEach(row=>{
-      if(OWNER_ACCOUNTS.find(o=>o.id===row.id)) return; // ข้าม admin
+      const ownerAcc = OWNER_ACCOUNTS.find(o=>o.id===row.id);
+      if(ownerAcc){
+        // Admin: ดึงเฉพาะ avatarImg / coverImg / wallet จาก Supabase มา merge
+        db[row.id] = {
+          ...ownerAcc,
+          ...(db[row.id]||{}),
+          avatarImg: row.avatar_img||db[row.id]?.avatarImg||null,
+          coverImg:  row.cover_img ||db[row.id]?.coverImg ||null,
+          wallet:    row.wallet    ||db[row.id]?.wallet   ||0,
+        };
+        return;
+      }
       db[row.id] = {
         id:row.id, name:row.name||'', user:row.username||'',
         phone:row.phone||'', email:row.email||'', pass:row.password||'',
@@ -5415,6 +5426,20 @@ function restoreSession(){
 }
 currentUser = restoreSession();
 
+// ── Sync admin avatar/cover from Supabase on app load (เพื่อให้รูปแสดงบนเครื่องใหม่) ──
+(function syncAdminImages(){
+  if(!currentUser || !currentUser.isAdmin) return;
+  supa.from('kd_users').select('avatar_img,cover_img,wallet').eq('id',currentUser.id).single()
+    .then(({data})=>{
+      if(!data) return;
+      let changed = false;
+      if(data.avatar_img && currentUser.avatarImg !== data.avatar_img){ currentUser.avatarImg = data.avatar_img; changed=true; }
+      if(data.cover_img  && currentUser.coverImg  !== data.cover_img ){ currentUser.coverImg  = data.cover_img;  changed=true; }
+      if(data.wallet != null && currentUser.wallet !== data.wallet)   { currentUser.wallet    = data.wallet;     changed=true; }
+      if(changed){ saveUser(); updateProfileUI(); }
+    }).catch(()=>{});
+})();
+
 // ── pending register data (before PIN confirm) ──
 let _pendingReg = null;
 
@@ -5622,6 +5647,16 @@ function doLogin(){
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ຍິນດີຕ້ອນຮັບ '+owner.crown+' '+owner.name);
+    // Sync avatar/cover from Supabase for this admin on this device
+    supa.from('kd_users').select('avatar_img,cover_img,wallet').eq('id',owner.id).single()
+      .then(({data})=>{
+        if(!data) return;
+        let changed = false;
+        if(data.avatar_img && currentUser.avatarImg !== data.avatar_img){ currentUser.avatarImg = data.avatar_img; changed=true; }
+        if(data.cover_img  && currentUser.coverImg  !== data.cover_img ){ currentUser.coverImg  = data.cover_img;  changed=true; }
+        if(data.wallet != null && currentUser.wallet !== data.wallet)   { currentUser.wallet    = data.wallet;     changed=true; }
+        if(changed){ saveUser(); updateProfileUI(); }
+      }).catch(()=>{});
     return;
   }
   // Regular users — email, phone, or name
