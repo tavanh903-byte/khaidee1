@@ -7599,9 +7599,15 @@ function showWishlist(){
 
 // ============ ADMIN NOTIFICATIONS ============
 function adminResetSysWallet(){
+  if(!confirm('ຕ້ອງການຕັ້ງຄ່າ Admin Wallet ໃໝ່ 100,000,000 ກີບ?\n(ຈະ reset ລາຍຮັບ/ລາຍຈ່າຍ/ກຳໄລ ດ້ວຍ)')){ return; }
   adminSysWallet = 100000000;
+  adminIncome  = 0;
+  adminExpense = 0;
+  adminProfit  = 0;
   saveAdminSysWallet();
+  saveAdminFinance();
   updateAdminSysWalletDisplay();
+  updateAdminFinanceDisplay();
   renderAdminTab('overview');
   showNotif('✅ ຕັ້ງ Admin Wallet ໃໝ່ 100,000,000 ກີບ');
 }
@@ -8124,14 +8130,32 @@ function showAdminLogin(){
 }
 
 let adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
+let adminIncome  = parseInt(localStorage.getItem('kd_admin_income')||'0');   // ລາຍຮັບ (ເມື່ອ approve ຖອນ)
+let adminExpense = parseInt(localStorage.getItem('kd_admin_expense')||'0');  // ລາຍຈ່າຍ (ເມື່ອ approve ຝາກ)
+let adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');   // ກຳໄລ (ຄ່າທຳນຽມ)
 
 function saveAdminSysWallet(){
   localStorage.setItem('kd_admin_sys_wallet', String(adminSysWallet));
+}
+function saveAdminFinance(){
+  localStorage.setItem('kd_admin_income',  String(adminIncome));
+  localStorage.setItem('kd_admin_expense', String(adminExpense));
+  localStorage.setItem('kd_admin_profit',  String(adminProfit));
 }
 
 function updateAdminSysWalletDisplay(){
   const el = document.getElementById('adminSysWalletDisplay');
   if(el) el.textContent = Number(adminSysWallet).toLocaleString()+' ກີບ';
+  const el2 = document.getElementById('adminSysWalletDisplay2');
+  if(el2) el2.innerHTML = Number(adminSysWallet).toLocaleString()+' <span style="font-size:11px">ກີບ</span>';
+}
+function updateAdminFinanceDisplay(){
+  const ei = document.getElementById('adminIncomeDisplay');
+  const ee = document.getElementById('adminExpenseDisplay');
+  const ep = document.getElementById('adminProfitDisplay');
+  if(ei) ei.textContent = Number(adminIncome).toLocaleString()+' ກີບ';
+  if(ee) ee.textContent = Number(adminExpense).toLocaleString()+' ກີບ';
+  if(ep) ep.textContent = Number(adminProfit).toLocaleString()+' ກີບ';
 }
 
 function closeAdminPanel(){
@@ -8161,7 +8185,11 @@ async function doAdminLogin(){
   document.getElementById('adminWelcome').textContent = 'ຍິນດີຕ້ອນຮັບ '+u;
   // Reset to initial state
   adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
+  adminIncome  = parseInt(localStorage.getItem('kd_admin_income')||'0');
+  adminExpense = parseInt(localStorage.getItem('kd_admin_expense')||'0');
+  adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
   updateAdminSysWalletDisplay();
+  updateAdminFinanceDisplay();
   currentAdminTab = 'overview';
   document.querySelectorAll('.admin-tab,.admin-side-btn').forEach(t=>t.classList.remove('active'));
   const ov = document.getElementById('atab-overview');
@@ -8220,6 +8248,9 @@ function renderAdminOverview(){
   const totalWallet = allUsers.reduce((s,u)=>s+(u.wallet||0),0);
   const totalSales = orders.reduce((s,o)=>s+(o.total||0),0);
   const sysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'100000000');
+  const adminIncomeCur  = parseInt(localStorage.getItem('kd_admin_income')||'0');
+  const adminExpenseCur = parseInt(localStorage.getItem('kd_admin_expense')||'0');
+  const adminProfitCur  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
   return `
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
     <div class="admin-stat" style="cursor:pointer" onclick="switchAdminTab('social')"><div class="num" style="color:#0c6">${onlineCnt}</div><div class="lbl">🟢 ອອນລາຍ</div></div>
@@ -8229,16 +8260,32 @@ function renderAdminOverview(){
     <div class="admin-stat"><div class="num">${products.length}</div><div class="lbl">📦 ສິນຄ້າ</div></div>
     <div class="admin-stat"><div class="num">${orders.length}</div><div class="lbl">🧾 ອໍເດີ</div></div>
   </div>
-  <div class="admin-card" style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border-color:rgba(201,168,76,.4)">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">💎 Admin System Wallet</div>
-        <div style="font-size:24px;font-weight:700;color:var(--gold)">${Number(sysWallet).toLocaleString()} <span style="font-size:13px">ກີບ</span></div>
-        <div style="font-size:10px;color:var(--text2);margin-top:2px">ຕັດເມື່ອ Approve ຝາກ | ໄດ້ຄືນເມື່ອ Approve ຖອນ</div>
+  <div class="admin-card" style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border-color:rgba(201,168,76,.4);padding:14px">
+    <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px;letter-spacing:1px">💎 Admin Finance</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="background:rgba(12,180,100,.1);border:1px solid rgba(12,180,100,.3);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:rgba(12,180,100,.8);margin-bottom:4px;letter-spacing:.5px">📥 ລາຍຮັບ</div>
+        <div id="adminIncomeDisplay" style="font-size:14px;font-weight:700;color:#0cb464;line-height:1.2">${Number(adminIncomeCur).toLocaleString()}<br><span style="font-size:9px;font-weight:400">ກີບ</span></div>
+        <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:3px">ເມື່ອ approve ຖອນ</div>
       </div>
-      <div style="font-size:36px;opacity:.4">🏦</div>
+      <div style="background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.25);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:rgba(255,120,120,.8);margin-bottom:4px;letter-spacing:.5px">📤 ລາຍຈ່າຍ</div>
+        <div id="adminExpenseDisplay" style="font-size:14px;font-weight:700;color:#ff6666;line-height:1.2">${Number(adminExpenseCur).toLocaleString()}<br><span style="font-size:9px;font-weight:400">ກີບ</span></div>
+        <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:3px">ເມື່ອ approve ຝາກ</div>
+      </div>
+      <div style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.35);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:rgba(240,208,128,.8);margin-bottom:4px;letter-spacing:.5px">💰 ກຳໄລ</div>
+        <div id="adminProfitDisplay" style="font-size:14px;font-weight:700;color:var(--gold-light);line-height:1.2">${Number(adminProfitCur).toLocaleString()}<br><span style="font-size:9px;font-weight:400">ກີບ</span></div>
+        <div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:3px">% ຄ່າທຳນຽມຖອນ</div>
+      </div>
     </div>
-    <button onclick="adminResetSysWallet()" style="margin-top:10px;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer">🔄 ຕັ້ງຄ່າໃໝ່ 100,000,000</button>
+    <div style="margin-top:10px;border-top:1px solid rgba(201,168,76,.15);padding-top:10px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:2px">🏦 Admin System Wallet</div>
+        <div style="font-size:18px;font-weight:700;color:var(--gold)" id="adminSysWalletDisplay2">${Number(sysWallet).toLocaleString()} <span style="font-size:11px">ກີບ</span></div>
+      </div>
+      <button onclick="adminResetSysWallet()" style="background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer">🔄 ຕັ້ງໃໝ່</button>
+    </div>
   </div>
   <div class="admin-card">
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px">💰 ຍອດ Wallet ລວມທຸກບັນຊີ</div>
@@ -8870,8 +8917,11 @@ function adminApproveDeposit(id){
   // Deduct from Admin System Wallet
   if(adminSysWallet < amount){ showNotif('❌ Admin Wallet ບໍ່ພໍ ('+Number(adminSysWallet).toLocaleString()+' ກີບ)'); return; }
   adminSysWallet -= amount;
+  adminExpense += amount;   // ລາຍຈ່າຍ: ຈ່າຍໃຫ້ລູກຄ້າ
   saveAdminSysWallet();
+  saveAdminFinance();
   updateAdminSysWalletDisplay();
+  updateAdminFinanceDisplay();
   deps[idx].status='approved';
   // Add to user wallet
   const _dbDep = getUsersDB();
@@ -8904,15 +8954,20 @@ function adminApproveWithdraw(id){
   const idx = withs.findIndex(w=>w.id===id);
   if(idx<0) return;
   const netAmount = withs[idx].net || withs[idx].amount || 0;
-  // Admin receives the net amount (user's money flows into admin wallet)
+  const feeAmount = withs[idx].fee || 0;
+  // ລາຍຮັບ: ເງິນທີ່ຜູ້ໃຊ້ຖອນ (net) ເຂົ້າ Admin
   adminSysWallet += netAmount;
+  adminIncome += netAmount;       // ລາຍຮັບລວມ
+  adminProfit += feeAmount;       // ກຳໄລ = ຄ່າທຳນຽມ
   saveAdminSysWallet();
+  saveAdminFinance();
   updateAdminSysWalletDisplay();
+  updateAdminFinanceDisplay();
   withs[idx].status='approved';
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
-  showNotif('✅ ອະນຸມັດການຖອນ +'+Number(netAmount).toLocaleString()+' ກີບ ເຂົ້າ Admin Wallet');
+  showNotif('✅ ອະນຸມັດການຖອນ +'+Number(netAmount).toLocaleString()+' ກີບ | ກຳໄລ: +'+Number(feeAmount).toLocaleString()+' ກີບ');
   updateAdminNotifBadge();
 }
 function adminRejectWithdraw(id){
