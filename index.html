@@ -6248,6 +6248,23 @@ function showFinBill(type, id){
 
   const feeRate = r.feeRate ? r.feeRate*100 : (r.fee&&r.amount?(r.fee/r.amount*100).toFixed(0):10);
 
+  // Admin slip section (withdraw only)
+  const adminSlipSection = (!isDeposit && r.adminSlip) ? `
+    <div style="margin:16px 0;border-bottom:1px dashed rgba(255,255,255,.1);padding-bottom:16px">
+      <div style="font-size:11px;color:var(--gold);text-align:center;margin-bottom:10px;letter-spacing:1px;font-weight:700">━━━ 📎 ສລິບໂອນຈາກ Admin ━━━</div>
+      <div style="text-align:center;margin-bottom:8px">
+        <img src="${r.adminSlip}" style="max-width:100%;max-height:220px;border-radius:12px;border:1.5px solid rgba(12,180,100,.4);box-shadow:0 0 16px rgba(12,180,100,.2)" onclick="adminViewImg('${r.adminSlip}')">
+      </div>
+      <div style="text-align:center;font-size:10px;color:rgba(12,180,100,.7)">🔍 ກົດຮູບເພື່ອຂະຫຍາຍ</div>
+      <div id="slipResetCountdown_${r.id}" style="text-align:center;font-size:10px;color:var(--text2);margin-top:4px"></div>
+    </div>` : (!isDeposit && r.status==='approved') ? `
+    <div style="margin:16px 0;border-bottom:1px dashed rgba(255,255,255,.1);padding-bottom:16px">
+      <div style="text-align:center;background:rgba(255,255,255,.04);border-radius:10px;padding:12px">
+        <div style="font-size:11px;color:var(--text2)">📎 ສລິບໂອນ</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;opacity:.6">ສລິບຖືກລຶບອັດຕະໂນມັດ (ຫຼັງ 5 ນາທີ)</div>
+      </div>
+    </div>` : '';
+
   const html = `
     <div style="padding:20px 18px">
       <!-- Bill Header -->
@@ -6256,6 +6273,7 @@ function showFinBill(type, id){
         <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:2px">ຂາຍດີ</div>
         <div style="font-size:11px;color:var(--text2);margin-top:2px">KHAIDEE MARKETPLACE</div>
         <div style="margin-top:12px;display:inline-block;padding:6px 20px;border-radius:20px;background:${statusBg};font-size:13px;font-weight:700;color:${statusColor}">${statusLabel}</div>
+        ${r.approvedAt?`<div style="font-size:10px;color:var(--text2);margin-top:6px">ອະນຸມັດ: ${r.approvedAt}</div>`:''}
       </div>
 
       <!-- Bill Body -->
@@ -6279,11 +6297,12 @@ function showFinBill(type, id){
       </div>
 
       ${isDeposit&&r.slipImg?`
-      <!-- Slip Image -->
       <div style="margin:16px 0;border-bottom:1px dashed rgba(255,255,255,.1);padding-bottom:16px">
         <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:10px;letter-spacing:1px">━━━ ສລິບໂອນ ━━━</div>
         <div style="text-align:center"><img src="${r.slipImg}" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid rgba(255,255,255,.1)" onclick="adminViewImg('${r.slipImg}')"></div>
       </div>`:''}
+
+      ${adminSlipSection}
 
       <!-- Status Note -->
       <div style="background:${statusBg};border:1px solid ${statusColor}44;border-radius:12px;padding:12px;text-align:center;margin-top:8px">
@@ -6301,6 +6320,30 @@ function showFinBill(type, id){
   `;
   document.getElementById('finBillContent').innerHTML = html;
   openModal('finBillModal');
+  // Start slip reset countdown display (5 min from approvedAt)
+  if(!isDeposit && r.adminSlip && r.approvedAt){
+    _startSlipCountdown(r.id, r.approvedAt);
+  }
+}
+
+function _startSlipCountdown(wid, approvedAtStr){
+  const el = document.getElementById('slipResetCountdown_'+wid);
+  if(!el) return;
+  const approvedMs = new Date(approvedAtStr).getTime() || Date.now();
+  const resetMs = approvedMs + 5*60*1000;
+  function tick(){
+    const left = resetMs - Date.now();
+    if(!document.getElementById('slipResetCountdown_'+wid)) return;
+    if(left <= 0){
+      el.textContent = '⏰ ສລິບຖືກລຶບອັດຕະໂນມັດແລ້ວ';
+      return;
+    }
+    const m = Math.floor(left/60000);
+    const s = Math.floor((left%60000)/1000);
+    el.textContent = `⏳ ສລິບຈະຖືກລຶບໃນ ${m}:${String(s).padStart(2,'0')} ນາທີ`;
+    setTimeout(tick, 1000);
+  }
+  tick();
 }
 
 function showPersonalInfo(){
@@ -9067,6 +9110,15 @@ function renderAdminFinance(){
       ${r.fee?`<div class="admin-row"><span style="color:var(--text2)">📊 ຫັກ ${r.feeRate?r.feeRate*100:10}%</span><span style="color:#f66">-${Number(r.fee||0).toLocaleString()} ກີບ</span></div>`:''}
       ${r.net?`<div class="admin-row"><span style="color:var(--text2)">✅ ໂອນ</span><span style="color:#0c6;font-weight:700">${Number(r.net||0).toLocaleString()} ກີບ</span></div>`:''}
       ${r.qrImg?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);margin-bottom:4px">📱 QR Code:</div><img src="${r.qrImg}" class="slip-img" onclick="adminViewImg('${r.qrImg}')"></div>`:'<div style="font-size:11px;color:#f66;margin-top:6px">⚠️ ບໍ່ມີ QR</div>'}
+      <!-- Admin Slip Upload -->
+      <div style="margin-top:10px;background:rgba(201,168,76,.06);border:1px dashed rgba(201,168,76,.3);border-radius:10px;padding:10px">
+        <div style="font-size:11px;color:var(--gold);margin-bottom:6px;font-weight:700">📎 ສລິບໂອນ (Admin)</div>
+        <div id="adminSlipPrev_${r.id}" style="margin-bottom:6px"></div>
+        <label style="display:flex;align-items:center;gap:8px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:var(--gold)">
+          <span>📷</span><span>ຖ່າຍ/ເລືອກສລິບ</span>
+          <input type="file" accept="image/*" capture="environment" style="display:none" onchange="previewAdminWithdrawSlip('${r.id}',this)">
+        </label>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <button class="btn btn-gold" style="font-size:12px;padding:6px" onclick="adminApproveWithdraw('${r.id}')">✅ ອະນຸມັດ</button>
         <button class="btn btn-danger" style="font-size:12px;padding:6px" onclick="adminRejectWithdraw('${r.id}')">❌ ປະຕິເສດ</button>
@@ -9125,6 +9177,32 @@ function adminRejectDeposit(id){
   showNotif('❌ ປະຕິເສດຄຳຂໍຝາກ');
   updateAdminNotifBadge();
 }
+// ── Admin Withdraw Slip temp store (session only) ──
+const _adminWithdrawSlips = {};
+
+function previewAdminWithdrawSlip(wid, input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _adminWithdrawSlips[wid] = e.target.result;
+    const prev = document.getElementById('adminSlipPrev_'+wid);
+    if(prev) prev.innerHTML = `
+      <div style="position:relative;display:inline-block">
+        <img src="${e.target.result}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid rgba(201,168,76,.4);display:block" onclick="adminViewImg('${e.target.result}')">
+        <div style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px" onclick="clearAdminWithdrawSlip('${wid}')">✕</div>
+      </div>
+      <div style="font-size:10px;color:#0cb464;margin-top:4px">✅ ສລິບພ້ອມແລ້ວ</div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAdminWithdrawSlip(wid){
+  delete _adminWithdrawSlips[wid];
+  const prev = document.getElementById('adminSlipPrev_'+wid);
+  if(prev) prev.innerHTML = '';
+}
+
 function adminApproveWithdraw(id){
   const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
   const idx = withs.findIndex(w=>w.id===id);
@@ -9139,7 +9217,21 @@ function adminApproveWithdraw(id){
   saveAdminFinance();
   updateAdminSysWalletDisplay();
   updateAdminFinanceDisplay();
-  withs[idx].status='approved';
+  // Attach admin slip if uploaded
+  const slipData = _adminWithdrawSlips[id] || null;
+  const approvedAt = new Date().toLocaleString('lo-LA');
+  withs[idx].status = 'approved';
+  withs[idx].adminSlip = slipData;
+  withs[idx].approvedAt = approvedAt;
+  // Schedule slip reset after 5 minutes
+  if(slipData){
+    setTimeout(()=>{
+      const w2 = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+      const i2 = w2.findIndex(x=>x.id===id);
+      if(i2>=0){ w2[i2].adminSlip=null; localStorage.setItem('kd_withdraw_requests',JSON.stringify(w2)); }
+      delete _adminWithdrawSlips[id];
+    }, 5*60*1000);
+  }
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
