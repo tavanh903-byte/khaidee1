@@ -1316,6 +1316,28 @@ async function syncFromSupabase(){
       </div>
     </div>
 
+    <!-- ══ ADMIN OFFICIAL SHOP BANNER ══ -->
+    <div id="adminShopBanner" style="padding:10px 14px 4px">
+      <div onclick="openAdminOfficialShop()" style="cursor:pointer;background:linear-gradient(135deg,#1a1000 0%,#2a1800 40%,#1a0e00 100%);border:1.5px solid rgba(201,168,76,.6);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(201,168,76,.18)">
+        <!-- glow bg -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(201,168,76,.12),transparent 65%);pointer-events:none"></div>
+        <!-- crown icon -->
+        <div style="width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a2800,#1a1000);border:2px solid rgba(201,168,76,.7);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 0 18px rgba(201,168,76,.5)">👑</div>
+        <!-- text -->
+        <div style="flex:1;min-width:0">
+          <div style="font-size:10px;color:rgba(201,168,76,.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px">Official</div>
+          <div style="font-size:16px;font-weight:700;color:var(--gold);font-family:'Cinzel Decorative',serif;line-height:1.2">ຮ້ານ Admin</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">ສິນຄ້າຈາກທີມງານ · ຮັບປະກັນ 100%</div>
+          <div id="adminShopProductCount" style="font-size:11px;color:var(--gold);margin-top:3px;opacity:.8"></div>
+        </div>
+        <!-- arrow + badge -->
+        <div style="flex-shrink:0;text-align:right">
+          <div style="background:linear-gradient(135deg,var(--gold),#f0d080);color:#000;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:6px">ເຂົ້າຮ້ານ →</div>
+          <div style="font-size:18px">💎</div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-title" id="sectionTitle">🛍️ ສິນຄ້າທັງໝົດ</div>
     <div class="products-grid" id="productsGrid"></div>
   </div>
@@ -3295,6 +3317,7 @@ function saveChat(){localStorage.setItem('kd_chat',JSON.stringify(chatMsgs));}
 // ============ PRODUCTS RENDER ============
 let currentCat = 'all';
 function renderProducts(list){
+  updateAdminShopBanner();
   const grid = document.getElementById('productsGrid');
   if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text2);padding:40px">ບໍ່ພົບສິນຄ້າ</div>';return;}
   grid.innerHTML = list.map(p=>{
@@ -3303,10 +3326,11 @@ function renderProducts(list){
       ? `<div style="width:100%;aspect-ratio:1;overflow:hidden;border-radius:10px 10px 0 0;background:var(--dark3)"><img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div>`
       : `<div class="product-img">${p.emoji||'📦'}</div>`;
     const stars = p.reviews?.length ? (p.reviews.reduce((s,r)=>s+(r.stars||5),0)/p.reviews.length).toFixed(1) : null;
+    const isAdminProd = isAdminUser(p.sellerId);
     return `
-    <div class="product-card" onclick="showProductDetail('${p.id}')">
+    <div class="product-card" onclick="showProductDetail('${p.id}')" style="${isAdminProd?'border-color:rgba(201,168,76,.35)':''}">
       ${imgHtml}
-      ${p.isGame?'<div class="product-badge">ID ເກມ</div>':''}
+      ${isAdminProd?'<div class="product-badge" style="background:linear-gradient(135deg,var(--gold),#f0d080);color:#000">👑 Admin</div>':p.isGame?'<div class="product-badge">ID ເກມ</div>':''}
       <div class="product-id-badge">#${p.id}</div>
       <div class="product-info">
         <div class="product-name">${p.name}</div>
@@ -3577,15 +3601,20 @@ function showProductDetail(id){
     <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--gold);margin-bottom:12px;line-height:1.6">
       ⚠️ ແຄັບຮູບ ID #${p.id} ໄວ້ ຖ້າສິນຄ້າມີບັນຫາ ຕິດຕໍ່ Admin
     </div>
-    <div style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:10px;margin-bottom:14px;cursor:pointer" onclick="closeModal('productModal');setTimeout(()=>openPublicProfile('${p.sellerId||'admin'}'),200)">
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:10px;margin-bottom:14px;cursor:pointer" onclick="closeModal('productModal');setTimeout(()=>{const _sid='${p.sellerId||''}';ADMIN_SHOP_IDS.includes(_sid)?openAdminOfficialShop():openPublicProfile(_sid||'admin');},200)" >
       ${(()=>{
         const _su = getUsersDB()[p.sellerId]||null;
-        const avImg = _su && _su.avatarImg ? `<img src="${_su.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">` : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏪</div>`;
+        const isAdminSeller = isAdminUser(p.sellerId);
+        const avImg = isAdminSeller
+          ? `<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#3a2800,#1a1000);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 10px rgba(201,168,76,.4)">👑</div>`
+          : _su && _su.avatarImg
+            ? `<img src="${_su.avatarImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)">`
+            : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏪</div>`;
         return avImg;
       })()}
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;color:var(--text2)">ຂາຍໂດຍ</div>
-        <div style="font-size:13px;font-weight:700;color:var(--gold)">🏪 ${p.seller}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold)">${isAdminUser(p.sellerId)?'👑 Admin Official':'🏪 '+p.seller}</div>
       </div>
       <div style="font-size:11px;color:var(--text2)">ກົດດູໂປຣໄຟລ →</div>
     </div>
@@ -5003,6 +5032,11 @@ const OWNER_ACCOUNTS = [
   {id:'USR-88888',name:'Tavanh991',user:'tavanh991',pass:'',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'💎',rank:2},
   {id:'USR-77777',name:'Tavanh992',user:'tavanh992',pass:'',wallet:0,isSeller:true,orders:[],isAdmin:true,crown:'🪙',rank:3},
 ];
+
+// ── Admin Shop IDs (ประกาศเร็วเพื่อใช้งานทั่วทั้ง app) ──
+const ADMIN_SHOP_IDS = ['USR-99999','USR-88888','USR-77777'];
+function isAdminUser(uid){ return ADMIN_SHOP_IDS.includes(uid); }
+function getAdminShopProducts(){ return (typeof products!=='undefined'?products:[]).filter(p=>ADMIN_SHOP_IDS.includes(p.sellerId)&&!p.hidden); }
 
 // ── Restore login session — bulletproof 3-layer restore ──
 function restoreSession(){
@@ -7564,6 +7598,83 @@ function triggerCoverUpload(){ document.getElementById('coverFileInput').click()
 function openMyPublicProfile(){
   if(!currentUser) return;
   openPublicProfile(currentUser.id);
+}
+
+// ══════════════════════════════════════════════
+//  ADMIN OFFICIAL SHOP
+// ══════════════════════════════════════════════
+
+function updateAdminShopBanner(){
+  const countEl = document.getElementById('adminShopProductCount');
+  if(!countEl) return;
+  const adminProds = getAdminShopProducts();
+  const totalSold = adminProds.reduce((s,p)=>s+(p.sold||0),0);
+  countEl.textContent = adminProds.length > 0
+    ? `📦 ${adminProds.length} ສິນຄ້າ · 🛒 ຂາຍໄດ້ ${totalSold} ຊິ້ນ`
+    : `📦 ກຳລັງເພີ່ມສິນຄ້າ...`;
+}
+
+function openAdminOfficialShop(){
+  // Build merged profile view for all admin sellers
+  const adminProds = getAdminShopProducts();
+  const totalSold  = adminProds.reduce((s,p)=>s+(p.sold||0),0);
+
+  // Cover
+  const coverImg = document.getElementById('pubCoverImg');
+  coverImg.style.display = 'none';
+  // Set cover gradient via pubCover bg
+  const pubCover = document.getElementById('pubCover');
+  if(pubCover) pubCover.style.background = 'linear-gradient(135deg,#1a1000 0%,#2a1800 40%,#3a2200 70%,#1a1000 100%)';
+
+  // Avatar
+  const avImg   = document.getElementById('pubAvatarImg');
+  const avEmoji = document.getElementById('pubAvatarEmoji');
+  avImg.style.display = 'none';
+  avEmoji.style.display = '';
+  avEmoji.textContent = '👑';
+  avEmoji.style.fontSize = '36px';
+
+  // Info
+  document.getElementById('pubName').innerHTML = '<span style="color:var(--gold)">👑 ຮ້ານ Admin Official</span>';
+  document.getElementById('pubId').innerHTML = '<span style="color:rgba(201,168,76,.6);font-size:11px">✅ ຮ້ານທາງການ · ຮັບປະກັນ 100%</span>';
+  document.getElementById('pubStatProducts').textContent = adminProds.length;
+  document.getElementById('pubStatSold').textContent = totalSold;
+  document.getElementById('pubStatRating').textContent = '⭐';
+
+  const bio = document.getElementById('pubBio');
+  bio.textContent = '🏪 ຮ້ານຂາຍຂອງທີມງານ Admin ຂາຍດີ';
+  bio.style.display = 'block';
+
+  // Apply gold border to avatar
+  const avOuter = document.getElementById('pubAvatar');
+  if(avOuter) avOuter.style.border = '3px solid var(--gold)';
+
+  // Products grid
+  renderPubProductsGrid(adminProds, '__admin_shop__');
+
+  // Info tab
+  const info = document.getElementById('pubInfoContent');
+  info.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:14px">
+        <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:6px">👑 ຮ້ານ Admin Official</div>
+        <div style="font-size:13px;color:var(--text)">ສິນຄ້າຈາກທີມງານ Admin ທັງໝົດ</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">ຈັດການໂດຍ: Tavanh999 · Tavanh991 · Tavanh992</div>
+      </div>
+      <div style="background:var(--dark2);border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">📦 ສິນຄ້າທັງໝົດ</div>
+        <div style="font-size:22px;font-weight:700;color:var(--gold)">${adminProds.length} ລາຍການ</div>
+      </div>
+      <div style="background:var(--dark2);border-radius:10px;padding:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">🛒 ຂາຍໄດ້ທັງໝົດ</div>
+        <div style="font-size:22px;font-weight:700;color:var(--gold)">${totalSold} ຊິ້ນ</div>
+      </div>
+    </div>`;
+
+  const modal = document.getElementById('pubProfileModal');
+  modal.style.display = 'flex';
+  switchPubTab('products');
+  document.body.style.overflow = 'hidden';
 }
 
 function openPublicProfile(userId){
