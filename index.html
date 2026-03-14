@@ -3590,8 +3590,36 @@ setInterval(function(){
     }).catch(()=>{});
 }, 10000);
 
+// ✅ Free up localStorage by clearing images from old products
+function _freeUpStorage(){
+  try{
+    const prods = JSON.parse(localStorage.getItem('kd_products')||'[]');
+    // Remove images from oldest products (keep newest 6 with images)
+    const withImgs = prods.filter(p=>p.images&&p.images.length>0)
+      .sort((a,b)=>new Date(b.postedAt||0)-new Date(a.postedAt||0));
+    const toClean = withImgs.slice(6);
+    toClean.forEach(p=>{ p.images=[]; });
+    localStorage.setItem('kd_products', JSON.stringify(prods));
+    console.log('🧹 Freed storage: cleared images from', toClean.length, 'old products');
+  }catch(e){ console.warn('freeUpStorage:', e); }
+}
+
 function saveProducts(){
-  localStorage.setItem('kd_products',JSON.stringify(products));
+  try{
+    localStorage.setItem('kd_products',JSON.stringify(products));
+  } catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
+      // ✅ Auto-free: strip images from older products then retry
+      _freeUpStorage();
+      try{
+        localStorage.setItem('kd_products',JSON.stringify(products));
+      } catch(e2){
+        // Last resort: save without images at all (images are in Supabase)
+        const slim = products.map(p=>({...p, images:[]}));
+        localStorage.setItem('kd_products',JSON.stringify(slim));
+      }
+    }
+  }
   // Sync each product to Supabase
   products.forEach(p=>sbSaveProduct(p).catch(e=>console.warn('sbSaveProduct:',e)));
 }
@@ -6069,9 +6097,12 @@ function freeStorageSpace(){
       arr.forEach(r=>{ if(r.status!=='pending'){ delete r.slipImg; delete r.qrImg; } });
       localStorage.setItem(k, JSON.stringify(arr.slice(-30)));
     });
-    // 3. Strip product images beyond first 1 per product
+    // 3. Strip product images from old products (keep only newest 8 products with full images)
     const prods = JSON.parse(localStorage.getItem('kd_products')||'[]');
-    prods.forEach(p=>{ if(p.images&&p.images.length>1) p.images=p.images.slice(0,1); });
+    const withImgs = prods.filter(p=>p.images&&p.images.length>0)
+      .sort((a,b)=>new Date(b.postedAt||0)-new Date(a.postedAt||0));
+    // Keep newest 8 with all images, strip rest to 1 image only
+    withImgs.slice(8).forEach(p=>{ p.images = p.images.slice(0,1); });
     localStorage.setItem('kd_products', JSON.stringify(prods));
     return true;
   } catch(e){ return false; }
@@ -6642,7 +6673,7 @@ function submitSellProduct(){
     if(!total){cb(imgs);return;}
     let done=0;
     Array.from(files).slice(0, MAX_IMGS).forEach(f=>{
-      compressImage(f,900,900,0.78,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+      compressImage(f,700,700,0.72,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
   readImgsCompressed(imgFiles, imgs=>{
@@ -6666,9 +6697,20 @@ function submitSellProduct(){
       showNotif('✅ ລົງຂາຍ '+name+' ສຳເລັດ!');
     }catch(e){
       if(e.name==='QuotaExceededError'){
-        p.images=[]; products.push(p); saveProducts();
-        closeModal('sellProductModal'); renderProducts(products);
-        showNotif('⚠️ ລົງຂາຍສຳເລັດ (ບໍ່ໄດ້ບັນທຶກຮູບ ພື້ນທີ່ເຕັມ)');
+        // ✅ Storage full: clear old product images first, then retry
+        _freeUpStorage();
+        try{
+          products.push(p); saveProducts();
+          closeModal('sellProductModal'); renderProducts(products);
+          showNotif('✅ ລົງຂາຍ '+name+' ສຳເລັດ!');
+        }catch(e2){
+          // Still full - save without images, upload to Supabase only
+          p.images=[]; products.push(p);
+          localStorage.setItem('kd_products',JSON.stringify(products));
+          sbSaveProduct({...p, images: imgs}).catch(()=>{});
+          closeModal('sellProductModal'); renderProducts(products);
+          showNotif('✅ ລົງຂາຍສຳເລັດ! (ຮູບຖືກບັນທຶກ Supabase ຄົນອື່ນເຫັນໄດ້ ✓)');
+        }
       } else showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+e.message);
     }
   });
@@ -6718,7 +6760,7 @@ function submitGameSell(){
     if(!total){ cb(imgs); return; }
     let done = 0;
     Array.from(files).slice(0,20).forEach(f => {
-      compressImage(f, 900, 900, 0.78, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+      compressImage(f, 700, 700, 0.72, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
 
@@ -6745,8 +6787,20 @@ function submitGameSell(){
       renderProducts(products);
       showNotif('✅ ລົງຂາຍ ID ເກມ ສຳເລັດ!');
     }catch(e){
-      if(e.name==='QuotaExceededError'){ p.images=[]; products.push(p); saveProducts(); closeModal('gameCredModal'); renderProducts(products); showNotif('⚠️ ລົງຂາຍສຳເລັດ (ບໍ່ໄດ້ບັນທຶກຮູບ ພື້ນທີ່ເຕັມ)'); }
-      else showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+e.message);
+      if(e.name==='QuotaExceededError'){
+        _freeUpStorage();
+        try{
+          products.push(p); saveProducts();
+          closeModal('gameCredModal'); renderProducts(products);
+          showNotif('✅ ລົງຂາຍ ID ເກມ ສຳເລັດ!');
+        }catch(e2){
+          p.images=[]; products.push(p);
+          localStorage.setItem('kd_products',JSON.stringify(products));
+          sbSaveProduct({...p, images: imgs}).catch(()=>{});
+          closeModal('gameCredModal'); renderProducts(products);
+          showNotif('✅ ລົງຂາຍ ID ເກມ ສຳເລັດ! (ຮູບຖືກບັນທຶກ Supabase ✓)');
+        }
+      } else showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+e.message);
     }
     sellGameData = null;
     // Reset form
