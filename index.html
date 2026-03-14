@@ -3489,6 +3489,17 @@ function initApp() {
   updateProfileUI();
   renderBillsPage();
   checkUpdateOnLoad();
+  // ✅ ດຶງ wallet ຈາກ Supabase ທຸກຄັ້ງທີ່ເປີດແອັບ (ຮອງຮັບກໍລະນີ Admin ອະນຸມັດໃນຂະນະທີ່ user ເປີດແອັບຢູ່)
+  if(currentUser){
+    supa.from('kd_users').select('wallet').eq('id',currentUser.id).single()
+      .then(({data})=>{
+        if(data && data.wallet != null && currentUser.wallet !== data.wallet){
+          currentUser.wallet = data.wallet;
+          saveUser();
+          updateWalletDisplay();
+        }
+      }).catch(()=>{});
+  }
   // Clear demo products permanently
   const _demoIds2 = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010'];
   products = products.filter(p=>!_demoIds2.includes(p.id) && (p.sellerId||p.isGame));
@@ -3504,6 +3515,19 @@ function initApp() {
   });
 }
 
+
+// ✅ ດຶງ wallet ໃໝ່ຈາກ Supabase ທຸກ 30 ວິນາທີ (ຮອງຮັບ real-time approval)
+setInterval(function(){
+  if(!currentUser) return;
+  supa.from('kd_users').select('wallet').eq('id',currentUser.id).single()
+    .then(({data})=>{
+      if(data && data.wallet != null && currentUser.wallet !== data.wallet){
+        currentUser.wallet = data.wallet;
+        saveUser();
+        updateWalletDisplay();
+      }
+    }).catch(()=>{});
+}, 30000);
 
 function saveProducts(){
   localStorage.setItem('kd_products',JSON.stringify(products));
@@ -5504,9 +5528,9 @@ function restoreSession(){
 }
 currentUser = restoreSession();
 
-// ── Sync admin avatar/cover from Supabase on app load (เพื่อให้รูปแสดงบนเครื่องใหม่) ──
-(function syncAdminImages(){
-  if(!currentUser || !currentUser.isAdmin) return;
+// ── Sync wallet/avatar/cover from Supabase on app load (ທຸກ user ທຸກເຄື່ອງ) ──
+(function syncUserFromSupabase(){
+  if(!currentUser) return;
   supa.from('kd_users').select('avatar_img,cover_img,wallet').eq('id',currentUser.id).single()
     .then(({data})=>{
       if(!data) return;
@@ -5514,7 +5538,7 @@ currentUser = restoreSession();
       if(data.avatar_img && currentUser.avatarImg !== data.avatar_img){ currentUser.avatarImg = data.avatar_img; changed=true; }
       if(data.cover_img  && currentUser.coverImg  !== data.cover_img ){ currentUser.coverImg  = data.cover_img;  changed=true; }
       if(data.wallet != null && currentUser.wallet !== data.wallet)   { currentUser.wallet    = data.wallet;     changed=true; }
-      if(changed){ saveUser(); updateProfileUI(); }
+      if(changed){ saveUser(); updateProfileUI(); updateWalletDisplay(); }
     }).catch(()=>{});
 })();
 
@@ -5747,6 +5771,16 @@ function doLogin(){
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ເຂົ້າລະບົບສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+currentUser.name);
+    // ✅ ດຶງ wallet ຈາກ Supabase ທັນທີຫຼັງ login
+    supa.from('kd_users').select('wallet,avatar_img,cover_img').eq('id',user.id).single()
+      .then(({data})=>{
+        if(!data) return;
+        let changed = false;
+        if(data.wallet != null && currentUser.wallet !== data.wallet){ currentUser.wallet = data.wallet; changed=true; }
+        if(data.avatar_img && currentUser.avatarImg !== data.avatar_img){ currentUser.avatarImg = data.avatar_img; changed=true; }
+        if(data.cover_img  && currentUser.coverImg  !== data.cover_img ){ currentUser.coverImg  = data.cover_img;  changed=true; }
+        if(changed){ saveUser(); updateWalletDisplay(); updateProfileUI(); }
+      }).catch(()=>{});
   } else {
     showNotif('❌ ອີເມລ/ເບີໂທ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ');
   }
