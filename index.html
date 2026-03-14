@@ -834,12 +834,23 @@ async function sbSaveOrder(o){
 async function sbSaveDeposit(d){
   await supa.from('kd_deposits').upsert({
     id:d.id, user_id:d.userId, user_name:d.userName,
-    amount:d.amount, slip_img:d.slipImg||null, status:d.status||'pending'
+    amount:d.amount, slip_img:d.slipImg||null, status:d.status||'pending',
+    ref:d.ref||null, slip_hash:d.slipHash||null, slip_score:d.slipScore||0,
+    slip_warning:d.slipWarning||false, slip_file_time:d.slipFileTime||null,
+    upload_time:d.uploadTime||null, time_diff_min:d.timeDiffMin||null,
+    date_str:d.date||null
   });
 }
 async function sbLoadDeposits(){
   const {data} = await supa.from('kd_deposits').select('*').order('created_at',{ascending:false});
-  return (data||[]).map(r=>({id:r.id,userId:r.user_id,userName:r.user_name,amount:r.amount,slipImg:r.slip_img,status:r.status,date:r.created_at}));
+  return (data||[]).map(r=>({
+    id:r.id, userId:r.user_id, userName:r.user_name,
+    amount:r.amount, slipImg:r.slip_img, status:r.status,
+    date:r.date_str||r.created_at,
+    ref:r.ref||'', slipHash:r.slip_hash||'', slipScore:r.slip_score||0,
+    slipWarning:r.slip_warning||false, slipFileTime:r.slip_file_time||'-',
+    uploadTime:r.upload_time||null, timeDiffMin:r.time_diff_min
+  }));
 }
 async function sbUpdateDepositStatus(id, status){
   await supa.from('kd_deposits').update({status}).eq('id',id);
@@ -849,12 +860,18 @@ async function sbUpdateDepositStatus(id, status){
 async function sbSaveWithdrawal(w){
   await supa.from('kd_withdrawals').upsert({
     id:w.id, user_id:w.userId, user_name:w.userName,
-    amount:w.amount, fee:w.fee||0, net:w.net||0, qr_img:w.qrImg||null, status:w.status||'pending'
+    amount:w.amount, fee:w.fee||0, net:w.net||0, fee_rate:w.feeRate||0.1,
+    qr_img:w.qrImg||null, status:w.status||'pending', date_str:w.date||null
   });
 }
 async function sbLoadWithdrawals(){
   const {data} = await supa.from('kd_withdrawals').select('*').order('created_at',{ascending:false});
-  return (data||[]).map(r=>({id:r.id,userId:r.user_id,userName:r.user_name,amount:r.amount,fee:r.fee,net:r.net,qrImg:r.qr_img,status:r.status,date:r.created_at}));
+  return (data||[]).map(r=>({
+    id:r.id, userId:r.user_id, userName:r.user_name,
+    amount:r.amount, fee:r.fee, net:r.net, feeRate:r.fee_rate||0.1,
+    qrImg:r.qr_img, status:r.status,
+    date:r.date_str||r.created_at, type:'withdraw'
+  }));
 }
 async function sbUpdateWithdrawalStatus(id, status){
   await supa.from('kd_withdrawals').update({status}).eq('id',id);
@@ -6586,12 +6603,14 @@ let _finCurrentTab = 'deposit';
 
 function showDepositWithdrawHistory(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
-  // Show withdraw tab only for sellers
   const wTab = document.getElementById('finTab-withdraw');
   if(wTab) wTab.style.display = currentUser.isSeller ? 'block' : 'none';
   _finCurrentTab = 'deposit';
-  _renderFinTab('deposit');
   openModal('finHistoryModal');
+  // Show loading then sync from Supabase
+  const content = document.getElementById('finHistoryContent');
+  if(content) content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2)">⏳ ກຳລັງໂຫລດ...</div>';
+  syncFinanceFromSupabase().then(()=>_renderFinTab('deposit')).catch(()=>_renderFinTab('deposit'));
 }
 
 function switchFinTab(tab){
@@ -8331,6 +8350,16 @@ function updateAdminNotifBadge(){
     const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]').filter(r=>r.status==='pending');
     const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]').filter(a=>a.status==='pending');
     total = deps.length + withs.length + apps.length;
+    // Also sync from Supabase in background to keep badge accurate across devices
+    if(total===0){
+      Promise.all([sbLoadDeposits(), sbLoadWithdrawals()]).then(([sbDeps, sbWiths])=>{
+        const sbPend = (sbDeps||[]).filter(r=>r.status==='pending').length + (sbWiths||[]).filter(r=>r.status==='pending').length;
+        if(sbPend>0){
+          // Merge into localStorage so badge stays correct
+          syncFinanceFromSupabase().then(()=>updateAdminNotifBadge());
+        }
+      }).catch(()=>{});
+    }
   }
   // Diamond pending orders (admin + sellers)
   const diaPending = getDiamondPendingCount();
@@ -8925,9 +8954,15 @@ function renderAdminTab(tab){
   }
   else if(tab==='products') c.innerHTML = renderAdminProducts();
   else if(tab==='orders') c.innerHTML = renderAdminOrders();
-  else if(tab==='finance') c.innerHTML = renderAdminFinance();
+  else if(tab==='finance'){
+    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ ກຳລັງໂຫລດ...</div>';
+    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminFinance(); });
+  }
   else if(tab==='sellers') c.innerHTML = renderAdminSellers();
-  else if(tab==='history') c.innerHTML = renderAdminHistory();
+  else if(tab==='history'){
+    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ ກຳລັງໂຫລດ...</div>';
+    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminHistory(); });
+  }
   else if(tab==='diamond') c.innerHTML = renderAdminDiamond();
   else if(tab==='social') c.innerHTML = renderAdminSocial();
   updateAdminNotifBadge();
@@ -9549,6 +9584,35 @@ function adminUpdateOrderStatus(id, status){
   if(idx>=0){ orders[idx].status=status; localStorage.setItem('kd_orders',JSON.stringify(orders)); renderAdminTab('orders'); showNotif('✅ ອັບເດດສະຖານະ'); }
 }
 
+async function syncFinanceFromSupabase(){
+  try{
+    // Load deposits from Supabase and merge into localStorage
+    const sbDeps = await sbLoadDeposits();
+    if(sbDeps && sbDeps.length){
+      const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+      // Merge: Supabase is source of truth, but keep local slipImg if Supabase missing
+      const merged = sbDeps.map(sd=>{
+        const local = localDeps.find(l=>l.id===sd.id);
+        return { ...local, ...sd, slipImg: sd.slipImg || (local&&local.slipImg) || null };
+      });
+      // Add any local-only pending items not yet in Supabase
+      localDeps.forEach(ld=>{ if(!merged.find(m=>m.id===ld.id)) merged.push(ld); });
+      localStorage.setItem('kd_deposit_requests', JSON.stringify(merged));
+    }
+    // Load withdrawals from Supabase and merge into localStorage
+    const sbWiths = await sbLoadWithdrawals();
+    if(sbWiths && sbWiths.length){
+      const localWiths = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+      const mergedW = sbWiths.map(sw=>{
+        const local = localWiths.find(l=>l.id===sw.id);
+        return { ...local, ...sw, qrImg: sw.qrImg || (local&&local.qrImg) || null };
+      });
+      localWiths.forEach(lw=>{ if(!mergedW.find(m=>m.id===lw.id)) mergedW.push(lw); });
+      localStorage.setItem('kd_withdraw_requests', JSON.stringify(mergedW));
+    }
+  } catch(e){ console.warn('syncFinance error:', e); }
+}
+
 function renderAdminFinance(){
   const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
   const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
@@ -9657,8 +9721,9 @@ function adminRejectDeposit(id){
   const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
   const idx = deps.findIndex(d=>d.id===id);
   if(idx<0) return;
-  deps.splice(idx,1);
+  deps[idx].status='rejected';
   localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
+  sbUpdateDepositStatus(id,'rejected').catch(e=>console.warn('sbRejectDeposit:',e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('❌ ປະຕິເສດຄຳຂໍຝາກ');
@@ -9734,8 +9799,9 @@ function adminRejectWithdraw(id){
   const _dbWit = getUsersDB();
   const _witUid = withs[idx].userId;
   if(_dbWit[_witUid]){ _dbWit[_witUid].wallet=(_dbWit[_witUid].wallet||0)+(withs[idx].amount||0); saveUsersDB(_dbWit); if(currentUser&&currentUser.id===_witUid){currentUser.wallet=_dbWit[_witUid].wallet;saveUser();updateWalletDisplay();} }
-  withs.splice(idx,1);
+  withs[idx].status='rejected';
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
+  sbUpdateWithdrawalStatus(id,'rejected').catch(e=>console.warn('sbRejectWith:',e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('❌ ປະຕິເສດ ແລະ ຄືນເງິນ');
