@@ -1000,7 +1000,17 @@ async function syncFromSupabase(){
     if(prods.length > 0){
       // ✅ Filter out products that were locally deleted
       const deletedIds = _getDeletedProductIds();
-      products = prods.filter(p => !deletedIds.has(p.id));
+      const sbProds = prods.filter(p => !deletedIds.has(p.id));
+      // ✅ MERGE: keep local images[] if Supabase doesn't have images_json
+      const localProds = JSON.parse(localStorage.getItem('kd_products')||'[]');
+      products = sbProds.map(sp => {
+        const local = localProds.find(lp => lp.id === sp.id);
+        // If Supabase has no images but local does, keep local images
+        if((!sp.images || !sp.images.length) && local && local.images && local.images.length){
+          return { ...sp, images: local.images };
+        }
+        return sp;
+      });
       localStorage.setItem('kd_products', JSON.stringify(products));
     }
     if(ords.length > 0){
@@ -6616,7 +6626,7 @@ function submitSellProduct(){
     if(!total){cb(imgs);return;}
     let done=0;
     Array.from(files).slice(0, MAX_IMGS).forEach(f=>{
-      compressImage(f,1200,1200,0.88,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+      compressImage(f,900,900,0.78,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
   readImgsCompressed(imgFiles, imgs=>{
@@ -6692,7 +6702,7 @@ function submitGameSell(){
     if(!total){ cb(imgs); return; }
     let done = 0;
     Array.from(files).slice(0,20).forEach(f => {
-      compressImage(f, 1200, 1200, 0.88, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+      compressImage(f, 900, 900, 0.78, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
 
