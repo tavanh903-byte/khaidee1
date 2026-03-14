@@ -348,7 +348,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
 /* NOTIFICATION BADGE */
 .notif-badge{position:absolute;top:4px;right:4px;background:#e53;color:#fff;border-radius:10px;min-width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
 /* IMG CAROUSEL */
-.img-carousel{position:relative;overflow:hidden;border-radius:12px;background:var(--dark3);margin-bottom:10px}
+.img-carousel{position:relative;overflow:hidden;border-radius:12px;background:var(--dark3);margin-bottom:10px;min-height:320px}
 .img-carousel-track{display:flex;transition:transform .3s ease;will-change:transform}
 .img-carousel-track img,.img-carousel-track video{min-width:100%;width:100%;height:240px;object-fit:cover;border-radius:12px}
 .img-carousel-dots{display:flex;justify-content:center;gap:6px;margin-top:8px}
@@ -470,8 +470,8 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .upload-box{border:2px dashed rgba(201,168,76,.3);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;color:var(--text2);font-size:13px}
 .upload-box:hover{border-color:var(--gold);color:var(--gold)}
 .upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.upload-preview-item{width:60px;height:60px;border-radius:8px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;overflow:hidden}
-.upload-preview-item img{width:100%;height:100%;object-fit:cover}
+.upload-preview-item{width:80px;height:80px;border-radius:8px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;overflow:hidden}
+.upload-preview-item img{width:100%;height:100%;object-fit:cover;image-rendering:-webkit-optimize-contrast}
 /* INFO BOX */
 .info-box{background:rgba(26,58,92,.3);border:1px solid rgba(74,127,193,.3);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px}
 /* SELLER HISTORY */
@@ -798,20 +798,45 @@ function sbRowToUser(r){
 // ── Products ──
 async function sbLoadProducts(){
   const {data} = await supa.from('kd_products').select('*').order('created_at',{ascending:false});
-  return (data||[]).map(r=>({
-    id:r.id, name:r.name, price:r.price, cat:r.category,
-    emoji:r.emoji, desc:r.description, qty:r.qty||0, sold:r.sold||0,
-    seller:r.seller_name, sellerId:r.seller_id,
-    img:r.image_img, isGame:r.is_game, gameType:r.game_type
-  }));
+  return (data||[]).map(r=>{
+    // ✅ Load all images from images_json, fallback to image_img
+    let images = [];
+    if(r.images_json){
+      try{ images = JSON.parse(r.images_json); }catch(e){ images = []; }
+    }
+    if(!images.length && r.image_img) images = [r.image_img];
+    return {
+      id:r.id, name:r.name, price:r.price, cat:r.category,
+      emoji:r.emoji, desc:r.description, qty:r.qty||0, sold:r.sold||0,
+      seller:r.seller_name, sellerId:r.seller_id,
+      img:r.image_img, images: images,
+      isGame:r.is_game, gameType:r.game_type
+    };
+  });
 }
 async function sbSaveProduct(p){
-  await supa.from('kd_products').upsert({
+  // ✅ Save all images as JSON in images_json column (with fallback)
+  const imagesJson = p.images && p.images.length ? JSON.stringify(p.images) : null;
+  const firstImg = (p.images&&p.images[0])||p.img||null;
+  // Try with images_json column first
+  const {error} = await supa.from('kd_products').upsert({
     id:p.id, name:p.name, price:p.price, category:p.cat,
     emoji:p.emoji, description:p.desc, qty:p.qty||0, sold:p.sold||0,
     seller_id:p.sellerId||'', seller_name:p.seller||'',
-    image_img:p.img||null, is_game:!!p.isGame, game_type:p.gameType||null
+    image_img: firstImg,
+    images_json: imagesJson,
+    is_game:!!p.isGame, game_type:p.gameType||null
   });
+  // If images_json column doesn't exist yet, save without it
+  if(error && error.message && error.message.includes('images_json')){
+    await supa.from('kd_products').upsert({
+      id:p.id, name:p.name, price:p.price, category:p.cat,
+      emoji:p.emoji, description:p.desc, qty:p.qty||0, sold:p.sold||0,
+      seller_id:p.sellerId||'', seller_name:p.seller||'',
+      image_img: firstImg,
+      is_game:!!p.isGame, game_type:p.gameType||null
+    });
+  }
 }
 async function sbDeleteProduct(id){
   await supa.from('kd_products').delete().eq('id',id);
@@ -3584,7 +3609,7 @@ function renderProducts(list){
     const imgs = p.images||[];
     const ratio = tall ? '3/4' : '1/1';
     const imgHtml = imgs.length
-      ? `<div style="width:100%;aspect-ratio:${ratio};overflow:hidden;border-radius:10px 10px 0 0;background:var(--dark3)"><img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div>`
+      ? `<div style="width:100%;aspect-ratio:${ratio};overflow:hidden;border-radius:10px 10px 0 0;background:var(--dark3)"><img src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges" loading="lazy"></div>`
       : `<div class="product-img" style="aspect-ratio:${ratio}">${p.emoji||'📦'}</div>`;
     const stars = p.reviews?.length ? (p.reviews.reduce((s,r)=>s+(r.stars||5),0)/p.reviews.length).toFixed(1) : null;
     const isAdminProd = isAdminUser(p.sellerId);
@@ -3813,7 +3838,7 @@ function showProductDetail(id){
       ${related.map(r=>{
         const ri=r.images||[];
         return `<div style="background:var(--dark3);border-radius:10px;overflow:hidden;border:1px solid var(--gray2);cursor:pointer" onclick="closeModal('productModal');setTimeout(()=>showProductDetail('${r.id}'),200)">
-          ${ri.length?`<img src="${ri[0]}" style="width:100%;height:80px;object-fit:cover">`:`<div style="height:70px;display:flex;align-items:center;justify-content:center;font-size:28px">${r.emoji||'📦'}</div>`}
+          ${ri.length?`<img src="${ri[0]}" style="width:100%;height:90px;object-fit:cover;image-rendering:-webkit-optimize-contrast">`:`<div style="height:70px;display:flex;align-items:center;justify-content:center;font-size:28px">${r.emoji||'📦'}</div>`}
           <div style="padding:6px 8px"><div style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div><div style="font-size:12px;color:var(--gold)">${fmtPrice(r.price)}</div></div>
         </div>`;
       }).join('')}
@@ -5977,11 +6002,16 @@ function compressImage(file, maxW, maxH, quality, cb){
     const img = new Image();
     img.onload = () => {
       let w = img.width, h = img.height;
+      // Only downscale if larger than max - never upscale
       if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
       if(h > maxH){ w = Math.round(w * maxH / h); h = maxH; }
+      // Ensure minimum size for clarity
+      if(w < 400 && img.width >= 400){ w = img.width; h = img.height; }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, w, h);
       cb(canvas.toDataURL('image/jpeg', quality));
     };
@@ -6586,7 +6616,7 @@ function submitSellProduct(){
     if(!total){cb(imgs);return;}
     let done=0;
     Array.from(files).slice(0, MAX_IMGS).forEach(f=>{
-      compressImage(f,800,800,0.7,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+      compressImage(f,1200,1200,0.88,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
   readImgsCompressed(imgFiles, imgs=>{
@@ -6658,11 +6688,11 @@ function submitGameSell(){
   const imgFiles = document.getElementById('gameImgInput')?.files || [];
 
   const readImgsCompressed2 = (files, cb) => {
-    const imgs = [], total = Math.min(files.length, 3); // max 3 for game IDs
+    const imgs = [], total = Math.min(files.length, 20); // max 20 for game IDs
     if(!total){ cb(imgs); return; }
     let done = 0;
-    Array.from(files).slice(0,3).forEach(f => {
-      compressImage(f, 600, 600, 0.6, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+    Array.from(files).slice(0,20).forEach(f => {
+      compressImage(f, 1200, 1200, 0.88, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
     });
   };
 
@@ -8986,15 +9016,15 @@ function sendAdminMsg(){
 let carouselIdx = 0;
 function buildCarousel(imgs){
   if(!imgs||!imgs.length) return '';
-  if(imgs.length===1) return `<div style="border-radius:12px;overflow:hidden;margin-bottom:10px"><img src="${imgs[0]}" style="width:100%;max-height:260px;object-fit:cover;cursor:pointer" onclick="adminViewImg('${imgs[0]}')"></div>`;
+  if(imgs.length===1) return `<div style="border-radius:12px;overflow:hidden;margin-bottom:10px"><img src="${imgs[0]}" style="width:100%;max-height:360px;object-fit:contain;background:#111;cursor:pointer;image-rendering:-webkit-optimize-contrast" onclick="adminViewImg('${imgs[0]}')"></div>`;
   return `
   <div class="img-carousel" id="pdCarousel">
     <div class="img-carousel-track" id="pdCarouselTrack">
       ${imgs.map((src,i)=>{
         if(src.startsWith('data:video')||src.includes('.mp4')){
-          return `<video src="${src}" controls style="min-width:100%;width:100%;height:240px;object-fit:cover;border-radius:12px"></video>`;
+          return `<video src="${src}" controls style="min-width:100%;width:100%;height:320px;object-fit:contain;background:#111;border-radius:12px"></video>`;
         }
-        return `<img src="${src}" style="min-width:100%;width:100%;height:240px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="adminViewImg('${src}')">`;
+        return `<img src="${src}" style="min-width:100%;width:100%;height:320px;object-fit:contain;background:#111;border-radius:12px;cursor:pointer;image-rendering:-webkit-optimize-contrast" onclick="adminViewImg('${src}')">`;
       }).join('')}
     </div>
     <div class="img-carousel-dots" id="pdDots">
