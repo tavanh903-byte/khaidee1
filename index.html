@@ -877,6 +877,33 @@ async function sbUpdateWithdrawalStatus(id, status){
   await supa.from('kd_withdrawals').update({status}).eq('id',id);
 }
 
+// ── Seller Apps ──
+async function sbSaveSellerApp(app){
+  try{
+    await supa.from('kd_seller_apps').upsert({
+      id: app.userId,
+      user_id: app.userId, user_name: app.name||app.userName||'',
+      wa_num: app.waNum||'', status: app.status||'pending',
+      date_str: app.date||null, shop_name: app.shopName||null,
+      shop_desc: app.shopDesc||null
+    });
+  }catch(e){ console.warn('sbSaveSellerApp:',e); }
+}
+async function sbLoadSellerApps(){
+  try{
+    const {data} = await supa.from('kd_seller_apps').select('*').order('created_at',{ascending:false});
+    return (data||[]).map(r=>({
+      userId:r.user_id, name:r.user_name, userName:r.user_name,
+      waNum:r.wa_num, status:r.status,
+      date:r.date_str||r.created_at,
+      shopName:r.shop_name||'', shopDesc:r.shop_desc||''
+    }));
+  }catch(e){ console.warn('sbLoadSellerApps:',e); return []; }
+}
+async function sbUpdateSellerAppStatus(userId, status){
+  try{ await supa.from('kd_seller_apps').update({status}).eq('user_id',userId); }catch(e){}
+}
+
 // ── Game Orders ──
 async function sbSaveGameOrder(o){
   await supa.from('kd_game_orders').upsert({
@@ -5946,27 +5973,28 @@ function submitSellerApply(){
         date: new Date().toLocaleString(),
         status: 'pending'
       });
+      const newApp = trimmed[trimmed.length-1];
       const ok = safeSave('kd_seller_apps', trimmed);
       if(!ok){
-        // Storage full - save without images and show contact modal
         trimmed[trimmed.length-1].idCardImg = '[ສ່ງຮູບທາງ Line/WhatsApp]';
         trimmed[trimmed.length-1].selfieImg = '[ສ່ງຮູບທາງ Line/WhatsApp]';
         try { localStorage.setItem('kd_seller_apps', JSON.stringify(trimmed)); } catch(e){
-          // Even text fails - clear old data and retry
           freeStorageSpace();
           try { localStorage.setItem('kd_seller_apps', JSON.stringify(trimmed)); } catch(e2){}
         }
         currentUser.sellerPending = true;
         currentUser.sellerName = fn+' '+ln;
         saveUser();
+        sbSaveSellerApp(trimmed[trimmed.length-1]).catch(()=>{});
         addAdminNotification('seller', {user:currentUser.name, id:currentUser.id});
         closeModal('sellerApplyModal');
         updateProfileUI();
         resetBtn();
-        // Show quota exceeded contact modal
         showQuotaContactModal(fn+' '+ln);
         return;
       }
+      // Save to Supabase so admin sees it from any device
+      sbSaveSellerApp(newApp).catch(()=>{});
       currentUser.sellerPending = true;
       currentUser.sellerName = fn+' '+ln;
       saveUser();
@@ -8945,26 +8973,48 @@ function switchAdminTab(tab){
   renderAdminTab(tab);
 }
 
+function _adminLoading(c){ c.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">⏳ ກຳລັງໂຫລດ...</div>'; }
+
 function renderAdminTab(tab){
   const c = document.getElementById('adminContent');
-  if(tab==='overview') c.innerHTML = renderAdminOverview() + renderAdminUpdateAnnounce();
-  else if(tab==='search') c.innerHTML = renderAdminSearch();
+  if(!c) return;
+  _adminLoading(c);
+  const showAfter = (fn) => { c.innerHTML = fn(); };
+
+  if(tab==='overview'){
+    // Sync users + products + orders
+    Promise.all([sbLoadUsers(), syncFinanceFromSupabase(),
+      sbLoadProducts().then(p=>{ if(p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); }}),
+      sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('kd_orders',JSON.stringify(o)); }})
+    ]).finally(()=>{ c.innerHTML = renderAdminOverview() + renderAdminUpdateAnnounce(); });
+  }
+  else if(tab==='search'){
+    sbLoadUsers().finally(()=>{ c.innerHTML = renderAdminSearch(); });
+  }
   else if(tab==='users'){
-    sbLoadUsers().then(()=>{ c.innerHTML = renderAdminUsers(); });
+    sbLoadUsers().then(()=>{ c.innerHTML = renderAdminUsers(); }).catch(()=>{ c.innerHTML = renderAdminUsers(); });
   }
-  else if(tab==='products') c.innerHTML = renderAdminProducts();
-  else if(tab==='orders') c.innerHTML = renderAdminOrders();
+  else if(tab==='products'){
+    sbLoadProducts().then(p=>{ if(p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); } c.innerHTML = renderAdminProducts(); }).catch(()=>{ c.innerHTML = renderAdminProducts(); });
+  }
+  else if(tab==='orders'){
+    sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('kd_orders',JSON.stringify(o)); } c.innerHTML = renderAdminOrders(); }).catch(()=>{ c.innerHTML = renderAdminOrders(); });
+  }
   else if(tab==='finance'){
-    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ ກຳລັງໂຫລດ...</div>';
-    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminFinance(); });
+    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminFinance(); }).catch(()=>{ c.innerHTML = renderAdminFinance(); });
   }
-  else if(tab==='sellers') c.innerHTML = renderAdminSellers();
+  else if(tab==='sellers'){
+    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminSellers(); }).catch(()=>{ c.innerHTML = renderAdminSellers(); });
+  }
   else if(tab==='history'){
-    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">⏳ ກຳລັງໂຫລດ...</div>';
-    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminHistory(); });
+    syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminHistory(); }).catch(()=>{ c.innerHTML = renderAdminHistory(); });
   }
-  else if(tab==='diamond') c.innerHTML = renderAdminDiamond();
-  else if(tab==='social') c.innerHTML = renderAdminSocial();
+  else if(tab==='diamond'){
+    c.innerHTML = renderAdminDiamond();
+  }
+  else if(tab==='social'){
+    sbLoadUsers().finally(()=>{ c.innerHTML = renderAdminSocial(); });
+  }
   updateAdminNotifBadge();
 }
 
@@ -9330,12 +9380,12 @@ function adminApproveSeller(userId){
   if(idx<0)return;
   apps[idx].status='approved';
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
-  // Update user's isSeller flag + save waNum
+  sbUpdateSellerAppStatus(userId,'approved').catch(()=>{});
   const waNum = apps[idx].waNum || '';
   const db1 = getUsersDB();
   if(db1[userId]){
     db1[userId].isSeller=true; db1[userId].sellerPending=false; db1[userId].sellerWA=waNum;
-    saveUsersDB(db1);
+    saveUsersDB(db1); sbSaveUser(db1[userId]).catch(()=>{});
   }
   if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;updateProfileUI();}
   renderAdminTab('sellers');
@@ -9348,10 +9398,11 @@ function adminRejectSeller(userId){
   if(idx<0)return;
   apps[idx].status='rejected';
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  sbUpdateSellerAppStatus(userId,'rejected').catch(()=>{});
   const db2 = getUsersDB();
   if(db2[userId]){
     db2[userId].sellerPending=false; db2[userId].sellerRejected=true;
-    saveUsersDB(db2);
+    saveUsersDB(db2); sbSaveUser(db2[userId]).catch(()=>{});
   }
   if(currentUser&&currentUser.id===userId){currentUser.sellerPending=false;currentUser.sellerRejected=true;updateProfileUI();}
   renderAdminTab('sellers');
@@ -9478,6 +9529,14 @@ function adminSaveEditUser(uid){
       }
     }
   }
+  // Sync to Supabase (name, email, phone, wallet only — not password)
+  const _allU = getAllUsers();
+  const _savedU = _allU.find(x=>x.id===uid);
+  if(_savedU){
+    const _syncU = {..._savedU};
+    delete _syncU.pass; // never sync password change from admin
+    sbSaveUser(_syncU).catch(e=>console.warn('sbSaveEditUser:',e));
+  }
   closeModal('adminEditUserModal');
   renderAdminTab('users');
   showNotif('✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!');
@@ -9488,6 +9547,8 @@ function adminDeleteUser(uid){
   const _dbDel = getUsersDB();
   delete _dbDel[uid];
   saveUsersDB(_dbDel);
+  // Delete from Supabase too
+  supa.from('kd_users').delete().eq('id',uid).then(()=>{}).catch(()=>{});
   if(currentUser && currentUser.id===uid){
     currentUser=null;
     localStorage.removeItem('kd_session');
@@ -9537,6 +9598,7 @@ function adminDeleteProduct(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
   saveProducts();
+  sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
   const card = document.getElementById('aprd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>{card.remove();},400);}
   else renderAdminTab('products');
@@ -9546,6 +9608,7 @@ function adminDeleteProductSearch(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
   saveProducts();
+  sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
   const card = document.getElementById('srch_prd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>card.remove(),400);}
   showNotif('🗑 ລຶບສຳເລັດ');
@@ -9581,25 +9644,29 @@ function renderAdminOrders(){
 
 function adminUpdateOrderStatus(id, status){
   const idx = orders.findIndex(o=>o.id===id);
-  if(idx>=0){ orders[idx].status=status; localStorage.setItem('kd_orders',JSON.stringify(orders)); renderAdminTab('orders'); showNotif('✅ ອັບເດດສະຖານະ'); }
+  if(idx>=0){
+    orders[idx].status=status;
+    localStorage.setItem('kd_orders',JSON.stringify(orders));
+    sbSaveOrder(orders[idx]).catch(e=>console.warn('sbUpdateOrder:',e));
+    renderAdminTab('orders');
+    showNotif('✅ ອັບເດດສະຖານະ');
+  }
 }
 
 async function syncFinanceFromSupabase(){
   try{
-    // Load deposits from Supabase and merge into localStorage
+    // Deposits
     const sbDeps = await sbLoadDeposits();
     if(sbDeps && sbDeps.length){
       const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-      // Merge: Supabase is source of truth, but keep local slipImg if Supabase missing
       const merged = sbDeps.map(sd=>{
         const local = localDeps.find(l=>l.id===sd.id);
         return { ...local, ...sd, slipImg: sd.slipImg || (local&&local.slipImg) || null };
       });
-      // Add any local-only pending items not yet in Supabase
       localDeps.forEach(ld=>{ if(!merged.find(m=>m.id===ld.id)) merged.push(ld); });
       localStorage.setItem('kd_deposit_requests', JSON.stringify(merged));
     }
-    // Load withdrawals from Supabase and merge into localStorage
+    // Withdrawals
     const sbWiths = await sbLoadWithdrawals();
     if(sbWiths && sbWiths.length){
       const localWiths = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
@@ -9609,6 +9676,19 @@ async function syncFinanceFromSupabase(){
       });
       localWiths.forEach(lw=>{ if(!mergedW.find(m=>m.id===lw.id)) mergedW.push(lw); });
       localStorage.setItem('kd_withdraw_requests', JSON.stringify(mergedW));
+    }
+    // Seller Apps
+    const sbApps = await sbLoadSellerApps();
+    if(sbApps && sbApps.length){
+      const localApps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+      const mergedA = sbApps.map(sa=>{
+        const local = localApps.find(l=>l.userId===sa.userId);
+        return { ...local, ...sa,
+          idCardImg: (local&&local.idCardImg)||null,
+          selfieImg: (local&&local.selfieImg)||null };
+      });
+      localApps.forEach(la=>{ if(!mergedA.find(m=>m.userId===la.userId)) mergedA.push(la); });
+      localStorage.setItem('kd_seller_apps', JSON.stringify(mergedA));
     }
   } catch(e){ console.warn('syncFinance error:', e); }
 }
@@ -9815,12 +9895,11 @@ function adminApproveSellerCard(userId){
   if(idx<0) return;
   apps[idx].status='approved';
   const waNum = apps[idx].waNum || '';
-  // FREE STORAGE: remove images after approval (no longer needed)
-  delete apps[idx].idCardImg;
-  delete apps[idx].selfieImg;
+  delete apps[idx].idCardImg; delete apps[idx].selfieImg;
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  sbUpdateSellerAppStatus(userId,'approved').catch(()=>{});
   const _dbSC = getUsersDB();
-  if(_dbSC[userId]){ _dbSC[userId].isSeller=true; _dbSC[userId].sellerPending=false; _dbSC[userId].sellerWA=waNum; saveUsersDB(_dbSC); }
+  if(_dbSC[userId]){ _dbSC[userId].isSeller=true; _dbSC[userId].sellerPending=false; _dbSC[userId].sellerWA=waNum; saveUsersDB(_dbSC); sbSaveUser(_dbSC[userId]).catch(()=>{}); }
   if(currentUser&&currentUser.id===userId){currentUser.isSeller=true;currentUser.sellerPending=false;currentUser.sellerWA=waNum;saveUser();updateProfileUI();}
   const card = document.getElementById('seller_'+userId);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
@@ -9833,8 +9912,9 @@ function adminRejectSellerCard(userId){
   if(idx<0) return;
   apps[idx].status='rejected';
   localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  sbUpdateSellerAppStatus(userId,'rejected').catch(()=>{});
   const _dbRC = getUsersDB();
-  if(_dbRC[userId]){ _dbRC[userId].sellerPending=false; _dbRC[userId].sellerRejected=true; saveUsersDB(_dbRC); }
+  if(_dbRC[userId]){ _dbRC[userId].sellerPending=false; _dbRC[userId].sellerRejected=true; saveUsersDB(_dbRC); sbSaveUser(_dbRC[userId]).catch(()=>{}); }
   if(currentUser&&currentUser.id===userId){currentUser.sellerPending=false;currentUser.sellerRejected=true;saveUser();updateProfileUI();}
   const card = document.getElementById('seller_'+userId);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
