@@ -952,12 +952,30 @@ async function clearDemoProductsFromSupabase(){
   }catch(e){ console.warn('clearDemo:',e); }
 }
 
+// ✅ Track deleted product IDs so sync doesn't bring them back
+const _KD_DELETED_PRODS_KEY = 'kd_deleted_product_ids';
+function _getDeletedProductIds(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(_KD_DELETED_PRODS_KEY)||'[]');
+    return new Set(arr);
+  }catch(e){ return new Set(); }
+}
+function _addDeletedProductId(id){
+  const set = _getDeletedProductIds();
+  set.add(id);
+  // Keep only last 500 deleted IDs to avoid localStorage bloat
+  const arr = Array.from(set).slice(-500);
+  localStorage.setItem(_KD_DELETED_PRODS_KEY, JSON.stringify(arr));
+}
+
 async function syncFromSupabase(){
   try{
     await clearDemoProductsFromSupabase();
     const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders(), sbLoadUsers()]);
     if(prods.length > 0){
-      products = prods;
+      // ✅ Filter out products that were locally deleted
+      const deletedIds = _getDeletedProductIds();
+      products = prods.filter(p => !deletedIds.has(p.id));
       localStorage.setItem('kd_products', JSON.stringify(products));
     }
     if(ords.length > 0){
@@ -4823,7 +4841,12 @@ function deleteProductFromManage(id){
   if(!confirm(`🗑 ລຶບ "${p.name}" ?\nຂໍ້ມູນຈະຫາຍຖາວອນ`)) return;
   const idx = products.findIndex(x=>x.id===id);
   products.splice(idx,1);
-  saveProducts();
+  // ✅ Track deleted IDs to prevent sync from bringing them back
+  _addDeletedProductId(id);
+  // ✅ Save local state first (without re-uploading deleted product)
+  localStorage.setItem('kd_products', JSON.stringify(products));
+  // ✅ Delete from Supabase (fire and don't let saveProducts re-add it)
+  sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
   // If on edit page, go back
   const curPage = document.querySelector('.page.active');
   if(curPage&&curPage.id==='page-edit-product') switchPage('manage');
@@ -9701,7 +9724,8 @@ function renderAdminProducts(){
 function adminDeleteProduct(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
-  saveProducts();
+  _addDeletedProductId(id);
+  localStorage.setItem('kd_products', JSON.stringify(products));
   sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
   const card = document.getElementById('aprd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>{card.remove();},400);}
@@ -9711,7 +9735,8 @@ function adminDeleteProduct(id){
 function adminDeleteProductSearch(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
-  saveProducts();
+  _addDeletedProductId(id);
+  localStorage.setItem('kd_products', JSON.stringify(products));
   sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
   const card = document.getElementById('srch_prd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>card.remove(),400);}
