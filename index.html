@@ -727,6 +727,48 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ══════════════════════════════════════════
+// 🖼️  SUPABASE STORAGE — Product Images
+// ══════════════════════════════════════════
+async function uploadImageToStorage(file, folder){
+  try{
+    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+    const fileName = folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    const { data, error } = await supa.storage
+      .from('product-images')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+    if(error) throw error;
+    const { data: urlData } = supa.storage
+      .from('product-images')
+      .getPublicUrl(fileName);
+    return urlData.publicUrl;
+  } catch(e){
+    console.warn('uploadImageToStorage failed:', e);
+    return null;
+  }
+}
+
+async function uploadFilesToStorage(files, folder, maxFiles){
+  const results = [];
+  const toUpload = Array.from(files).slice(0, maxFiles);
+  for(const file of toUpload){
+    if(file.type.startsWith('image/')){
+      const url = await uploadImageToStorage(file, folder);
+      if(url) results.push(url);
+    } else if(file.type.startsWith('video/')){
+      // Videos: compress to base64 (small enough)
+      const b64 = await new Promise(res=>{
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.onerror = () => res(null);
+        r.readAsDataURL(file);
+      });
+      if(b64) results.push(b64);
+    }
+  }
+  return results;
+}
+
+// ══════════════════════════════════════════
 // 🔄  SUPABASE DATA LAYER
 // ══════════════════════════════════════════
 
@@ -6668,15 +6710,23 @@ function submitSellProduct(){
   const MAX_IMGS = isGameCat ? 20 : 10;
   const videoUrl = (document.getElementById('sellVideoUrl')?.value||'').trim();
 
-  const readImgsCompressed = (files, cb) => {
-    const imgs=[], total=Math.min(files.length, MAX_IMGS);
-    if(!total){cb(imgs);return;}
-    let done=0;
-    Array.from(files).slice(0, MAX_IMGS).forEach(f=>{
-      compressImage(f,700,700,0.72,data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+  // ✅ Async upload - await properly so URLs are ready before saving
+  const getImages = async (files) => {
+    if(!files || !files.length) return [];
+    showNotif('⏳ ກຳລັງອັພໂຫລດຮູບ...');
+    const urls = await uploadFilesToStorage(files, 'products', MAX_IMGS);
+    if(urls.length > 0) return urls;
+    // Fallback: compress to base64
+    return await new Promise(resolve => {
+      const imgs=[], total=Math.min(files.length, MAX_IMGS);
+      if(!total){ resolve([]); return; }
+      let done=0;
+      Array.from(files).slice(0, MAX_IMGS).forEach(f=>{
+        compressImage(f,700,700,0.72,data=>{ if(data) imgs.push(data); done++; if(done===total) resolve(imgs); });
+      });
     });
   };
-  readImgsCompressed(imgFiles, imgs=>{
+  getImages(imgFiles).then(imgs=>{
     const p = {
       id, name, desc,
       cat: mainCat, subcat: cat,
@@ -6755,16 +6805,23 @@ function submitGameSell(){
   const gameEmojis = {rov:'🎮', freefire:'🔫', mlbb:'💎', pubg:'🪖', genshin:'⚔️'};
   const imgFiles = document.getElementById('gameImgInput')?.files || [];
 
-  const readImgsCompressed2 = (files, cb) => {
-    const imgs = [], total = Math.min(files.length, 20); // max 20 for game IDs
-    if(!total){ cb(imgs); return; }
-    let done = 0;
-    Array.from(files).slice(0,20).forEach(f => {
-      compressImage(f, 700, 700, 0.72, data=>{ if(data) imgs.push(data); done++; if(done===total) cb(imgs); });
+  // ✅ Async upload game images
+  const getGameImages = async (files) => {
+    if(!files || !files.length) return [];
+    showNotif('⏳ ກຳລັງອັພໂຫລດຮູບ...');
+    const urls = await uploadFilesToStorage(files, 'games', 20);
+    if(urls.length > 0) return urls;
+    return await new Promise(resolve => {
+      const imgs=[], total=Math.min(files.length, 20);
+      if(!total){ resolve([]); return; }
+      let done=0;
+      Array.from(files).slice(0,20).forEach(f=>{
+        compressImage(f,700,700,0.72,data=>{ if(data) imgs.push(data); done++; if(done===total) resolve(imgs); });
+      });
     });
   };
 
-  readImgsCompressed2(imgFiles, imgs => {
+  getGameImages(imgFiles).then(imgs => {
     const pid = 'PRD-' + Date.now().toString().slice(-6);
     const p = {
       ...sellGameData,
