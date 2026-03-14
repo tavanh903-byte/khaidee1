@@ -861,8 +861,17 @@ async function sbLoadDeposits(){
     uploadTime:r.upload_time||null, timeDiffMin:r.time_diff_min
   }));
 }
-async function sbUpdateDepositStatus(id, status){
+async function sbUpdateDepositStatus(id, status, userId, amount){
   await supa.from('kd_deposits').update({status}).eq('id',id);
+  // ✅ If approved, also update wallet in kd_users via Supabase RPC or direct update
+  if(status === 'approved' && userId && amount){
+    try{
+      // Get current wallet then add amount
+      const {data} = await supa.from('kd_users').select('wallet').eq('id',userId).single();
+      const newWallet = (data?.wallet||0) + amount;
+      await supa.from('kd_users').update({wallet: newWallet}).eq('id',userId);
+    } catch(e){ console.warn('sbUpdateWallet:', e); }
+  }
 }
 
 // ── Withdrawals ──
@@ -9725,6 +9734,25 @@ async function syncFinanceFromSupabase(){
       });
       localDeps.forEach(ld=>{ if(!merged.find(m=>m.id===ld.id)) merged.push(ld); });
       localStorage.setItem('kd_deposit_requests', JSON.stringify(merged));
+      // ✅ If current user has newly approved deposit, reload wallet from Supabase
+      if(currentUser){
+        const myNewApproved = merged.filter(d=>
+          d.userId===currentUser.id &&
+          d.status==='approved' &&
+          !localDeps.find(l=>l.id===d.id && l.status==='approved')
+        );
+        if(myNewApproved.length > 0){
+          // Re-fetch wallet from Supabase
+          supa.from('kd_users').select('wallet').eq('id',currentUser.id).single()
+            .then(({data})=>{
+              if(data && data.wallet != null){
+                currentUser.wallet = data.wallet;
+                saveUser();
+                updateWalletDisplay();
+              }
+            }).catch(()=>{});
+        }
+      }
     }
     // Withdrawals
     const sbWiths = await sbLoadWithdrawals();
@@ -9846,10 +9874,13 @@ function adminApproveDeposit(id){
   if(_dbDep[_depUid]){
     _dbDep[_depUid].wallet = (_dbDep[_depUid].wallet||0) + amount;
     saveUsersDB(_dbDep);
+    // ✅ Sync wallet to Supabase so customer sees updated balance
+    sbSaveUser(_dbDep[_depUid]).catch(e=>console.warn('sbSaveWallet:',e));
     if(currentUser&&currentUser.id===_depUid){ currentUser.wallet=_dbDep[_depUid].wallet; saveUser(); updateWalletDisplay(); }
   }
+  deps[idx].approvedAt = new Date().toLocaleString('lo-LA');
   localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
-  sbUpdateDepositStatus(id,'approved').catch(e=>console.warn('sbApproveDeposit:',e));
+  sbUpdateDepositStatus(id,'approved',_depUid,amount).catch(e=>console.warn('sbApproveDeposit:',e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   // Refresh user-facing history if open
