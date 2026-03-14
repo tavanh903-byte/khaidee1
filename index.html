@@ -3595,6 +3595,22 @@ function saveProducts(){
   // Sync each product to Supabase
   products.forEach(p=>sbSaveProduct(p).catch(e=>console.warn('sbSaveProduct:',e)));
 }
+
+// ✅ Re-sync all products with images to Supabase (run once after images_json column created)
+async function resyncAllProductImages(){
+  const local = JSON.parse(localStorage.getItem('kd_products')||'[]');
+  const withImgs = local.filter(p => p.images && p.images.length > 0);
+  if(!withImgs.length){ showNotif('ບໍ່ມີສິນຄ້າທີ່ມີຮູບ'); return; }
+  showNotif('⏳ ກຳລັງ sync ຮູບທັງໝົດ... ('+withImgs.length+' ລາຍການ)');
+  let done = 0;
+  for(const p of withImgs){
+    try{
+      await sbSaveProduct(p);
+      done++;
+    } catch(e){ console.warn('resync fail:', p.id, e); }
+  }
+  showNotif('✅ Sync ຮູບສຳເລັດ '+done+'/'+withImgs.length+' ລາຍການ!');
+}
 function saveOrders(){
   localStorage.setItem('kd_orders',JSON.stringify(orders));
   orders.forEach(o=>sbSaveOrder(o).catch(e=>console.warn('sbSaveOrder:',e)));
@@ -9275,6 +9291,13 @@ function renderAdminOverview(){
   <div class="admin-card">
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px">📈 ຍອດຂາຍລວມ</div>
     <div style="font-size:22px;font-weight:700;color:#0c6">${totalSales.toLocaleString()} <span style="font-size:13px">ກີບ</span></div>
+  </div>
+  <div class="admin-card" style="background:rgba(74,127,193,.08);border:1px solid rgba(74,127,193,.3)">
+    <div style="font-size:12px;font-weight:700;color:#69f;margin-bottom:8px">🖼 ຮູບສິນຄ້າ — ກົດ Sync ຮູບທຸກລາຍການໄປ Supabase</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">ໃຊ້ຄັ້ງດຽວຫຼັງຈາກ Add column images_json ໃນ Supabase ແລ້ວ ເພື່ອໃຫ້ລູກຄ້າທຸກຄົນເຫັນຮູບ</div>
+    <button onclick="resyncAllProductImages()" style="width:100%;background:linear-gradient(135deg,rgba(74,127,193,.3),rgba(36,83,160,.4));border:1px solid rgba(74,127,193,.5);color:#69f;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+      🔄 Sync ຮູບທັງໝົດໄປ Supabase
+    </button>
   </div>
   <div class="admin-card">
     <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">📋 ຄຳຂໍຝາກ/ຖອນລ່າສຸດ</div>
