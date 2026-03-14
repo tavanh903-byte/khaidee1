@@ -6045,7 +6045,7 @@ function onSellCatChange(){
 
   // ─── เสื้อผ้า ───
   if(cat==='clothes'){
-    html += buildSellColorPicker('เสื้อผ้า');
+    html += buildSellColorPicker('ເສື້ອຜ້າ');
     html += buildSellSizePicker(['XS','S','M','L','XL','2XL','3XL','4XL']);
     html += `<div class="sell-section">
       <div class="sell-section-title">📋 ຂໍ້ມູນເພີ່ມເຕີມ</div>
@@ -8334,7 +8334,7 @@ function isWished(pid){ return wishlist.includes(pid); }
 function showWishlist(){
   const wished = products.filter(p=>wishlist.includes(p.id));
   let html = '<div class="modal-title">❤️ ສິນຄ້າຖືກໃຈ</div>';
-  if(!wished.length){ html+='<div style="text-align:center;color:var(--text2);padding:24px">ຍັງບໍ່ມີ ກົດ ❤️ ຢູ່ສິນຄ້າ'; }
+  if(!wished.length){ html+='<div style="text-align:center;color:var(--text2);padding:24px">ຍັງບໍ່ມີ ກົດ ❤️ ຢູ່ສິນຄ້າ</div>'; }
   else {
     html += wished.map(p=>`
       <div style="display:flex;align-items:center;gap:10px;background:var(--dark3);border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid var(--gray2);cursor:pointer" onclick="closeModal('wishlistModal');showProductDetail('${p.id}')">
@@ -8694,7 +8694,7 @@ function startDeadlineTimer(orderId, deadlineMs){
     const el = document.getElementById('diaDeadlineTimer_'+orderId);
     if(!el){ clearInterval(_deadlineTimers[orderId]); return; }
     if(left<=0){
-      el.textContent='⚠️ หมดเวลา';
+      el.textContent='⚠️ ໝົດເວລາ';
       el.style.color='#ff4444';
       clearInterval(_deadlineTimers[orderId]);
       playWarningSound();
