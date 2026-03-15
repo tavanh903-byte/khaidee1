@@ -1057,7 +1057,7 @@ async function clearDemoProductsFromSupabase(){
     await supa.from('kd_products').delete().in('id', demoIds);
     // Also delete products with no seller_id
     await supa.from('kd_products').delete().is('seller_id','').not('is_game','eq',true);
-    console.log('✅ Demo products cleared from Supabase');
+    ;
   }catch(e){ console.warn('clearDemo:',e); }
 }
 
@@ -3655,7 +3655,7 @@ async function loadAdminCredentials(){
       else o.pass = FRONT_PASS;
     });
     _credsLoaded = true;
-    console.log('🔒 Credentials loaded securely | BACK2='+ADMIN_BACK_PASS2+' | USERS='+ADMIN_USERS.map(u=>u.user).join(','));
+    
   } catch(e){
     console.warn('loadAdminCredentials failed:', e);
   }
@@ -3725,7 +3725,7 @@ function updateBalanceUI(newWallet){
   if(newWallet > prev){
     const diff = newWallet - prev;
     showNotif('💰 ຍອດເງິນເພີ່ມ +'+Number(diff).toLocaleString()+' ກີບ', 'success');
-    console.log('💰 Wallet updated:', prev, '→', newWallet, '(+'+diff+')');
+    
   }
 }
 
@@ -3745,14 +3745,14 @@ function startWalletRealtime(){
       table: 'kd_users',
       filter: 'id=eq.' + currentUser.id
     }, (payload) => {
-      console.log('📡 Realtime wallet payload:', payload?.new?.wallet);
+      
       const newWallet = payload?.new?.wallet;
       if(newWallet != null) updateBalanceUI(newWallet);
     })
     .subscribe((status, err) => {
-      console.log('📡 Wallet Realtime status:', status, err||'');
+      
       if(status === 'SUBSCRIBED'){
-        console.log('✅ Wallet Realtime connected for', currentUser.id);
+        
       } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
         console.warn('⚠️ Realtime disconnected:', status, '— will retry in 5s');
         _walletChannel = null;
@@ -3780,7 +3780,7 @@ setInterval(function(){
   supa.from('kd_users').select('wallet').eq('id',currentUser.id).single()
     .then(({data})=>{
       if(data && data.wallet != null && data.wallet !== currentUser.wallet){
-        console.log('🔄 Fallback poll wallet update:', data.wallet);
+        
         updateBalanceUI(data.wallet);
       }
     }).catch(()=>{});
@@ -3796,7 +3796,7 @@ function _freeUpStorage(){
     const toClean = withImgs.slice(6);
     toClean.forEach(p=>{ p.images=[]; });
     localStorage.setItem('kd_products', JSON.stringify(prods));
-    console.log('🧹 Freed storage: cleared images from', toClean.length, 'old products');
+    
   }catch(e){ console.warn('freeUpStorage:', e); }
 }
 
@@ -5674,7 +5674,7 @@ function previewAdmShopCover(input){
     OWNER_ACCOUNTS.forEach(o=>{
       o.coverImg = data;
       supa.from('kd_users').update({cover_img: data}).eq('id', o.id)
-        .then(()=>{ console.log('✅ Cover synced to Supabase:', o.id); })
+        .then(()=>{})
         .catch(e=>console.warn('cover sync fail:', e));
     });
     showNotif('✅ ບັນທຶກຮູບ Cover ສຳເລັດ');
@@ -5702,7 +5702,7 @@ function previewAdmShopAvatar(input){
     OWNER_ACCOUNTS.forEach(o=>{
       o.avatarImg = data;
       supa.from('kd_users').update({avatar_img: data}).eq('id', o.id)
-        .then(()=>{ console.log('✅ Avatar synced to Supabase:', o.id); })
+        .then(()=>{})
         .catch(e=>console.warn('avatar sync fail:', e));
     });
     // อัพเดท currentUser ถ้าเป็น admin
@@ -8616,10 +8616,6 @@ function showNotif(msg,typeOverride){
     setTimeout(()=>n.remove(),300);
   },dur);
 }
-function showNotifSuccess(msg){showNotif(msg,'success');}
-function showNotifError(msg){showNotif(msg,'error');}
-function showNotifOrder(msg){showNotif(msg,'order');}
-function showNotifMsg(msg){showNotif(msg,'msg');}
 
 // ============ AVATAR ============
 function triggerCoverUpload(){ document.getElementById('coverFileInput').click(); }
@@ -9028,10 +9024,7 @@ function addAdminNotification(type, data){
   localStorage.setItem('kd_admin_notifs', JSON.stringify(notifs.slice(0,100)));
   updateAdminNotifBadge();
 }
-
-// ============================================================
 //  WHATSAPP NOTIFICATION SYSTEM — ຂາຍດີ-Shop
-// ============================================================
 const WA_ADMIN = '8562054966168';
 const WA_SITE  = 'tavanh903-byte.github.io/khaidee1';
 
@@ -10023,7 +10016,6 @@ function adminRejectSeller(userId){
 }
 
 
-
 function renderAdminUsers(){
   const allUsers = getAllUsers();
   if(!allUsers.length) return '<div style="text-align:center;padding:30px;color:var(--text2)">ຍັງບໍ່ມີຜູ້ໃຊ້</div>';
@@ -10429,7 +10421,7 @@ function adminApproveDeposit(id){
   // ✅ Update Supabase ทันที — Realtime จะยิงไปหาลูกค้าเอง
   sbUpdateDepositStatus(id,'approved',_depUid,amount)
     .then(()=>{
-      console.log('✅ Supabase wallet updated → Realtime will notify customer');
+      
       // Verify ดึงกลับมายืนยัน
       return supa.from('kd_users').select('wallet').eq('id',_depUid).single();
     })
@@ -10439,7 +10431,7 @@ function adminApproveDeposit(id){
         if(db2[_depUid]){ db2[_depUid].wallet = data.wallet; saveUsersDB(db2); }
         // ถ้า admin เป็น user นั้นเอง (unlikely) ก็ update ด้วย
         if(currentUser && currentUser.id === _depUid){ updateBalanceUI(data.wallet); }
-        console.log('✅ Wallet verified in Supabase:', data.wallet);
+        
       }
     })
     .catch(e=>console.warn('sbApproveDeposit:', e));
@@ -11337,7 +11329,7 @@ function doDeposit(){
     // ══════════════════════════════════════════════
     if(!slipWarning && slipScore >= 55){
       // ผ่านทุกอย่าง: ชื่อ + จำนวน + วันที่ + เวลา + รูปเป็น slip จริง
-      console.log('🤖 Auto-approve deposit:', amt, 'for', currentUser.id);
+      
       // อัพเดท wallet ทันที
       const newWallet = (currentUser.wallet||0) + amt;
       updateBalanceUI(newWallet);
@@ -11349,7 +11341,7 @@ function doDeposit(){
           const idx2 = deps2.findIndex(d=>d.id===newDep.id);
           if(idx2>=0){ deps2[idx2].status='approved'; deps2[idx2].autoApproved=true; deps2[idx2].approvedAt=new Date().toLocaleString('lo-LA'); }
           localStorage.setItem('kd_deposit_requests', JSON.stringify(deps2));
-          console.log('✅ Auto-approved wallet updated in Supabase');
+          
         })
         .catch(e=>console.warn('Auto-approve error:', e));
       showNotif('✅ ຝາກເງິນ +'+Number(amt).toLocaleString()+' ກີບ ສຳເລັດ! ຍອດເງິນໄດ້ຮັບການອັບເດດ', 'success');
@@ -11419,10 +11411,7 @@ window.addEventListener('load', ()=>{
   updateCartBadge();
   updateAdminNotifBadge();
 }, true);
-
-// ============================================================
 // 🎮  GAME TOPUP SYSTEM
-// ============================================================
 const TOPUP_GAMES = [
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🔥 เกมยอดนิยม
