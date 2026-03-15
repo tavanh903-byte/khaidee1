@@ -7686,6 +7686,9 @@ function switchPage(name, pushHistory=true){
 })();
 
 // จัดการปุ่มย้อนกลับ (Android back / browser back)
+// Double-back-to-exit state
+let _backPressedOnce = false;
+
 window.addEventListener('popstate', function(e){
   const target = e.state && e.state.page ? e.state.page : 'home';
 
@@ -7703,11 +7706,20 @@ window.addEventListener('popstate', function(e){
     return;
   }
 
-  // 2) ถ้าอยู่หน้า home อยู่แล้ว → ไม่ทำอะไร (ป้องกันออกจากแอป)
+  // 2) ถ้าอยู่หน้า home → double-back เพื่อออก
   if(_currentPage === 'home' || target === 'home'){
     switchPage('home', false);
-    // push อีกครั้งเพื่อไม่ให้ back ครั้งถัดไปออกแอปทันที
     try{ history.pushState({page:'home'}, '', '#home'); }catch(e){}
+    // Double-back-to-exit
+    if(_backPressedOnce){
+      // กด 2 ครั้ง → ออกแอป
+      _backPressedOnce = false;
+      window.history.go(-(window.history.length));
+      return;
+    }
+    _backPressedOnce = true;
+    showNotif('ກົດຍ້ອນກັບອີກຄັ້ງເພື່ອອອກ / กดอีกครั้งเพื่อออก', 'info');
+    setTimeout(()=>{ _backPressedOnce = false; }, 2000);
     return;
   }
 
