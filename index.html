@@ -275,7 +275,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 
 
 /* PAGE WRAPPER */
-.page{display:none;flex-direction:column;flex:1;padding-bottom:80px;overflow:hidden}#page-adminshop.active{overflow-y:auto}
+.page{display:none;flex-direction:column;flex:1;padding-bottom:80px;overflow:hidden}#page-adminshop{display:none;flex-direction:column}#page-adminshop.active{display:flex;overflow-y:auto;height:100%;padding-bottom:80px}
 .page.active{display:flex}
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
@@ -2160,7 +2160,7 @@ async function syncFromSupabase(){
   </div>
 
   <!-- ══════ ADMIN OFFICIAL SHOP MANAGER PAGE ══════ -->
-  <div class="page" id="page-adminshop" style="display:none;overflow-y:auto">
+  <div class="page" id="page-adminshop">
     <div style="background:linear-gradient(135deg,#0a0a0a,#141400);border-bottom:1px solid rgba(201,168,76,.25);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button onclick="switchPage('profile')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
@@ -2175,7 +2175,7 @@ async function syncFromSupabase(){
         <button id="admshopTab-add" onclick="switchAdmShopTab('add')" style="flex:1;padding:7px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text)">➕ ເພີ່ມສິນຄ້າ</button>
       </div>
     </div>
-    <div style="padding:16px;flex:1;overflow-y:auto">
+    <div style="padding:16px;overflow-y:auto;flex:1;min-height:0">
 
       <!-- TAB: Shop Info -->
       <div id="admshopContent-info">
