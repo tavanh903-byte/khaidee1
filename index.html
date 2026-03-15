@@ -2145,13 +2145,6 @@ async function syncFromSupabase(){
           </div>
         </div>
       </div>
-      <!-- 👑 Admin Official Shop Section (admin only) -->
-      
-          <div style="background:rgba(201,168,76,.07);padding:6px 14px;border-top:1px solid rgba(201,168,76,.15);font-size:10px;color:var(--text2);display:flex;gap:12px">
-            <span>👑 Official Store</span><span>🔒 ສິນຄ້າຄຸ້ມຄ່າ</span><span>⭐ Admin Verified</span>
-          </div>
-        </div>
-      </div>
 
       <!-- ✅ Admin: ปุ่มจัดการร้าน + รูปโปรไฟล์/พื้นหลัง -->
       <div id="adminShopMgrBtn" style="display:none;padding:0 16px 8px">
@@ -2167,7 +2160,7 @@ async function syncFromSupabase(){
   </div>
 
   <!-- ══════ ADMIN OFFICIAL SHOP MANAGER PAGE ══════ -->
-  <div class="page" id="page-adminshop" style="display:none">
+  <div class="page" id="page-adminshop" style="display:none;overflow-y:auto">
     <div style="background:linear-gradient(135deg,#0a0a0a,#141400);border-bottom:1px solid rgba(201,168,76,.25);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <button onclick="switchPage('profile')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
@@ -2182,7 +2175,7 @@ async function syncFromSupabase(){
         <button id="admshopTab-add" onclick="switchAdmShopTab('add')" style="flex:1;padding:7px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text)">➕ ເພີ່ມສິນຄ້າ</button>
       </div>
     </div>
-    <div style="padding:16px;overflow-y:auto">
+    <div style="padding:16px;flex:1;overflow-y:auto">
 
       <!-- TAB: Shop Info -->
       <div id="admshopContent-info">
@@ -5680,20 +5673,35 @@ function openAdminOfficialShopManager(){
     if(info.logo){ img.src=info.logo; img.style.display='block'; emoji.style.display='none'; }
     else { img.style.display='none'; emoji.style.display=''; }
   }
-  // โหลด Cover + Avatar ที่บันทึกไว้
+  // โหลด Cover + Avatar + Logo ที่บันทึกไว้
   const info2 = loadAdmShopInfo();
+
+  // Cover
   const coverImg = document.getElementById('admShopCoverImg');
   const coverPh  = document.getElementById('admShopCoverPlaceholder');
-  if(coverImg && info2.cover){
-    coverImg.src=info2.cover; coverImg.style.display='block';
-    if(coverPh) coverPh.style.display='none';
+  if(coverImg){
+    if(info2.cover){
+      coverImg.src=info2.cover; coverImg.style.display='block';
+      if(coverPh) coverPh.style.display='none';
+    } else {
+      coverImg.style.display='none';
+      if(coverPh) coverPh.style.display='flex';
+    }
   }
+
+  // Avatar
   const avatarImg   = document.getElementById('admShopAvatarImg');
   const avatarEmoji = document.getElementById('admShopAvatarEmoji');
-  if(avatarImg && info2.avatar){
-    avatarImg.src=info2.avatar; avatarImg.style.display='block';
-    if(avatarEmoji) avatarEmoji.style.display='none';
+  if(avatarImg){
+    if(info2.avatar){
+      avatarImg.src=info2.avatar; avatarImg.style.display='block';
+      if(avatarEmoji) avatarEmoji.style.display='none';
+    } else {
+      avatarImg.style.display='none';
+      if(avatarEmoji) avatarEmoji.style.display='';
+    }
   }
+
   switchAdmShopTab('info');
 }
 
