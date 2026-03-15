@@ -2146,30 +2146,18 @@ async function syncFromSupabase(){
         </div>
       </div>
       <!-- 👑 Admin Official Shop Section (admin only) -->
-      <div id="adminOfficialShopSection" style="display:none;padding:0 16px 8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px">
-          <div style="font-size:13px;font-weight:700;color:var(--gold)">👑 ຮ້ານ Admin Official</div>
-          <button onclick="openAdminOfficialShopManager()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">⚙️ ຈັດການຮ້ານ</button>
-        </div>
-        <div onclick="openAdminOfficialShopManager()" style="background:linear-gradient(135deg,#1a1200,#0d0d00);border:1.5px solid rgba(201,168,76,.45);border-radius:16px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,.12)">
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px">
-            <div id="adminShopBannerAvatarWrap" style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;border:2px solid rgba(201,168,76,.5)">
-              <img id="adminShopBannerAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
-              <span id="adminShopBannerAvatarEmoji">👑</span>
-            </div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:800;color:var(--gold)" id="adminShopBannerName">ຮ້ານ Official</div>
-              <div style="font-size:11px;color:var(--text2);margin-top:2px" id="adminShopBannerDesc">ສິນຄ້າຄຸນນະພາບຈາກທີມ Admin</div>
-              <div style="display:flex;gap:8px;margin-top:5px;font-size:10px">
-                <span style="background:rgba(201,168,76,.15);color:var(--gold);padding:2px 8px;border-radius:8px" id="adminShopBannerProdCount">0 ສິນຄ້າ</span>
-                <span style="background:rgba(39,174,96,.15);color:#2ecc71;padding:2px 8px;border-radius:8px">✅ ຮ້ານຢັ້ງຢືນ</span>
-              </div>
-            </div>
-          </div>
+      
           <div style="background:rgba(201,168,76,.07);padding:6px 14px;border-top:1px solid rgba(201,168,76,.15);font-size:10px;color:var(--text2);display:flex;gap:12px">
             <span>👑 Official Store</span><span>🔒 ສິນຄ້າຄຸ້ມຄ່າ</span><span>⭐ Admin Verified</span>
           </div>
         </div>
+      </div>
+
+      <!-- ✅ Admin: ปุ่มจัดการร้าน + รูปโปรไฟล์/พื้นหลัง -->
+      <div id="adminShopMgrBtn" style="display:none;padding:0 16px 8px">
+        <button onclick="openAdminOfficialShopManager()" style="width:100%;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.08));border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:14px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px">
+          ⚙️ ຈັດການຮ້ານ Official (ຮູບ, ສິນຄ້າ)
+        </button>
       </div>
 
       <div style="padding:12px 16px">
@@ -2198,6 +2186,35 @@ async function syncFromSupabase(){
 
       <!-- TAB: Shop Info -->
       <div id="admshopContent-info">
+
+        <!-- Cover Image -->
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">🖼️ ຮູບພື້ນຫຼັງຮ້ານ (Cover)</div>
+          <div style="width:100%;height:90px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#1a1000,#2a1800);margin-bottom:10px;position:relative">
+            <img id="admShopCoverImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+            <div id="admShopCoverPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px">📷 ຍັງບໍ່ມີຮູບ Cover</div>
+          </div>
+          <label style="display:block;width:100%;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:10px;padding:9px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
+            📷 ເລືອກຮູບ Cover
+            <input type="file" accept="image/*" style="display:none" onchange="previewAdmShopCover(this)">
+          </label>
+        </div>
+
+        <!-- Avatar Image -->
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">👤 ຮູບໂປຣໄຟລຮ້ານ (Avatar)</div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;flex-shrink:0;border:2px solid var(--gold)">
+              <img id="admShopAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+              <span id="admShopAvatarEmoji">👑</span>
+            </div>
+            <label style="flex:1;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:10px;padding:9px;text-align:center;font-size:13px;font-weight:700;cursor:pointer">
+              📷 ເລືອກຮູບ Avatar
+              <input type="file" accept="image/*" style="display:none" onchange="previewAdmShopAvatar(this)">
+            </label>
+          </div>
+        </div>
+
         <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:14px">
           <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:12px">🖼️ ຮູບໂລໂກ້ຮ້ານ</div>
           <div style="display:flex;align-items:center;gap:12px">
@@ -5572,6 +5589,9 @@ function saveAdmShopInfoData(d){ localStorage.setItem(ADM_SHOP_KEY, JSON.stringi
 
 function updateAdminShopBannerProfile(){
   const sec = document.getElementById('adminOfficialShopSection');
+  // ✅ แสดง/ซ่อนปุ่มจัดการร้านสำหรับ Admin
+  const mgrBtn = document.getElementById('adminShopMgrBtn');
+  if(mgrBtn) mgrBtn.style.display = (currentUser && currentUser.isAdmin) ? 'block' : 'none';
   if(!sec) return;
   if(currentUser && currentUser.isAdmin){
     sec.style.display = 'block';
@@ -5594,6 +5614,58 @@ function updateAdminShopBannerProfile(){
   }
 }
 
+// ✅ Preview + Save Cover Image ของร้าน Admin
+function previewAdmShopCover(input){
+  const file = input.files[0];
+  if(!file) return;
+  compressImage(file, 900, 400, 0.85, data=>{
+    if(!data) return;
+    const img = document.getElementById('admShopCoverImg');
+    const ph  = document.getElementById('admShopCoverPlaceholder');
+    if(img){ img.src=data; img.style.display='block'; }
+    if(ph)  ph.style.display='none';
+    // บันทึกลง shop info
+    const info = loadAdmShopInfo();
+    info.cover = data;
+    localStorage.setItem('kd_admin_shop_info', JSON.stringify(info));
+    // sync ไป Supabase (avatar_img ของ OWNER_ACCOUNTS)
+    OWNER_ACCOUNTS.forEach(o=>{
+      o.coverImg = data;
+      supa.from('kd_users').update({cover_img: data}).eq('id', o.id).then(()=>{}).catch(()=>{});
+    });
+    showNotif('✅ ບັນທຶກຮູບ Cover ສຳເລັດ');
+  });
+}
+
+// ✅ Preview + Save Avatar Image ของร้าน Admin
+function previewAdmShopAvatar(input){
+  const file = input.files[0];
+  if(!file) return;
+  compressImage(file, 400, 400, 0.88, data=>{
+    if(!data) return;
+    const img   = document.getElementById('admShopAvatarImg');
+    const emoji = document.getElementById('admShopAvatarEmoji');
+    if(img)  { img.src=data; img.style.display='block'; }
+    if(emoji)  emoji.style.display='none';
+    // บันทึกลง shop info
+    const info = loadAdmShopInfo();
+    info.avatar = data;
+    localStorage.setItem('kd_admin_shop_info', JSON.stringify(info));
+    // sync ไป Supabase
+    OWNER_ACCOUNTS.forEach(o=>{
+      o.avatarImg = data;
+      supa.from('kd_users').update({avatar_img: data}).eq('id', o.id).then(()=>{}).catch(()=>{});
+    });
+    // อัพเดท currentUser ถ้าเป็น admin
+    if(currentUser && currentUser.isAdmin){
+      currentUser.avatarImg = data;
+      saveUser();
+      updateProfileUI();
+    }
+    showNotif('✅ ບັນທຶກຮູບ Avatar ສຳເລັດ');
+  });
+}
+
 function openAdminOfficialShopManager(){
   if(!currentUser || !currentUser.isAdmin){ showNotif('❌ ສະເພາະ Admin ເທົ່ານັ້ນ'); return; }
   switchPage('adminshop');
@@ -5607,6 +5679,20 @@ function openAdminOfficialShopManager(){
   if(img && emoji){
     if(info.logo){ img.src=info.logo; img.style.display='block'; emoji.style.display='none'; }
     else { img.style.display='none'; emoji.style.display=''; }
+  }
+  // โหลด Cover + Avatar ที่บันทึกไว้
+  const info2 = loadAdmShopInfo();
+  const coverImg = document.getElementById('admShopCoverImg');
+  const coverPh  = document.getElementById('admShopCoverPlaceholder');
+  if(coverImg && info2.cover){
+    coverImg.src=info2.cover; coverImg.style.display='block';
+    if(coverPh) coverPh.style.display='none';
+  }
+  const avatarImg   = document.getElementById('admShopAvatarImg');
+  const avatarEmoji = document.getElementById('admShopAvatarEmoji');
+  if(avatarImg && info2.avatar){
+    avatarImg.src=info2.avatar; avatarImg.style.display='block';
+    if(avatarEmoji) avatarEmoji.style.display='none';
   }
   switchAdmShopTab('info');
 }
