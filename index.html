@@ -1892,7 +1892,7 @@ async function syncFromSupabase(){
       <div style="padding:12px 16px;font-size:11px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;letter-spacing:1px">👑 ADMIN — ສາມາດຕິດຕໍ່ໄດ້</div>
       <div class="chat-room-item" onclick="openAdminChat('Tavanh999','99999')" style="border-bottom:1px solid rgba(201,168,76,.1)">
         <div style="position:relative">
-          <div class="chat-avatar" style="background:linear-gradient(135deg,#c9a84c,#f0d080);color:#000;font-family:'Cinzel Decorative',serif;font-size:11px;font-weight:900">ຂດ</div>
+          <div id="chatAvatar_99999" class="chat-avatar" style="overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center"></div
           <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:16px">👑</div>
         </div>
         <div class="chat-room-info">
@@ -1903,7 +1903,7 @@ async function syncFromSupabase(){
       </div>
       <div class="chat-room-item" onclick="openAdminChat('Tavanh991','88888')" style="border-bottom:1px solid rgba(201,168,76,.1)">
         <div style="position:relative">
-          <div class="chat-avatar" style="background:linear-gradient(135deg,#b0c4de,#e8f4f8);color:#1a3a5c;font-family:'Cinzel Decorative',serif;font-size:11px;font-weight:900">ຂດ</div>
+          <div id="chatAvatar_88888" class="chat-avatar" style="overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center"></div
           <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:16px">💎</div>
         </div>
         <div class="chat-room-info">
@@ -1914,7 +1914,7 @@ async function syncFromSupabase(){
       </div>
       <div class="chat-room-item" onclick="openAdminChat('Tavanh992','55555')" style="border-bottom:1px solid rgba(255,255,255,.06)">
         <div style="position:relative">
-          <div class="chat-avatar" style="background:linear-gradient(135deg,#999,#ccc);color:#222;font-family:'Cinzel Decorative',serif;font-size:11px;font-weight:900">ຂດ</div>
+          <div id="chatAvatar_55555" class="chat-avatar" style="overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center"></div
           <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:16px">🪙</div>
         </div>
         <div class="chat-room-info">
@@ -7524,9 +7524,9 @@ function changeLang(l){currentLang=l;}
 
 // ============ CHAT ============
 const ADMIN_PROFILES = [
-  {name:'Tavanh999',id:'99999',rank:1,crown:'👑'},
-  {name:'Tavanh991',id:'88888',rank:2,crown:'💎'},
-  {name:'Tavanh992',id:'55555',rank:3,crown:'🪙'}
+  {name:'Tavanh999',id:'USR-99999',shortId:'99999',rank:1,crown:'👑'},
+  {name:'Tavanh991',id:'USR-88888',shortId:'88888',rank:2,crown:'💎'},
+  {name:'Tavanh992',id:'USR-77777',shortId:'55555',rank:3,crown:'🪙'}
 ];
 
 function setChatRoomHeader(title, avatarHtml){
@@ -7535,13 +7535,37 @@ function setChatRoomHeader(title, avatarHtml){
   if(avEl) avEl.innerHTML = avatarHtml;
 }
 
+// โหลดรูป avatar ใน chat list
+function loadChatAvatars(){
+  // Admin avatars
+  [
+    {shortId:'99999', fullId:'USR-99999', name:'Tavanh999'},
+    {shortId:'88888', fullId:'USR-88888', name:'Tavanh991'},
+    {shortId:'55555', fullId:'USR-77777', name:'Tavanh992'},
+  ].forEach(a=>{
+    const el = document.getElementById('chatAvatar_'+a.shortId);
+    if(!el) return;
+    el.innerHTML = getAvatarHtml(a.fullId, a.name, 44);
+    // ปรับ size ให้เต็ม div
+    const img = el.querySelector('img');
+    const div = el.querySelector('div');
+    if(img){ img.style.width='100%'; img.style.height='100%'; img.style.borderRadius='50%'; }
+    if(div){ div.style.width='100%'; div.style.height='100%'; div.style.borderRadius='50%'; }
+  });
+  // user avatar ตัวเอง
+  const myAv = document.getElementById('myChatAvatar');
+  if(myAv && currentUser){
+    myAv.innerHTML = getAvatarHtml(currentUser.id, currentUser.name||currentUser.user, 40);
+  }
+}
+
 function openAdminChat(adminName, adminId){
   if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
   const roomId = 'admin_'+adminId;
   currentChat = roomId;
   document.getElementById('chatListView').style.display='none';
   document.getElementById('chatRoomView').style.display='flex';
-  const ap = ADMIN_PROFILES.find(a=>a.id===adminId);
+  const ap = ADMIN_PROFILES.find(a=>a.id===adminId||a.shortId===adminId);
   const crown = ap ? ap.crown : '👑';
   // Use real admin photo if available
   const _adminAv = getAvatarHtml(adminId, adminName, 36);
@@ -7755,11 +7779,13 @@ function verifyPIN(userId, inputPin){
 function getAvatarHtml(uid, name, size=32){
   const db = getUsersDB();
   const u = db[uid] || null;
-  const ownerAcc = OWNER_ACCOUNTS.find(o=>o.id===uid);
-  const adminP = ADMIN_PROFILES.find(a=>a.id===uid);
-  const merged = ownerAcc ? (u ? {...ownerAcc,...u} : ownerAcc) : u;
+  // รองรับทั้ง USR-xxx และ shortId
+  const ownerAcc = OWNER_ACCOUNTS.find(o=>o.id===uid||o.id==='USR-'+uid);
+  const adminP = ADMIN_PROFILES.find(a=>a.id===uid||a.shortId===uid||a.id==='USR-'+uid);
+  const merged = ownerAcc ? (u ? {...ownerAcc,...u} : ownerAcc) : (adminP ? adminP : u);
   const isAdmin = !!(ownerAcc || adminP);
-  const avatarImg = merged?.avatarImg || null;
+  // ดึงรูปจาก Supabase/localStorage ด้วย
+  const avatarImg = merged?.avatarImg || u?.avatarImg || null;
   const crown = merged?.crown || adminP?.crown || '';
   if(avatarImg){
     return `<img src="${avatarImg}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${isAdmin?'var(--gold)':'rgba(255,255,255,.2)'}">`;
@@ -8013,6 +8039,7 @@ function switchPage(name, pushHistory=true){
   if(name==='topup') renderTopupGamesPage();
   if(name==='profile'){ updateProfileUI(); updateAdminDiamondUI(); updateSellerDiamondUI(); }
   if(name==='bills')        renderBillsPage();
+  if(name==='chat')         setTimeout(loadChatAvatars, 80);
   if(name==='cart')         renderCartPage();
   if(name==='topup-mlbb')   renderTopupPage('mlbb');
   if(name==='topup-ff')     renderTopupPage('ff');
