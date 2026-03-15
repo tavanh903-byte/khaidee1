@@ -1517,11 +1517,16 @@ async function syncFromSupabase(){
 
     <!-- ══ ADMIN OFFICIAL SHOP BANNER ══ -->
     <div id="adminShopBanner" style="padding:10px 14px 4px">
-      <div onclick="openAdminOfficialShop()" style="cursor:pointer;background:linear-gradient(135deg,#1a1000 0%,#2a1800 40%,#1a0e00 100%);border:1.5px solid rgba(201,168,76,.6);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(201,168,76,.18)">
+      <div id="adminShopBannerCard" onclick="openAdminOfficialShop()" style="cursor:pointer;background:linear-gradient(135deg,#1a1000 0%,#2a1800 40%,#1a0e00 100%);border:1.5px solid rgba(201,168,76,.6);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(201,168,76,.18)">
+        <!-- bg image overlay -->
+        <img id="adminShopBannerBg" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.35;pointer-events:none">
         <!-- glow bg -->
         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(201,168,76,.12),transparent 65%);pointer-events:none"></div>
-        <!-- crown icon -->
-        <div style="width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a2800,#1a1000);border:2px solid rgba(201,168,76,.7);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 0 18px rgba(201,168,76,.5)">👑</div>
+        <!-- crown icon / logo -->
+        <div id="adminShopBannerLogoWrap" style="width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a2800,#1a1000);border:2px solid rgba(201,168,76,.7);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 0 18px rgba(201,168,76,.5);overflow:hidden">
+          <img id="adminShopBannerLogoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+          <span id="adminShopBannerLogoEmoji">👑</span>
+        </div>
         <!-- text -->
         <div style="flex:1;min-width:0">
           <div style="font-size:10px;color:rgba(201,168,76,.6);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px">Official</div>
@@ -2185,6 +2190,34 @@ async function syncFromSupabase(){
 
       <!-- TAB: Shop Info -->
       <div id="admshopContent-info">
+
+        <!-- Banner Logo -->
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">👑 ຮູບໂລໂກ້ແບນເນີ (ວົງກົມ)</div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a2800,#1a1000);border:2px solid rgba(201,168,76,.7);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex-shrink:0">
+              <img id="admBannerLogoPreview" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+              <span id="admBannerLogoEmoji">👑</span>
+            </div>
+            <label style="flex:1;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:10px;padding:9px;text-align:center;font-size:13px;font-weight:700;cursor:pointer">
+              📷 ເລືອກຮູບໂລໂກ້
+              <input type="file" accept="image/*" style="display:none" onchange="saveBannerLogo(this)">
+            </label>
+          </div>
+        </div>
+
+        <!-- Banner Background -->
+        <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:12px">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px">🖼️ ຮູບພື້ນຫຼັງແບນເນີ</div>
+          <div style="width:100%;height:70px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#1a1000,#2a1800);margin-bottom:10px;position:relative">
+            <img id="admBannerBgPreview" src="" style="display:none;width:100%;height:100%;object-fit:cover;opacity:.7">
+            <div id="admBannerBgPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px">📷 ຍັງບໍ່ມີຮູບພື້ນຫຼັງ</div>
+          </div>
+          <label style="display:block;width:100%;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:10px;padding:9px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box">
+            📷 ເລືອກຮູບພື້ນຫຼັງ
+            <input type="file" accept="image/*" style="display:none" onchange="saveBannerBg(this)">
+          </label>
+        </div>
 
         <!-- Cover Image -->
         <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px;margin-bottom:12px">
@@ -5654,6 +5687,57 @@ function updateAdminShopBannerProfile(){
 }
 
 // ✅ Preview + Save Cover Image ของร้าน Admin
+// ══ BANNER LOGO + BG SAVE ══
+function saveBannerLogo(input){
+  const file = input.files[0];
+  if(!file) return;
+  showNotif('⏳ ກຳລັງໂຫລດ...');
+  compressImage(file, 200, 200, 0.85, data=>{
+    if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
+    // preview ในหน้าจัดการ
+    const prev = document.getElementById('admBannerLogoPreview');
+    const emoji = document.getElementById('admBannerLogoEmoji');
+    if(prev){ prev.src=data; prev.style.display='block'; }
+    if(emoji) emoji.style.display='none';
+    // อัพเดทแบนเนอร์หน้าหลักทันที
+    const bannerImg = document.getElementById('adminShopBannerLogoImg');
+    const bannerEmoji = document.getElementById('adminShopBannerLogoEmoji');
+    if(bannerImg){ bannerImg.src=data; bannerImg.style.display='block'; }
+    if(bannerEmoji) bannerEmoji.style.display='none';
+    // บันทึก
+    try{
+      localStorage.setItem('kd_banner_logo', data);
+      const info = loadAdmShopInfo(); info.bannerLogo=data;
+      localStorage.setItem(ADM_SHOP_KEY, JSON.stringify(info));
+    }catch(e){}
+    showNotif('✅ ບັນທຶກຮູບໂລໂກ້ສຳເລັດ');
+  });
+}
+
+function saveBannerBg(input){
+  const file = input.files[0];
+  if(!file) return;
+  showNotif('⏳ ກຳລັງໂຫລດ...');
+  compressImage(file, 700, 180, 0.72, data=>{
+    if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
+    // preview ในหน้าจัดการ
+    const prev = document.getElementById('admBannerBgPreview');
+    const ph   = document.getElementById('admBannerBgPlaceholder');
+    if(prev){ prev.src=data; prev.style.display='block'; }
+    if(ph)   ph.style.display='none';
+    // อัพเดทแบนเนอร์หน้าหลักทันที
+    const bannerBg = document.getElementById('adminShopBannerBg');
+    if(bannerBg){ bannerBg.src=data; bannerBg.style.display='block'; }
+    // บันทึก
+    try{
+      localStorage.setItem('kd_banner_bg', data);
+      const info = loadAdmShopInfo(); info.bannerBg=data;
+      localStorage.setItem(ADM_SHOP_KEY, JSON.stringify(info));
+    }catch(e){}
+    showNotif('✅ ບັນທຶກຮູບພື້ນຫຼັງສຳເລັດ');
+  });
+}
+
 function previewAdmShopCover(input){
   const file = input.files[0];
   if(!file) return;
@@ -5760,6 +5844,20 @@ function openAdminOfficialShopManager(){
     }
   }
 
+  // โหลดรูปแบนเนอร์ที่บันทึกไว้
+  const info3 = loadAdmShopInfo();
+  const blPrev = document.getElementById('admBannerLogoPreview');
+  const blEmoji = document.getElementById('admBannerLogoEmoji');
+  if(blPrev && info3.bannerLogo){
+    blPrev.src=info3.bannerLogo; blPrev.style.display='block';
+    if(blEmoji) blEmoji.style.display='none';
+  }
+  const bbPrev = document.getElementById('admBannerBgPreview');
+  const bbPh   = document.getElementById('admBannerBgPlaceholder');
+  if(bbPrev && info3.bannerBg){
+    bbPrev.src=info3.bannerBg; bbPrev.style.display='block';
+    if(bbPh) bbPh.style.display='none';
+  }
   switchAdmShopTab('info');
 }
 
@@ -8637,6 +8735,18 @@ function updateAdminShopBanner(){
   countEl.textContent = adminProds.length > 0
     ? `📦 ${adminProds.length} ສິນຄ້າ · 🛒 ຂາຍໄດ້ ${totalSold} ຊິ້ນ`
     : `📦 ກຳລັງເພີ່ມສິນຄ້າ...`;
+  // โหลดรูป logo + bg จาก localStorage
+  const info = loadAdmShopInfo();
+  const logoImg = document.getElementById('adminShopBannerLogoImg');
+  const logoEmoji = document.getElementById('adminShopBannerLogoEmoji');
+  if(logoImg && info.bannerLogo){
+    logoImg.src=info.bannerLogo; logoImg.style.display='block';
+    if(logoEmoji) logoEmoji.style.display='none';
+  }
+  const bgImg = document.getElementById('adminShopBannerBg');
+  if(bgImg && info.bannerBg){
+    bgImg.src=info.bannerBg; bgImg.style.display='block';
+  }
 }
 
 function openAdminOfficialShop(){
