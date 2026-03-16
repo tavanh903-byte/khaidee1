@@ -3899,7 +3899,7 @@ function renderProducts(list){
         <div class="product-name">${p.name}</div>
         <div class="product-price">${fmtPrice(p.price)}</div>
         ${stars?`<div style="font-size:11px;color:#ffc107">★ ${stars} <span style="color:var(--text2)">(${p.reviews.length})</span></div>`:''}
-        <div class="product-sold">ຂາຍໄດ້ ${p.sold||0} ຕ່ຽວ</div>
+        <div class="product-sold">ຂາຍໄດ້ ${p.sold||0} · 👁 ${(p.views||0).toLocaleString()}</div>
         <div class="guaranteed-badge">✅ ຮັບປະກັນ 24ຊມ</div>
       </div>
     </div>`;
@@ -4076,6 +4076,12 @@ function showProductDetail(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
   currentProduct = p;
+  // ✅ เพิ่ม views ทุกครั้งที่เปิดดูสินค้า
+  const _pidx = products.findIndex(x=>x.id===id);
+  if(_pidx>=0){
+    products[_pidx].views = (products[_pidx].views||0) + 1;
+    saveProducts();
+  }
   const imgs = p.images||[];
   const reviews = p.reviews||[];
   const avgStars = reviews.length ? (reviews.reduce((s,r)=>s+(r.stars||5),0)/reviews.length).toFixed(1) : null;
@@ -4161,6 +4167,12 @@ function showProductDetail(id){
         <div style="font-size:20px;font-weight:700;color:var(--gold)">${fmtPrice(p.price)}</div>
       </div>
       <button onclick="handleWishToggle('${id}')" id="wishBtn_${id}" style="background:none;border:none;font-size:28px;cursor:pointer;padding:4px">${wished?'❤️':'🤍'}</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:12px;color:var(--text2)">
+      <span>👁 ${(p.views||0).toLocaleString()} ຄົນດູ</span>
+      <span>🛒 ຂາຍໄດ້ ${p.sold||0} ຊິ້ນ</span>
+      ${(p.views||0) > 50 ? '<span style="background:rgba(231,76,60,.15);color:#e74c3c;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">🔥 ກຳລັງຮ້ອນ</span>' : ''}
+      ${(p.views||0) > 20 ? '<span style="background:rgba(201,168,76,.12);color:var(--gold);border-radius:6px;padding:2px 8px;font-size:10px">⚡ ນິຍົມ</span>' : ''}
     </div>
     ${avgStars?`<div style="color:#ffc107;font-size:13px;margin-bottom:8px">★ ${avgStars} <span style="color:var(--text2);font-size:11px">(${reviews.length} ລີວິວ)</span></div>`:''}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
@@ -10848,37 +10860,81 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
             },
             {
               type: 'text',
-              text: `Analyze this bank transfer slip image carefully.
+              text: `You are a FRAUD DETECTION expert analyzing a bank transfer slip image.
+Your job is to detect FAKE or EDITED slips. Be STRICT and SUSPICIOUS.
 
-STEP 1 - Check authenticity:
-- Real slip: clean white/light background, standard bank UI, consistent font, no blur at text edges
-- Fake/edited: irregular fonts, color inconsistencies, blurry text edges, photo-editing artifacts, misaligned text
+═══ STEP 1: DEEP AUTHENTICITY CHECK ═══
 
-STEP 2 - Find QR code:
-Look for a QR code anywhere on the slip (left side, right side, corner, center).
-If found, describe its visual pattern/fingerprint (dark modules layout in corners, approximate density).
-This QR code contains the transaction reference - extract its DATA if readable.
+Check ALL of these fraud indicators carefully:
 
-STEP 3 - Extract all text and return JSON ONLY (no other text):
+A) FONT CONSISTENCY — Most critical for edited amounts:
+   - All numbers on the slip must use the EXACT SAME font, size, weight, and color
+   - Edited amounts often have: slightly different font weight, color shade, letter spacing, or baseline alignment
+   - Compare the amount number carefully with other numbers on the slip (e.g., reference number, date)
+   - If ANY digit looks different in thickness, shade, or position → editingSuspected = true
+
+B) PIXEL & EDGE ANALYSIS:
+   - Real text has smooth, consistent anti-aliasing edges
+   - Edited text often has: jagged edges, halos, blurry borders, or unusually sharp edges
+   - Look for copy-paste artifacts: unnatural background color under text, white boxes, color bleeding
+   - Check if background texture/pattern is broken or interrupted near the amount
+
+C) LAYOUT & ALIGNMENT:
+   - Bank slips have strict grid layouts — all text aligns perfectly
+   - Edited text is often slightly misaligned: wrong baseline, wrong horizontal position
+   - Check if the amount label and amount value are properly aligned with other rows
+
+D) COLOR & LIGHTING:
+   - All text should have consistent color saturation and brightness
+   - Edited areas often show: different brightness, subtle color cast, or unnatural contrast
+   - Check if shadows/lighting are consistent across the entire slip
+
+E) SCREENSHOT vs PHOTO:
+   - Real mobile screenshots have: sharp pixels, consistent DPI, no reflection/shadow
+   - Edited screenshots may show: compression artifacts, lossy JPEG artifacts around text
+   - Photos of screens have: moire patterns, reflection, slight blur — these are OK if authentic
+
+F) AMOUNT-SPECIFIC CHECK:
+   - Compare the numeric amount with the written/spelled-out amount if both exist
+   - They must match exactly
+   - If only numbers exist, verify the amount looks native to the slip design
+
+═══ STEP 2: QR CODE ANALYSIS ═══
+Look for QR code anywhere on slip. If found:
+- Extract QR data/content if readable
+- Describe its visual pattern for duplicate detection
+
+═══ STEP 3: TEXT EXTRACTION ═══
+Extract all visible text carefully.
+
+Return JSON ONLY (absolutely no other text, no markdown):
 {
   "isRealSlip": true/false,
   "editingSuspected": true/false,
-  "editingReason": "reason if suspected",
-  "recipientName": "FULL NAME IN CAPS",
+  "editingReason": "detailed reason - specify WHICH element looks edited and HOW",
+  "editingConfidence": "high/medium/low",
+  "fontConsistent": true/false,
+  "pixelAnomalyDetected": true/false,
+  "recipientName": "FULL NAME IN CAPS or null",
   "amount": 123456,
+  "amountRaw": "exact text of amount as shown",
   "date": "DD/MM/YYYY",
   "time": "HH:MM",
-  "transactionRef": "transaction reference number if visible",
+  "transactionRef": "reference number or null",
   "qrFound": true/false,
-  "qrData": "QR code content/data if readable, or null",
-  "qrFingerprint": "brief visual description of QR pattern for duplicate detection",
-  "rawText": "all text found on slip",
+  "qrData": "QR content or null",
+  "qrFingerprint": "visual description of QR pattern",
+  "rawText": "all text found",
   "confidence": "high/medium/low"
 }
 
-The legitimate recipient name should be: \${SLIP_OWNER_NAME}
-Current date/time: \${nowStr}
-\${expectedAmount ? 'Expected amount: ' + expectedAmount + ' LAK' : ''}
+IMPORTANT RULES:
+- If editingSuspected = true, set editingConfidence carefully
+- When in doubt, set editingSuspected = true (false negatives are dangerous)
+- A slip that LOOKS real but has ONE suspicious element should still be flagged
+- The expected amount is: \${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown'}
+- Recipient should be: \${SLIP_OWNER_NAME}
+- Current date/time: \${nowStr}
 `
             }
           ]
@@ -10906,22 +10962,49 @@ Current date/time: \${nowStr}
     const errors = [];
     const details = {};
 
-    // 0. ตรวจว่าเป็น slip จริง ไม่ใช่รูปแต่ง
-    if(parsed.editingSuspected === true){
-      return {
-        verified: false,
-        errors: ['🚨 ສລິບໜ້າສົງໄສ — ກວດພົບຮ່ອງຮອຍການຕົບແຕ່ງຮູບ: ' + (parsed.editingReason||'ຮູບຜິດປົກກະຕິ')],
-        details: {}, isSuspicious: true,
-        reason: 'editing_suspected'
-      };
-    }
+    // 0. ตรวจว่าเป็น slip จริง ไม่ใช่รูปแต่ง (เข้มงวดขึ้น)
     if(parsed.isRealSlip === false){
       return {
         verified: false,
-        errors: ['🚨 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານຈິງ — ບໍ່ອະນຸຍາດ'],
-        details: {}, isSuspicious: true,
-        reason: 'not_real_slip'
+        errors: ['🚨 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານຈິງ — ຖືກປະຕິເສດ'],
+        details: {}, isSuspicious: true, reason: 'not_real_slip'
       };
+    }
+    // ตรวจ font ไม่สม่ำเสมอ (สัญญาณหลักของการแต่งตัวเลข)
+    if(parsed.fontConsistent === false){
+      return {
+        verified: false,
+        errors: ['🚨 ກວດພົບ Font ຕົວເລກຜິດປົກກະຕິ — ຕົວເລກຈຳນວນເງິນຖືກດັດແປງ!'],
+        details: {}, isSuspicious: true, reason: 'font_inconsistent'
+      };
+    }
+    // ตรวจ pixel anomaly
+    if(parsed.pixelAnomalyDetected === true){
+      return {
+        verified: false,
+        errors: ['🚨 ກວດພົບຮ່ອງຮອຍການແກ້ໄຂຮູບ (Pixel Anomaly) — ສລິບຖືກດັດແປງ!'],
+        details: {}, isSuspicious: true, reason: 'pixel_anomaly'
+      };
+    }
+    // ตรวจ editingSuspected ทั่วไป
+    if(parsed.editingSuspected === true){
+      const confidence = parsed.editingConfidence || 'medium';
+      // high/medium confidence → ปฏิเสธทันที
+      // low confidence → ส่ง Admin ตรวจ
+      if(confidence === 'high' || confidence === 'medium'){
+        return {
+          verified: false,
+          errors: ['🚨 ສລິບໜ້າສົງໄສ [' + confidence.toUpperCase() + '] — ' + (parsed.editingReason||'ຮູບຜິດປົກກະຕິ')],
+          details: {}, isSuspicious: true, reason: 'editing_suspected_' + confidence
+        };
+      } else {
+        // low confidence — warn แต่ให้ Admin ตัดสิน
+        return {
+          verified: null,
+          errors: ['⚠️ ສລິບໜ້າສົງໄສເລັກໜ້ອຍ — ສົ່ງ Admin ກວດສອບ: ' + (parsed.editingReason||'')],
+          details: {}, isSuspicious: false, reason: 'editing_low_confidence'
+        };
+      }
     }
 
     // 1. ตรวจชื่อผู้รับ
