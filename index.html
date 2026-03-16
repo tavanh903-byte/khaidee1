@@ -767,14 +767,11 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
 // ══════════════════════════════════════════
 function setSupabaseUser(userId){
   if(userId){
-    // ส่ง user_id เป็น header ให้ Supabase RLS ใช้ตรวจสิทธิ์
     supa.rpc('set_config', {
       setting_name: 'app.user_id',
-      new_value: userId,
+      new_value: String(userId),
       is_local: false
-    }).catch(()=>{
-      // ถ้า RLS ยังไม่ได้ setup ก็ไม่ error
-    });
+    }).then(()=>{}).catch(()=>{});
   }
 }
 
@@ -783,7 +780,7 @@ function clearSupabaseUser(){
     setting_name: 'app.user_id',
     new_value: '',
     is_local: false
-  }).catch(()=>{});
+  }).then(()=>{}).catch(()=>{});
 }
 
 // ══════════════════════════════════════════
@@ -10891,13 +10888,11 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
       hour:'2-digit', minute:'2-digit', hour12: false
     });
 
-    // Timeout 30s ป้องกันค้าง
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // Timeout 30s ด้วย Promise.race
     let response;
+    const timeoutId = null;
     try {
-      response = await fetch('https://api.anthropic.com/v1/messages', {
-        signal: controller.signal,
+      response = await Promise.race([fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -10992,17 +10987,13 @@ IMPORTANT RULES:
           ]
         }]
       })
-    });
+    }),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))
+      ]);
 
     } catch(fetchErr) {
-      clearTimeout(timeoutId);
-      if(fetchErr.name === 'AbortError'){
-        console.warn('Claude OCR timeout after 30s');
-        return { verified: null, reason: 'timeout', networkFail: true };
-      }
-      throw fetchErr;
+      return { verified: null, reason: 'timeout', networkFail: true };
     }
-    clearTimeout(timeoutId);
     if (!response.ok) {
       console.warn('Claude OCR HTTP error:', response.status);
       return { verified: null, reason: 'api_error', networkFail: true };
@@ -11423,12 +11414,16 @@ function previewDepositSlip(){
             if(nameCheck.qrData) confirmBtn.dataset.qrData = nameCheck.qrData;
             if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef = nameCheck.transactionRef;
             if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint = nameCheck.qrFingerprint;
-            // ✅ Auto-fill Ref ID ให้ลูกค้าทันที
+            // ✅ Auto-fill + lock Ref ID
             const _refInput = document.getElementById('depositRef');
-            if(_refInput && nameCheck.transactionRef && !_refInput.value.trim()){
+            if(_refInput && nameCheck.transactionRef){
               _refInput.value = nameCheck.transactionRef;
+              _refInput.readOnly = true;
               _refInput.style.borderColor = 'var(--gold)';
               _refInput.style.background = 'rgba(201,168,76,0.08)';
+              _refInput.style.color = 'var(--gold)';
+              _refInput.style.cursor = 'not-allowed';
+              _refInput.title = 'Ref ID ຖືກກວດຈາກສລິບອັດຕະໂນມັດ — ບໍ່ສາມາດແກ້ໄຂໄດ້';
             }
           }
         } else if(nameCheck.verified === false){
@@ -11623,7 +11618,7 @@ function doDeposit(){
     document.getElementById('depositAmt').value='';
     document.getElementById('depositSlipPreview').innerHTML='';
     document.getElementById('depositSlipInput').value='';
-    if(refInput) refInput.value='';
+    if(refInput){ refInput.value=''; refInput.readOnly=false; refInput.style.borderColor=''; refInput.style.background=''; refInput.style.color=''; refInput.style.cursor=''; }
     if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';delete confirmBtn.dataset.slipData;}
     document.getElementById('dep-step2').style.display='none';
     document.getElementById('dep-step1').style.display='block';
