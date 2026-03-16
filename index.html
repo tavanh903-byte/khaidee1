@@ -3590,13 +3590,11 @@ let currentLang = localStorage.getItem('kd_lang') || 'lo';
 let sellGameData = null;
 
 // ============ INIT ============
-// Splash percent counter + cart shoot items animation
+// Splash percent counter + drop items animation
 (function(){
   let elapsed = 0;
   const TOTAL = 5000;
   const pctEl = document.getElementById('splashPct');
-
-  // ไอคอน 8 ตัว แสดงทีละตัวตามรถ
   const dropItems = [
     { pct: 10, icon: '🛍️' },
     { pct: 22, icon: '👕' },
@@ -3608,38 +3606,27 @@ let sellGameData = null;
     { pct: 94, icon: '💄' },
   ];
   const dropped = new Set();
-
   const timer = setInterval(()=>{
-    elapsed += 50;
-    const pct = Math.min(100, Math.round(elapsed / TOTAL * 100));
-    if(pctEl) pctEl.textContent = pct + '%';
-
-    // หา barWrap และ cart ทุก tick (ค้นหาในขณะที่ splash ยังอยู่)
-    const barWrap = document.querySelector('.splash-bar-wrap');
-    const cartEl  = document.querySelector('.splash-cart-run');
-
-    if(barWrap && cartEl){
-      // ดึง position รถจริงๆ บน bar
-      const barRect  = barWrap.getBoundingClientRect();
-      const cartRect = cartEl.getBoundingClientRect();
-      // left ของรถ relative to barWrap
-      const cartLeft = cartRect.left - barRect.left + cartRect.width / 2;
-
-      dropItems.forEach(d => {
-        if(pct >= d.pct && !dropped.has(d.pct)){
-          dropped.add(d.pct);
-          const span = document.createElement('span');
-          span.className = 'cart-drop-item';
-          span.textContent = d.icon;
-          // วางตำแหน่งตรงรถพอดี
-          span.style.left = cartLeft + 'px';
-          barWrap.appendChild(span);
-          // ✅ ไม่ลบออก — อยู่กับที่สะสมจนแอปโหลดเสร็จ
-        }
-      });
-    }
-
-    if(elapsed >= TOTAL) clearInterval(timer);
+    try{
+      elapsed += 50;
+      const pct = Math.min(100, Math.round(elapsed / TOTAL * 100));
+      if(pctEl) pctEl.textContent = pct + '%';
+      const barWrap = document.querySelector('.splash-bar-wrap');
+      if(barWrap){
+        dropItems.forEach(d => {
+          if(pct >= d.pct && !dropped.has(d.pct)){
+            dropped.add(d.pct);
+            const span = document.createElement('span');
+            span.className = 'cart-drop-item';
+            span.textContent = d.icon;
+            span.style.left = d.pct + '%';
+            span.style.transform = 'translateX(-50%)';
+            barWrap.appendChild(span);
+          }
+        });
+      }
+      if(elapsed >= TOTAL) clearInterval(timer);
+    }catch(e){ clearInterval(timer); }
   }, 50);
 })();
 
@@ -7572,9 +7559,6 @@ function setChatRoomHeader(title, avatarHtml){
   document.getElementById('chatRoomTitle').textContent = title;
   const avEl = document.getElementById('chatRoomAvatar');
   if(avEl) avEl.innerHTML = avatarHtml;
-}
-
-  });
 }
 
 function openAdminChat(adminName, adminId){
