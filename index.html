@@ -763,6 +763,30 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
 });
 
 // ══════════════════════════════════════════
+// 🔐 RLS — ส่ง user_id ไปกับทุก Supabase request
+// ══════════════════════════════════════════
+function setSupabaseUser(userId){
+  if(userId){
+    // ส่ง user_id เป็น header ให้ Supabase RLS ใช้ตรวจสิทธิ์
+    supa.rpc('set_config', {
+      setting_name: 'app.user_id',
+      new_value: userId,
+      is_local: false
+    }).catch(()=>{
+      // ถ้า RLS ยังไม่ได้ setup ก็ไม่ error
+    });
+  }
+}
+
+function clearSupabaseUser(){
+  supa.rpc('set_config', {
+    setting_name: 'app.user_id',
+    new_value: '',
+    is_local: false
+  }).catch(()=>{});
+}
+
+// ══════════════════════════════════════════
 // 🖼️  SUPABASE STORAGE — Product Images
 // ══════════════════════════════════════════
 async function uploadImageToStorage(file, folder){
@@ -3707,6 +3731,7 @@ async function loadAdminCredentials(){
 
 function initApp() {
   if(!currentUser){ currentUser = restoreSession(); }
+  if(currentUser){ setSupabaseUser(currentUser.id); } // ✅ RLS
   renderProducts(products);
   updateWalletDisplay();
   updateProfileUI();
@@ -3727,6 +3752,7 @@ function initApp() {
         if(changed){ saveUser(); updateProfileUI(); }
       }).catch(()=>{});
     // เริ่ม Realtime subscription
+    setSupabaseUser(currentUser.id); // ✅ RLS
     startWalletRealtime();
   }
   // Clear demo products permanently
@@ -6312,6 +6338,7 @@ async function doLogin(){
     currentUser = db[owner.id] ? {...owner,...db[owner.id],isAdmin:true} : {...owner};
     saveUser();
     heartbeat();
+    setSupabaseUser(owner.id); // ✅ RLS
     if(remember) setSavedLogin(val, pass);
     closeModal('loginModal');
     updateProfileUI();
@@ -6391,6 +6418,7 @@ async function doLogin(){
 
 function logoutUser(){
   stopWalletRealtime();
+  clearSupabaseUser(); // ✅ RLS
   currentUser = null;
   localStorage.removeItem('kd_session');
   localStorage.removeItem('kd_user');
@@ -11395,6 +11423,13 @@ function previewDepositSlip(){
             if(nameCheck.qrData) confirmBtn.dataset.qrData = nameCheck.qrData;
             if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef = nameCheck.transactionRef;
             if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint = nameCheck.qrFingerprint;
+            // ✅ Auto-fill Ref ID ให้ลูกค้าทันที
+            const _refInput = document.getElementById('depositRef');
+            if(_refInput && nameCheck.transactionRef && !_refInput.value.trim()){
+              _refInput.value = nameCheck.transactionRef;
+              _refInput.style.borderColor = 'var(--gold)';
+              _refInput.style.background = 'rgba(201,168,76,0.08)';
+            }
           }
         } else if(nameCheck.verified === false){
           const errList = (nameCheck.errors||[]).join('<br>');
