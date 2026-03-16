@@ -10845,12 +10845,18 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
       hour:'2-digit', minute:'2-digit', hour12: false
     });
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+    // Timeout 30s ป้องกันค้าง
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        signal: controller.signal,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
         messages: [{
           role: 'user',
           content: [
@@ -10942,9 +10948,18 @@ IMPORTANT RULES:
       })
     });
 
+    } catch(fetchErr) {
+      clearTimeout(timeoutId);
+      if(fetchErr.name === 'AbortError'){
+        console.warn('Claude OCR timeout after 30s');
+        return { verified: null, reason: 'timeout', networkFail: true };
+      }
+      throw fetchErr;
+    }
+    clearTimeout(timeoutId);
     if (!response.ok) {
       console.warn('Claude OCR HTTP error:', response.status);
-      return { verified: null, reason: 'api_error' };
+      return { verified: null, reason: 'api_error', networkFail: true };
     }
 
     const data = await response.json();
@@ -11115,7 +11130,8 @@ IMPORTANT RULES:
 
   } catch(err) {
     console.warn('verifySlipOwnerName error:', err);
-    return { verified: null, reason: 'network_error' };
+    // network error หรือ timeout → อย่าบล็อก ให้ Admin ตรวจแทน
+    return { verified: null, reason: 'network_error', networkFail: true };
   }
 }
 
@@ -11304,14 +11320,17 @@ function previewDepositSlip(){
       // ── 3. ตรวจว่าเป็น Slip จริง ──
       const analysis = await analyzeSlipImage(compressed);
 
-      if(!analysis.likelySlip || analysis.score < 35){
-        validEl.style.background='rgba(220,38,38,0.15)';
-        validEl.style.border='1px solid rgba(220,38,38,0.4)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML=`❌ ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານ<br>
-          <span style="font-size:11px;opacity:0.8">ກາລຸນາຖ່າຍສລິບໂອນເງິນຈາກ JDB Mobile ໃໝ່</span>`;
-        if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
-      } else if(analysis.score < 55){
+      if(!analysis.likelySlip || analysis.score < 20){
+        // score ต่ำมากๆ — น่าจะไม่ใช่ slip แต่ให้ผ่าน Claude ตรวจแทน
+        validEl.style.background='rgba(234,179,8,0.08)';
+        validEl.style.border='1px solid rgba(234,179,8,0.25)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⏳ ກຳລັງກວດສລິບ...`;
+        // ไม่ block — ให้ Claude AI ตัดสินแทน (fall through to OCR check)
+      }
+      if(analysis.score < 20){
+        // ยังคงให้ผ่านไป Claude OCR แทน
+      } else if(analysis.score < 45){
         validEl.style.background='rgba(234,179,8,0.12)';
         validEl.style.border='1px solid rgba(234,179,8,0.35)';
         validEl.style.color='#fbbf24';
@@ -11374,11 +11393,17 @@ function previewDepositSlip(){
             addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:parseInt(document.getElementById('depositAmt')?.value||'0'), reason: nameCheck.reason});
           }
         } else {
-          // ⚠️ OCR ล้มเหลว — warn แต่ให้ผ่าน
+          // ⚠️ OCR ล้มเหลว (network/timeout) — ให้ Admin ตรวจ ไม่บล็อก
+          const _failReason = nameCheck?.reason;
+          const _failMsg = _failReason === 'timeout'
+            ? '⏱️ ກວດສລິບໃຊ້ເວລາດົນ'
+            : _failReason === 'api_error'
+            ? '⚠️ ລະບົບກວດສລິບຊົ່ວຄາວລົ້ມເຫຼວ'
+            : '⚠️ ກວດສລິບອັດຕະໂນມັດບໍ່ໄດ້';
           validEl.style.background='rgba(234,179,8,0.12)';
           validEl.style.border='1px solid rgba(234,179,8,0.35)';
           validEl.style.color='#fbbf24';
-          validEl.innerHTML=`⚠️ ກວດສລິບອັດຕະໂນມັດບໍ່ໄດ້ — Admin ຈະກວດຄືນ${timeInfo}<br><span style="font-size:11px;opacity:0.8">ສາມາດສົ່ງໄດ້ Admin ຈະພິຈາລະນາ</span>`;
+          validEl.innerHTML=`${_failMsg}${timeInfo}<br><span style="font-size:11px;opacity:0.8">✅ ສາມາດສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້ທ່ານໃນໄວໆ</span>`;
           if(confirmBtn){
             confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
             confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
