@@ -6271,11 +6271,16 @@ function doQuickLogin(){
   doLogin();
 }
 
-function doLogin(){
+async function doLogin(){
   const val  = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
   if(!val||!pass){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນ');return;}
   const remember = document.getElementById('rememberMeCheck')?.checked !== false;
+  // ✅ โหลด credentials จาก Supabase ก่อน
+  if(!_credsLoaded){
+    showNotif('⏳ ກຳລັງໂຫລດ...');
+    await loadAdminCredentials();
+  }
   // Owner accounts (case-insensitive)
   const owner = OWNER_ACCOUNTS.find(a=>
     (a.user.toLowerCase()===val.toLowerCase()||a.id===val||a.name.toLowerCase()===val.toLowerCase())&&a.pass===pass
@@ -6301,7 +6306,7 @@ function doLogin(){
       }).catch(()=>{});
     return;
   }
-  // Regular users — email, phone, or name
+  // Regular users — ลองหาใน localStorage ก่อน
   const user = findUserByEmailAndPass(val, pass);
   if(user){
     currentUser = user;
@@ -6311,7 +6316,6 @@ function doLogin(){
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ເຂົ້າລະບົບສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+currentUser.name);
-    // ✅ ດຶງ wallet ຈາກ Supabase ທັນທີຫຼັງ login + เริ่ม Realtime
     supa.from('kd_users').select('wallet,avatar_img,cover_img').eq('id',user.id).single()
       .then(({data})=>{
         if(!data) return;
@@ -6321,10 +6325,45 @@ function doLogin(){
         if(data.cover_img  && currentUser.coverImg  !== data.cover_img ){ currentUser.coverImg  = data.cover_img;  changed=true; }
         if(changed){ saveUser(); updateProfileUI(); }
       }).catch(()=>{});
-    // เริ่ม Realtime subscription หลัง login
     startWalletRealtime();
   } else {
-    showNotif('❌ ອີເມລ/ເບີໂທ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກ');
+    // ✅ ไม่เจอใน localStorage → ดึงจาก Supabase โดยตรง
+    showNotif('⏳ ກຳລັງກວດສອບ...');
+    const v = val.trim().toLowerCase();
+    supa.from('kd_users')
+      .select('*')
+      .or(`email.eq.${val},phone.eq.${val},username.eq.${val}`)
+      .limit(1)
+      .then(({data})=>{
+        if(!data || !data.length){
+          showNotif('❌ ບໍ່ພົບບັນຊີ — ກະລຸນາລົງທະບຽນກ່ອນ');
+          return;
+        }
+        const row = data[0];
+        if(row.password !== pass){
+          showNotif('❌ ລະຫັດຜ່ານບໍ່ຖືກ');
+          return;
+        }
+        // บันทึก user ลง localStorage
+        const db = getUsersDB();
+        const u = {
+          id:row.id, name:row.name||'', user:row.username||'',
+          phone:row.phone||'', email:row.email||'', pass:row.password||'',
+          wallet:row.wallet||0, isSeller:row.is_seller||false,
+          avatarImg:row.avatar_img||null, coverImg:row.cover_img||null,
+        };
+        db[u.id] = u;
+        saveUsersDB(db);
+        currentUser = u;
+        saveUser();
+        heartbeat();
+        if(remember) setSavedLogin(val, pass);
+        closeModal('loginModal');
+        updateProfileUI();
+        updateBalanceUI(u.wallet||0);
+        startWalletRealtime();
+        showNotif('✅ ເຂົ້າລະບົບສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+u.name);
+      }).catch(()=>{ showNotif('❌ ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ກວດ Internet ຂອງທ່ານ'); });
   }
 }
 
