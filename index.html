@@ -974,7 +974,8 @@ async function sbLoadDeposits(){
     date:r.date_str||r.created_at,
     ref:r.ref||'', slipHash:r.slip_hash||'', slipScore:r.slip_score||0,
     slipWarning:r.slip_warning||false, slipFileTime:r.slip_file_time||'-',
-    uploadTime:r.upload_time||null, timeDiffMin:r.time_diff_min
+    uploadTime:r.upload_time||null, timeDiffMin:r.time_diff_min,
+    qrData:r.qr_data||null, transactionRef:r.transaction_ref||null
   }));
 }
 async function sbUpdateDepositStatus(id, status, userId, amount){
@@ -1089,14 +1090,11 @@ async function syncFromSupabase(){
     await clearDemoProductsFromSupabase();
     const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders(), sbLoadUsers()]);
     if(prods.length > 0){
-      // ✅ Filter out products that were locally deleted
       const deletedIds = _getDeletedProductIds();
       const sbProds = prods.filter(p => !deletedIds.has(p.id));
-      // ✅ MERGE: keep local images[] if Supabase doesn't have images_json
       const localProds = JSON.parse(localStorage.getItem('kd_products')||'[]');
       products = sbProds.map(sp => {
         const local = localProds.find(lp => lp.id === sp.id);
-        // If Supabase has no images but local does, keep local images
         if((!sp.images || !sp.images.length) && local && local.images && local.images.length){
           return { ...sp, images: local.images };
         }
@@ -1108,10 +1106,29 @@ async function syncFromSupabase(){
       orders = ords;
       localStorage.setItem('kd_orders', JSON.stringify(orders));
     }
-    // Load update info
+    // ✅ โหลด deposits + withdrawals จาก Supabase (ข้ามเครื่อง)
+    try{
+      const [sbDeps, sbWiths] = await Promise.all([sbLoadDeposits(), sbLoadWithdrawals()]);
+      if(sbDeps.length > 0){
+        // Merge กับ local (เก็บ slipImg จาก local ไว้)
+        const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+        const merged = sbDeps.map(sd => {
+          const local = localDeps.find(d => d.id === sd.id);
+          return { ...sd, slipImg: local?.slipImg || sd.slipImg || null };
+        });
+        // เพิ่ม local entries ที่ยังไม่มีใน Supabase
+        localDeps.forEach(ld => {
+          if(!merged.find(m => m.id === ld.id)) merged.push(ld);
+        });
+        localStorage.setItem('kd_deposit_requests', JSON.stringify(merged));
+      }
+      if(sbWiths.length > 0){
+        localStorage.setItem('kd_withdraw_requests', JSON.stringify(sbWiths));
+      }
+    } catch(e2){ console.warn('deposit sync:', e2); }
+
     const updateInfo = await sbGetSetting('update_info');
     if(updateInfo) localStorage.setItem('kd_update_info', updateInfo);
-    console.log('✅ Synced from Supabase');
   } catch(e){
     console.warn('⚠️ Supabase sync failed, using localStorage:', e);
   }
@@ -10474,6 +10491,7 @@ async function syncFinanceFromSupabase(){
 }
 
 function renderAdminFinance(){
+  // syncFinanceFromSupabase() ถูกเรียกก่อนหน้าแล้วใน renderAdminTab
   const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
   const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
   const pendDeps = deps.filter(r=>r.status==='pending');
@@ -11559,7 +11577,9 @@ function doDeposit(){
     // บันทึก hash เพื่อตรวจ duplicate ครั้งหน้า
     if(slipHash) saveSlipHash(slipHash);
 
-    sbSaveDeposit(newDep).catch(e=>console.warn('sbSaveDeposit:',e));
+    sbSaveDeposit(newDep)
+      .then(()=>{ console.log('✅ Deposit saved to Supabase:', newDep.id); })
+      .catch(e=>{ console.warn('❌ sbSaveDeposit failed:', e); });
     addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt, ref, warning:slipWarning});
     waDeposit(currentUser, amt);
 
