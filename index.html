@@ -3756,41 +3756,40 @@ function updateBalanceUI(newWallet){
   }
 }
 
+let _realtimeRetryCount = 0;
+const _REALTIME_MAX_RETRY = 3;
+
 function startWalletRealtime(){
   if(!currentUser) return;
-  // ยกเลิก channel เก่าก่อน
   if(_walletChannel){
     try{ supa.removeChannel(_walletChannel); }catch(e){}
     _walletChannel = null;
   }
-  // Subscribe Realtime UPDATE บน kd_users row ของ user นี้
   _walletChannel = supa
-    .channel('wallet-' + currentUser.id, { config: { broadcast: { self: true } } })
+    .channel('wallet-' + currentUser.id)
     .on('postgres_changes', {
       event: 'UPDATE',
       schema: 'public',
       table: 'kd_users',
       filter: 'id=eq.' + currentUser.id
     }, (payload) => {
-      
       const newWallet = payload?.new?.wallet;
       if(newWallet != null) updateBalanceUI(newWallet);
     })
-    .subscribe((status, err) => {
-      
+    .subscribe((status) => {
       if(status === 'SUBSCRIBED'){
-        
+        _realtimeRetryCount = 0;
       } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
-        console.warn('⚠️ Realtime disconnected:', status, '— will retry in 5s');
         _walletChannel = null;
-        // Auto-reconnect หลัง 5 วินาที
-        setTimeout(()=>{
-          if(currentUser) startWalletRealtime();
-        }, 5000);
+        if(_realtimeRetryCount < _REALTIME_MAX_RETRY){
+          _realtimeRetryCount++;
+          const delay = 5000 * _realtimeRetryCount;
+          setTimeout(()=>{ if(currentUser) startWalletRealtime(); }, delay);
+        }
+        // หยุด retry — fallback polling 15s จะทำงานแทน
       }
     });
 }
-
 function stopWalletRealtime(){
   if(_walletChannel){
     try{ supa.removeChannel(_walletChannel); }catch(e){}
