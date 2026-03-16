@@ -7537,26 +7537,28 @@ function setChatRoomHeader(title, avatarHtml){
 
 // โหลดรูป avatar ใน chat list
 function loadChatAvatars(){
-  // Admin avatars
+  const db = getUsersDB();
   [
-    {shortId:'99999', fullId:'USR-99999', name:'Tavanh999'},
-    {shortId:'88888', fullId:'USR-88888', name:'Tavanh991'},
-    {shortId:'55555', fullId:'USR-77777', name:'Tavanh992'},
+    {shortId:'99999', fullId:'USR-99999', name:'Tavanh999', crown:'👑', bg:'linear-gradient(135deg,#c9a84c,#f0d080)', color:'#000'},
+    {shortId:'88888', fullId:'USR-88888', name:'Tavanh991', crown:'💎', bg:'linear-gradient(135deg,#b0c4de,#e8f4f8)', color:'#1a3a5c'},
+    {shortId:'55555', fullId:'USR-77777', name:'Tavanh992', crown:'🪙', bg:'linear-gradient(135deg,#999,#ccc)',       color:'#222'},
   ].forEach(a=>{
     const el = document.getElementById('chatAvatar_'+a.shortId);
     if(!el) return;
-    el.innerHTML = getAvatarHtml(a.fullId, a.name, 44);
-    // ปรับ size ให้เต็ม div
-    const img = el.querySelector('img');
-    const div = el.querySelector('div');
-    if(img){ img.style.width='100%'; img.style.height='100%'; img.style.borderRadius='50%'; }
-    if(div){ div.style.width='100%'; div.style.height='100%'; div.style.borderRadius='50%'; }
+    // ดึง avatar จาก DB หรือ OWNER_ACCOUNTS
+    const u = db[a.fullId] || OWNER_ACCOUNTS.find(o=>o.id===a.fullId);
+    const avatarImg = u?.avatarImg || null;
+    if(avatarImg){
+      // แสดงรูปจริง — เต็ม div
+      el.style.background = 'transparent';
+      el.innerHTML = `<img src="${avatarImg}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;display:block">`;
+    } else {
+      // fallback — สี + crown เหมือนเดิม
+      el.style.background = a.bg;
+      el.style.color = a.color;
+      el.innerHTML = `<span style="font-size:18px">${a.crown}</span>`;
+    }
   });
-  // user avatar ตัวเอง
-  const myAv = document.getElementById('myChatAvatar');
-  if(myAv && currentUser){
-    myAv.innerHTML = getAvatarHtml(currentUser.id, currentUser.name||currentUser.user, 40);
-  }
 }
 
 function openAdminChat(adminName, adminId){
