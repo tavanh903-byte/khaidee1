@@ -10900,59 +10900,60 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     let response;
     const timeoutId = null;
     try {
-      const promptText = `You are a FRAUD DETECTION expert analyzing a bank transfer slip IMAGE.
-You must READ the actual image content carefully. Do NOT rely on file metadata.
+      const promptText = `You are a bank transfer slip verification expert for Khaidee Marketplace.
+READ the actual slip image carefully and extract ALL information visible IN the image.
 
-═══ CRITICAL: READ FROM THE IMAGE ONLY ═══
-Extract ALL information by reading the text visible IN the slip image.
+═══ YOUR JOB: CHECK 4 ITEMS FROM THE SLIP IMAGE ═══
 
-═══ STEP 1: AUTHENTICITY CHECK ═══
-Check for fraud indicators:
-A) FONT CONSISTENCY — numbers must use same font/size/weight/color. Edited amounts have different font weight or color.
-B) PIXEL ANOMALY — edited text has jagged edges, halos, copy-paste artifacts, broken background
-C) LAYOUT — all text must align perfectly. Edited text is misaligned.
-D) COLOR — consistent brightness throughout. Edited areas show different brightness or color cast.
+1. RECIPIENT NAME — Read the merchant/recipient name shown in the slip
+   - Look for names like "SENGTAVANH BOUNXAISENG" or similar
+   - If no name visible → set recipientName to null
 
-═══ STEP 2: READ THE SLIP — 4 REQUIRED FIELDS ═══
-Read directly from the image:
-1. RECIPIENT NAME — read the name shown in the slip (e.g. SENGTAVANH BOUNXAISENG)
-2. AMOUNT — read the transfer amount number shown in the slip
-3. DATE & TIME — read the date and time printed ON the slip image itself
-4. REFERENCE NUMBER — read the transaction reference/ID shown in the slip
+2. AMOUNT — Read the transfer amount number shown in the slip
+   - Look for numbers like "10,000 LAK" or "10000"
+   - Must be a real number → set amount as integer
 
-═══ STEP 3: VALIDATE ═══
-- recipientName must match: ${SLIP_OWNER_NAME}
-- amount must match expected: ${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'any amount'}
-- date shown IN slip must be today: ${nowStr}
-- transactionRef must exist in the slip
+3. DATE & TIME — Read the transaction date and time printed ON the slip
+   - Usually shown at top of slip like "16/03/26 19:33:11" or "16/03/2026"
+   - Extract day, month, year, hour, minute from the slip image
+   - Today is: ${nowStr}
+
+4. REFERENCE NUMBER — Read the transaction reference/ID shown in the slip
+   - Look for "Reference 1:", "Ref:", "TXN", or similar
+   - Extract the exact reference code like "BONEVCAMX2M0H6F8"
+
+═══ FRAUD CHECK ═══
+- Check if amounts, fonts, or text look edited/tampered
+- Check if the slip looks like a real bank screenshot vs a fake image
 
 Return JSON ONLY (no markdown, no extra text):
 {
   "isRealSlip": true/false,
   "editingSuspected": true/false,
-  "editingReason": "which element looks edited and how, or null",
+  "editingReason": "reason or null",
   "editingConfidence": "high/medium/low",
   "fontConsistent": true/false,
   "pixelAnomalyDetected": true/false,
-  "recipientName": "FULL NAME read from slip image or null",
-  "amount": 123456,
-  "amountRaw": "exact amount text as shown in slip",
-  "date": "DD/MM/YYYY read from slip image",
-  "time": "HH:MM read from slip image",
-  "transactionRef": "reference number read from slip or null",
+  "recipientName": "FULL NAME read from slip or null",
+  "amount": 10000,
+  "amountRaw": "exact amount text as shown",
+  "date": "DD/MM/YYYY",
+  "time": "HH:MM",
+  "transactionRef": "reference code read from slip or null",
   "qrFound": true/false,
   "qrData": "QR content or null",
-  "qrFingerprint": "visual description of QR or null",
+  "qrFingerprint": "QR description or null",
   "rawText": "all text found in image",
   "confidence": "high/medium/low"
 }
 
-RULES:
-- Read ALL fields FROM THE IMAGE — do not guess or use file metadata
-- If editingSuspected = true with high/medium confidence → flag immediately
-- If recipient name does not match ${SLIP_OWNER_NAME} → isRealSlip = false
-- If date in slip does not match today (${nowStr}) → flag it
-- If ANY of the 4 fields is missing → set the missing field as null
+IMPORTANT:
+- Read ALL fields FROM THE IMAGE — never guess
+- Expected recipient: ${SLIP_OWNER_NAME}
+- Expected amount: ${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'any'}
+- Today: ${nowStr}
+- If slip date is NOT today → still return the date you read, let the system decide
+- transactionRef is CRITICAL — read it carefully from the slip
 `;
 
 
@@ -11055,17 +11056,22 @@ RULES:
     const recipientName = (parsed.recipientName || '').trim().toUpperCase();
     const target = SLIP_OWNER_NAME.toUpperCase();
     details.recipientName = parsed.recipientName || '(ບໍ່ພົບ)';
-    if (recipientName !== target) {
-      errors.push('❌ ຊື່ຜູ້ຮັບ: "' + (parsed.recipientName||'ບໍ່ພົບ') + '" ≠ "' + SLIP_OWNER_NAME + '"');
+    let nameWarning = null;
+    if (!parsed.recipientName || parsed.recipientName === 'null' || parsed.recipientName.trim() === '') {
+      // ไม่มีชื่อ → ส่ง Admin (ไม่บล็อก)
+      nameWarning = 'ສລິບຂອງທ່ານບໍ່ມີຊື່ຜູ້ຮັບປາຍທາງ — ຈະສົ່ງຕໍ່ໃຫ້ Admin ດຳເນີນການຕໍ່';
+    } else if (recipientName !== target) {
+      // ชื่อไม่ตรง → บล็อกทันที
+      errors.push('🚫 ຊື່ຜູ້ຮັບ "' + parsed.recipientName + '" ບໍ່ຖືກຕ້ອງ — ສລິບຖືກປະຕິເສດທັນທີ');
     }
 
     // 2. ตรวจจำนวนเงิน
     const slipAmount = parsed.amount ? parseInt(String(parsed.amount).replace(/[^0-9]/g,'')) : null;
     details.slipAmount = slipAmount;
     if (slipAmount === null) {
-      errors.push('❌ ອ່ານຈຳນວນເງິນໃນສລິບບໍ່ໄດ້');
+      errors.push('❌ ອ່ານຈຳນວນເງິນໃນສລິບບໍ່ໄດ້ — ກາລຸນາໃຊ້ສລິບທີ່ຖືກຕ້ອງ');
     } else if (expectedAmount && slipAmount !== expectedAmount) {
-      errors.push('❌ ຈຳນວນເງິນ: ' + slipAmount.toLocaleString() + ' ≠ ' + expectedAmount.toLocaleString() + ' ກີບ');
+      errors.push('❌ ຈຳນວນເງິນທີ່ທ່ານກົດ ' + expectedAmount.toLocaleString() + ' ກີບ ≠ ຈຳນວນທີ່ໂອນ ' + slipAmount.toLocaleString() + ' ກີບ — ກາລຸນາໃສ່ຈຳນວນເງິນໃຫ້ຖືກຕ້ອງ');
     }
 
     // 3. ตรวจวันที่และเวลา
@@ -11078,32 +11084,31 @@ RULES:
         const diffMin = (now - slipDate) / 60000;
         details.slipDateTime = parsed.date + ' ' + parsed.time;
         details.diffMin = Math.round(diffMin);
-
         const nowDay = now.getDate(), nowMonth = now.getMonth()+1, nowYear = now.getFullYear();
         if (day !== nowDay || month !== nowMonth || adYear !== nowYear) {
-          errors.push('❌ ວັນທີໂອນ: ' + parsed.date + ' ≠ ວັນນີ້');
+          errors.push('🚫 ວັນທີໃນສລິບ ' + parsed.date + ' ບໍ່ຕົງກັບວັນນີ້ — ກາລຸນາໃສ່ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ');
         } else if (diffMin < -2) {
-          errors.push('❌ ເວລາໂອນຢູ່ໃນອະນາຄົດ — ໜ້າສົງໄສ');
+          errors.push('🚫 ເວລາໂອນຢູ່ໃນອະນາຄົດ — ສລິບໜ້າສົງໄສ');
         } else if (diffMin > 10) {
-          errors.push('❌ ໂອນຜ່ານໄປ ' + Math.round(diffMin) + ' ນາທີ (ເກີນ 10 ນາທີ)');
+          errors.push('🚫 ສລິບເກົ່າກວ່າ 10 ນາທີ (' + Math.round(diffMin) + ' ນາທີ) — ກາລຸນາໃສ່ສລິບທີ່ໂອນບໍ່ເກີນ 10 ນາທີ ບໍ່ງັ້ນລະບົບຈະບລັອກທັນທີ');
         }
       } catch(e) {
-        errors.push('❌ ອ່ານວັນທີ/ເວລາໃນສລິບບໍ່ໄດ້');
+        errors.push('❌ ອ່ານວັນທີ/ເວລາໃນສລິບບໍ່ໄດ້ — ກາລຸນາໃຊ້ສລິບທີ່ຊັດເຈນ');
       }
     } else {
-      errors.push('❌ ບໍ່ພົບວັນທີ/ເວລາໃນສລິບ');
+      errors.push('🚫 ບໍ່ພົບວັນທີ/ເວລາໃນສລິບ — ກາລຸນາໃສ່ສລິບທະນາຄານທີ່ຖືກຕ້ອງ');
     }
 
-    // ══════════════════════════════════════════════════
-    // ✅ ตรวจ QR + Transaction Ref ซ้ำ (ทั้ง local + Supabase)
-    // ══════════════════════════════════════════════════
+    // 4. ตรวจเลข Ref — ต้องมี ถ้าไม่มีบล็อกทันที
     const extractedQR = parsed.qrData || null;
     const extractedRef = (parsed.transactionRef || '').trim();
+    if (!extractedRef) {
+      errors.push('🚫 ບໍ່ພົບເລກອ້າງອີງ (Reference) ໃນສລິບ — ສລິບຖືກປະຕິເສດທັນທີ');
+    }
 
-    // ตรวจ local localStorage ก่อน (เร็วกว่า)
+    // ตรวจ Ref/QR ซ้ำใน localStorage
     const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
     const nonRejected = localDeps.filter(d => d.status !== 'rejected');
-
     if(extractedRef){
       const refDupLocal = nonRejected.find(d =>
         d.transactionRef && d.transactionRef.toUpperCase() === extractedRef.toUpperCase()
@@ -11111,26 +11116,22 @@ RULES:
       if(refDupLocal){
         return {
           verified: false, isSuspicious: true,
-          errors: ['🚨 ເລກອ້າງອີງ (Ref) ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ! (' + refDupLocal.date + ')'],
+          errors: ['🚨 ເລກອ້າງອີງ (Ref) ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ! (' + (refDupLocal.date||'?') + ')'],
           details: {}, reason: 'ref_duplicate'
         };
       }
     }
-
     if(extractedQR){
-      const qrDupLocal = nonRejected.find(d =>
-        d.qrData && d.qrData === extractedQR
-      );
+      const qrDupLocal = nonRejected.find(d => d.qrData && d.qrData === extractedQR);
       if(qrDupLocal){
         return {
           verified: false, isSuspicious: true,
-          errors: ['🚨 QR Code ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ! (' + qrDupLocal.date + ')'],
+          errors: ['🚨 QR Code ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ! (' + (qrDupLocal.date||'?') + ')'],
           details: {}, reason: 'qr_duplicate'
         };
       }
     }
-
-    // ตรวจ Supabase (ข้ามเครื่อง — ป้องกันส่งจากหลายเครื่อง)
+    // ตรวจ Supabase (ข้ามเครื่อง)
     if(extractedQR || extractedRef){
       const dupCheck = await checkQRDuplicate(extractedQR, extractedRef, null);
       if(dupCheck.isDuplicate){
@@ -11142,20 +11143,50 @@ RULES:
       }
     }
 
-    const verified = errors.length === 0;
-    return {
-      verified,
-      errors,
-      details,
-      recipientName: parsed.recipientName || '',
-      confidence: parsed.confidence || 'low',
-      rawText: parsed.rawText || '',
-      transactionRef: extractedRef || null,
-      qrFound: parsed.qrFound || false,
-      qrData: extractedQR,
-      qrFingerprint: parsed.qrFingerprint || null,
-      reason: verified ? 'all_match' : 'mismatch'
-    };
+    // ══════════════════════════════════════════
+    // สรุปผล
+    // ══════════════════════════════════════════
+    if(errors.length >= 2){
+      // ผิดเกิน 2 ข้อ → บล็อกทันที น่าสงสัย
+      return {
+        verified: false, errors, details,
+        recipientName: parsed.recipientName || '',
+        transactionRef: extractedRef || null,
+        qrData: extractedQR, reason: 'multiple_errors',
+        isSuspicious: true
+      };
+    } else if(errors.length === 1){
+      // ผิด 1 ข้อ → บล็อก แต่ไม่น่าสงสัย
+      return {
+        verified: false, errors, details,
+        recipientName: parsed.recipientName || '',
+        transactionRef: extractedRef || null,
+        qrData: extractedQR, reason: 'mismatch',
+        isSuspicious: false
+      };
+    } else if(nameWarning){
+      // ไม่มีชื่อ → ส่ง Admin แต่ให้กด confirm ได้
+      return {
+        verified: null, nameWarning, details,
+        amount: parsed.amount, date: parsed.date, time: parsed.time,
+        recipientName: parsed.recipientName || '',
+        transactionRef: extractedRef || null,
+        qrData: extractedQR, reason: 'no_name'
+      };
+    } else {
+      // ✅ ผ่านครบ → Auto approve
+      return {
+        verified: true, errors: [], details,
+        recipientName: parsed.recipientName || '',
+        confidence: parsed.confidence || 'high',
+        transactionRef: extractedRef || null,
+        qrFound: parsed.qrFound || false,
+        qrData: extractedQR,
+        qrFingerprint: parsed.qrFingerprint || null,
+        amount: parsed.amount, date: parsed.date, time: parsed.time,
+        reason: 'all_match'
+      };
+    }
 
   } catch(err) {
     console.warn('verifySlipOwnerName error:', err);
@@ -11300,17 +11331,17 @@ function previewDepositSlip(){
       const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
 
       if(nameCheck.verified === true){
-        // ✅ Gemini ยืนยันครบ 4 ด่าน — Auto approve ได้เลย
-        const d = nameCheck.details||{};
+        // ✅ ผ่านครบ 4 ด่าน — Auto approve
         validEl.style.background='rgba(34,197,94,0.12)';
         validEl.style.border='1px solid rgba(34,197,94,0.35)';
         validEl.style.color='#4ade80';
-        validEl.innerHTML=`✅ Gemini ກວດຜ່ານຄົບ 4 ລາຍການ${timeInfo}
-          <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
-            👤 ຊື່ຜູ້ຮັບ: <strong>${d.recipientName||nameCheck.recipientName||'-'}</strong><br>
-            💰 ຈຳນວນ: <strong>${d.slipAmount?d.slipAmount.toLocaleString():nameCheck.amount?nameCheck.amount.toLocaleString():'?'} ກີບ</strong><br>
-            📅 ວັນທີ/ເວລາ: <strong>${nameCheck.date||'-'} ${nameCheck.time||''}</strong><br>
-            🔢 Ref: <strong>${nameCheck.transactionRef||'-'}</strong>
+        validEl.innerHTML=`✅ ສລິບຜ່ານການກວດຄົບທຸກລາຍການ — ເຕີມເງິນອັດຕະໂນມັດ
+          <div style="margin-top:8px;font-size:11px;line-height:2;opacity:0.9;background:rgba(34,197,94,0.08);padding:8px;border-radius:8px">
+            ✅ ຊື່ຜູ້ຮັບ: <strong>${nameCheck.recipientName||'-'}</strong> ຕົງແລ້ວ<br>
+            ✅ ຈຳນວນ: <strong>${nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?'} ກີບ</strong> ຕົງແລ້ວ<br>
+            ✅ ວັນທີ/ເວລາ: <strong>${nameCheck.date||'-'} ${nameCheck.time||''}</strong> ຕົງແລ້ວ<br>
+            ✅ ເລກ Ref: <strong>${nameCheck.transactionRef||'-'}</strong> ຕົງແລ້ວ<br>
+            ✅ ສລິບບໍ່ຊ້ຳ
           </div>`;
         if(confirmBtn){
           confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
@@ -11320,7 +11351,6 @@ function previewDepositSlip(){
           if(nameCheck.qrData) confirmBtn.dataset.qrData=nameCheck.qrData;
           if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
           if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint=nameCheck.qrFingerprint;
-          // Auto-fill Ref
           const _refInput = document.getElementById('depositRef');
           if(_refInput && nameCheck.transactionRef){
             _refInput.value=nameCheck.transactionRef;
@@ -11331,52 +11361,69 @@ function previewDepositSlip(){
             _refInput.style.cursor='not-allowed';
           }
         }
+      } else if(nameCheck.reason === 'no_name'){
+        // ⚠️ ไม่มีชื่อ — ส่ง Admin แต่ยังกด confirm ได้
+        validEl.style.background='rgba(234,179,8,0.12)';
+        validEl.style.border='1px solid rgba(234,179,8,0.4)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⚠️ ສລິບຂອງທ່ານບໍ່ມີຊື່ຜູ້ຮັບປາຍທາງ
+          <div style="margin-top:8px;font-size:11px;line-height:2;opacity:0.9;background:rgba(234,179,8,0.08);padding:8px;border-radius:8px">
+            ⚠️ ຊື່ຜູ້ຮັບ: <strong>ບໍ່ພົບໃນສລິບ</strong> — Admin ຈະກວດສອບ<br>
+            ✅ ຈຳນວນ: <strong>${nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?'} ກີບ</strong><br>
+            ✅ ວັນທີ/ເວລາ: <strong>${nameCheck.date||'-'} ${nameCheck.time||''}</strong><br>
+            ✅ ເລກ Ref: <strong>${nameCheck.transactionRef||'-'}</strong><br>
+            <span style="color:#fbbf24;font-size:10px">ຈະສົ່ງຕໍ່ໃຫ້ Admin ດຳເນີນການຕໍ່</span>
+          </div>`;
+        if(confirmBtn){
+          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='60';
+          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
+          confirmBtn.dataset.slipTime=fileModifiedTime;
+          if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
+          const _refInputNoName = document.getElementById('depositRef');
+          if(_refInputNoName && nameCheck.transactionRef){
+            _refInputNoName.value=nameCheck.transactionRef;
+            _refInputNoName.readOnly=true;
+            _refInputNoName.style.borderColor='#fbbf24';
+            _refInputNoName.style.background='rgba(251,191,36,0.08)';
+            _refInputNoName.style.color='#fbbf24';
+            _refInputNoName.style.cursor='not-allowed';
+          }
+        }
+        addAdminNotification('deposit_no_name',{user:currentUser?.name||'?', amount:expectedAmt, ref:nameCheck.transactionRef||''});
       } else if(nameCheck.verified === false){
         const errList = (nameCheck.errors||[]).join('<br>');
-        const isSuspicious = nameCheck.isSuspicious||false;
-        if(isSuspicious){
-          // 🚫 สลิปน่าสงสัย/ปลอมแปลง — บล็อกทันที ห้ามส่ง
-          validEl.style.background='rgba(239,68,68,0.25)';
-          validEl.style.border='2px solid rgba(239,68,68,0.8)';
-          validEl.style.color='#f87171';
-          validEl.innerHTML=`🚫 ສລິບຖືກປະຕິເສດ — ກວດພົບການປອມແປງ:<br>
-            <div style="margin-top:6px;font-size:11px;line-height:1.9">${errList}</div>
-            <div style="margin-top:8px;font-size:11px;color:#fca5a5;font-weight:700;background:rgba(239,68,68,0.15);padding:6px 8px;border-radius:6px">⛔ ສລິບນີ້ຖືກບລັອກ — ບໍ່ສາມາດສົ່ງໄດ້ Admin ໄດ້ຮັບແຈ້ງເຕືອນແລ້ວ</div>`;
-          // บล็อก confirm button ทันที
-          if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
-          addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:nameCheck.reason});
-        } else {
-          // ⚠️ ขาดข้อมูลบางอย่าง — ส่ง Admin ตรวจแทน ยังกด confirm ได้
-          validEl.style.background='rgba(234,179,8,0.12)';
-          validEl.style.border='1px solid rgba(234,179,8,0.4)';
-          validEl.style.color='#fbbf24';
-          validEl.innerHTML=`⚠️ ຂໍ້ມູນບໍ່ຄົບ — ສົ່ງ Admin ກວດ:<br>
-            <div style="margin-top:6px;font-size:11px;line-height:1.9">${errList}</div>
-            <div style="margin-top:6px;font-size:11px;opacity:0.8">✅ ສາມາດສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້</div>`;
-          if(confirmBtn){
-            confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='30';
-            confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
-            confirmBtn.dataset.slipTime=fileModifiedTime;
-          }
-          addAdminNotification('deposit_manual',{user:currentUser?.name||'?', amount:expectedAmt, reason:'incomplete_slip'});
-        }
+        const isSuspicious = nameCheck.isSuspicious || nameCheck.reason === 'multiple_errors';
+        const bgColor = isSuspicious ? 'rgba(239,68,68,0.2)' : 'rgba(220,38,38,0.12)';
+        const borderColor = isSuspicious ? '2px solid rgba(239,68,68,0.8)' : '1px solid rgba(220,38,38,0.5)';
+        validEl.style.background=bgColor;
+        validEl.style.border=borderColor;
+        validEl.style.color='#f87171';
+        validEl.innerHTML=`${isSuspicious ? '🚫 ສລິບຖືກບລັອກ — ພົບຫຼາຍລາຍການຜິດປົກກະຕິ' : '❌ ສລິບບໍ່ຜ່ານ — ພົບຂໍ້ຜິດພາດ'}
+          <div style="margin-top:8px;font-size:11px;line-height:2;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
+            ${errList}
+          </div>
+          ${isSuspicious ? '<div style="margin-top:6px;font-size:11px;color:#fca5a5;font-weight:700">⛔ ບໍ່ສາມາດສົ່ງໄດ້ — Admin ໄດ້ຮັບແຈ້ງເຕືອນແລ້ວ</div>' : ''}`;
+        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
+        if(isSuspicious) addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:nameCheck.reason});
       } else {
-        // ⚠️ Gemini error / timeout — บล็อกทันที
+        // Gemini error — บล็อก แสดงสาเหตุ
         const reason = nameCheck?.reason || 'unknown';
-        const reasonMsg = reason === 'timeout' ? 'ໃຊ້ເວລາດົນເກີນໄປ' :
-                          reason === 'api_error' ? 'ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ' :
-                          reason === 'empty_response' ? 'AI ບໍ່ສາມາດອ່ານຮູບໄດ້' :
-                          reason === 'parse_error' ? 'AI ອ່ານຮູບບໍ່ສຳເລັດ' : 'ກວດບໍ່ສຳເລັດ';
-        validEl.style.background='rgba(220,38,38,0.15)';
+        const reasonMsg = reason === 'timeout' ? 'ລະບົບໃຊ້ເວລາດົນ — ກາລຸນາລອງໃໝ່' :
+                          reason === 'api_error' ? 'ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ — ລອງໃໝ່' :
+                          reason === 'empty_response' ? 'AI ບໍ່ສາມາດອ່ານຮູບໄດ້ — ໃຊ້ຮູບທີ່ຊັດກວ່ານີ້' :
+                          'AI ກວດສລິບບໍ່ສຳເລັດ — ລອງໃໝ່';
+        validEl.style.background='rgba(220,38,38,0.12)';
         validEl.style.border='1px solid rgba(220,38,38,0.4)';
         validEl.style.color='#f87171';
-        validEl.innerHTML=`❌ ${reasonMsg}<br>
-          <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
-            ກາລຸນາໃຊ້ສລິບທະນາຄານທີ່ຖືກຕ້ອງ:<br>
-            ✅ ສລິບຕ້ອງມີ ຊື່ຜູ້ຮັບ, ຈຳນວນເງິນ, ວັນທີ, ເລກ Ref<br>
-            ✅ ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ<br>
-            ❌ ບໍ່ໃຊ້ຮູບທີ່ບໍ່ແມ່ນສລິບ
+        validEl.innerHTML=`❌ ${reasonMsg}
+          <div style="margin-top:8px;font-size:11px;line-height:1.8;opacity:0.85;background:rgba(220,38,38,0.08);padding:8px;border-radius:8px">
+            ✅ ສລິບຕ້ອງມີຄົບ 4 ລາຍການ:<br>
+            &nbsp;&nbsp;1. ຊື່ຜູ້ຮັບ (Merchant Name)<br>
+            &nbsp;&nbsp;2. ຈຳນວນເງິນ (Amount)<br>
+            &nbsp;&nbsp;3. ວັນທີ/ເວລາທີ່ໂອນ (ບໍ່ເກີນ 10 ນາທີ)<br>
+            &nbsp;&nbsp;4. ເລກອ້າງອີງ (Reference)<br>
+            ✅ ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ
           </div>`;
         if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
       }
