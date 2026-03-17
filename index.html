@@ -10970,7 +10970,7 @@ IMPORTANT:
       response = await Promise.race([
         fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPA_KEY },
           body: JSON.stringify(geminiBody)
         }),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))
