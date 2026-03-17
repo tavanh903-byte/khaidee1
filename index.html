@@ -10985,6 +10985,14 @@ RULES:
 
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('Gemini response status:', response.status);
+    console.log('Gemini raw data:', JSON.stringify(data).slice(0, 500));
+    console.log('Gemini text:', text.slice(0, 300));
+
+    if(!text){
+      console.warn('Gemini returned empty text');
+      return { verified: null, reason: 'empty_response' };
+    }
 
     let parsed;
     try {
@@ -11353,18 +11361,13 @@ function previewDepositSlip(){
           addAdminNotification('deposit_manual',{user:currentUser?.name||'?', amount:expectedAmt, reason:'incomplete_slip'});
         }
       } else {
-        // ⚠️ Gemini error / timeout — ส่ง Admin ตรวจ
-        validEl.style.background='rgba(234,179,8,0.12)';
-        validEl.style.border='1px solid rgba(234,179,8,0.35)';
-        validEl.style.color='#fbbf24';
-        validEl.innerHTML=`⚠️ Gemini ກວດບໍ່ສຳເລັດ${timeInfo}<br>
-          <span style="font-size:11px;opacity:0.8">ສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້</span>`;
-        if(confirmBtn){
-          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='0';
-          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
-          confirmBtn.dataset.slipTime=fileModifiedTime;
-        }
+        // ⚠️ Gemini error / timeout — บล็อกทันที ไม่ให้ส่ง
+        validEl.style.background='rgba(220,38,38,0.15)';
+        validEl.style.border='1px solid rgba(220,38,38,0.4)';
+        validEl.style.color='#f87171';
+        validEl.innerHTML=`❌ ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່<br>
+          <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທະນາຄານທີ່ຖືກຕ້ອງ ແລ້ວລອງໃໝ່ອີກຄັ້ງ</span>`;
+        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
       }
     };
     imgEl.src=dataUrl;
