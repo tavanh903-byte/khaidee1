@@ -10892,22 +10892,7 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     let response;
     const timeoutId = null;
     try {
-      response = await Promise.race([fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mimeType, data: base64Data }
-            },
-            {
-              type: 'text',
-              text: `You are a FRAUD DETECTION expert analyzing a bank transfer slip image.
+      const promptText = `You are a FRAUD DETECTION expert analyzing a bank transfer slip image.
 Your job is to detect FAKE or EDITED slips. Be STRICT and SUSPICIOUS.
 
 ═══ STEP 1: DEEP AUTHENTICITY CHECK ═══
@@ -10979,15 +10964,27 @@ IMPORTANT RULES:
 - If editingSuspected = true, set editingConfidence carefully
 - When in doubt, set editingSuspected = true (false negatives are dangerous)
 - A slip that LOOKS real but has ONE suspicious element should still be flagged
-- The expected amount is: \${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown'}
-- Recipient should be: \${SLIP_OWNER_NAME}
-- Current date/time: \${nowStr}
-`
-            }
+- The expected amount is: ${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown'}
+- Recipient should be: ${SLIP_OWNER_NAME}
+- Current date/time: ${nowStr}
+`;
+
+      const geminiBody = {
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: mimeType, data: base64Data } },
+            { text: promptText }
           ]
-        }]
-      })
-    }),
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
+      };
+
+      response = await Promise.race([
+        fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(geminiBody)
+        }),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))
       ]);
 
@@ -11000,7 +10997,7 @@ IMPORTANT RULES:
     }
 
     const data = await response.json();
-    const text = data.content?.find(b => b.type === 'text')?.text || '';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     let parsed;
     try {
