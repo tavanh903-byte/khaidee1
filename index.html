@@ -1041,7 +1041,11 @@ async function sbSaveSellerApp(app){
       user_id: app.userId, user_name: app.name||app.userName||'',
       wa_num: app.waNum||'', status: app.status||'pending',
       date_str: app.date||null, shop_name: app.shopName||null,
-      shop_desc: app.shopDesc||null
+      shop_desc: app.shopDesc||null,
+      id_card_img: app.idCardImg||null,
+      selfie_img: app.selfieImg||null,
+      phone: app.phone||null, email: app.email||null,
+      id_num: app.idNum||null
     });
   }catch(e){ console.warn('sbSaveSellerApp:',e); }
 }
@@ -1052,7 +1056,11 @@ async function sbLoadSellerApps(){
       userId:r.user_id, name:r.user_name, userName:r.user_name,
       waNum:r.wa_num, status:r.status,
       date:r.date_str||r.created_at,
-      shopName:r.shop_name||'', shopDesc:r.shop_desc||''
+      shopName:r.shop_name||'', shopDesc:r.shop_desc||'',
+      idCardImg:r.id_card_img||null,
+      selfieImg:r.selfie_img||null,
+      phone:r.phone||null, email:r.email||null,
+      idNum:r.id_num||null
     }));
   }catch(e){ console.warn('sbLoadSellerApps:',e); return []; }
 }
@@ -10506,8 +10514,8 @@ async function syncFinanceFromSupabase(){
       const mergedA = sbApps.map(sa=>{
         const local = localApps.find(l=>l.userId===sa.userId);
         return { ...local, ...sa,
-          idCardImg: (local&&local.idCardImg)||null,
-          selfieImg: (local&&local.selfieImg)||null };
+          idCardImg: sa.idCardImg || (local&&local.idCardImg)||null,
+          selfieImg: sa.selfieImg || (local&&local.selfieImg)||null };
       });
       localApps.forEach(la=>{ if(!mergedA.find(m=>m.userId===la.userId)) mergedA.push(la); });
       localStorage.setItem('kd_seller_apps', JSON.stringify(mergedA));
