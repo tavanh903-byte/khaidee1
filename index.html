@@ -2509,7 +2509,7 @@ async function syncFromSupabase(){
         <button class="btn btn-gold" onclick="goDepStep2()" style="margin-bottom:8px">
           ຕໍ່ໄປ → ເບິ່ງ QR ຈ່າຍ
         </button>
-        <button class="btn btn-outline" onclick="closeModal('depositModal')">ຍົກເລີກ</button>
+        <button class="btn btn-outline" onclick="stopSlipCountdown();showNotif('❌ ເຕີມເງິນລົ້ມເຫຼວ — ທ່ານຍົກເລີກການເຕີມເງິນ','error');closeModal('depositModal')">ຍົກເລີກ</button>
       </div>
 
       <!-- Step 2: QR + Upload Slip -->
@@ -10900,82 +10900,61 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     let response;
     const timeoutId = null;
     try {
-      const promptText = `You are a FRAUD DETECTION expert analyzing a bank transfer slip image.
-Your job is to detect FAKE or EDITED slips. Be STRICT and SUSPICIOUS.
+      const promptText = `You are a FRAUD DETECTION expert analyzing a bank transfer slip IMAGE.
+You must READ the actual image content carefully. Do NOT rely on file metadata.
 
-═══ STEP 1: DEEP AUTHENTICITY CHECK ═══
+═══ CRITICAL: READ FROM THE IMAGE ONLY ═══
+Extract ALL information by reading the text visible IN the slip image.
 
-Check ALL of these fraud indicators carefully:
+═══ STEP 1: AUTHENTICITY CHECK ═══
+Check for fraud indicators:
+A) FONT CONSISTENCY — numbers must use same font/size/weight/color. Edited amounts have different font weight or color.
+B) PIXEL ANOMALY — edited text has jagged edges, halos, copy-paste artifacts, broken background
+C) LAYOUT — all text must align perfectly. Edited text is misaligned.
+D) COLOR — consistent brightness throughout. Edited areas show different brightness or color cast.
 
-A) FONT CONSISTENCY — Most critical for edited amounts:
-   - All numbers on the slip must use the EXACT SAME font, size, weight, and color
-   - Edited amounts often have: slightly different font weight, color shade, letter spacing, or baseline alignment
-   - Compare the amount number carefully with other numbers on the slip (e.g., reference number, date)
-   - If ANY digit looks different in thickness, shade, or position → editingSuspected = true
+═══ STEP 2: READ THE SLIP — 4 REQUIRED FIELDS ═══
+Read directly from the image:
+1. RECIPIENT NAME — read the name shown in the slip (e.g. SENGTAVANH BOUNXAISENG)
+2. AMOUNT — read the transfer amount number shown in the slip
+3. DATE & TIME — read the date and time printed ON the slip image itself
+4. REFERENCE NUMBER — read the transaction reference/ID shown in the slip
 
-B) PIXEL & EDGE ANALYSIS:
-   - Real text has smooth, consistent anti-aliasing edges
-   - Edited text often has: jagged edges, halos, blurry borders, or unusually sharp edges
-   - Look for copy-paste artifacts: unnatural background color under text, white boxes, color bleeding
-   - Check if background texture/pattern is broken or interrupted near the amount
+═══ STEP 3: VALIDATE ═══
+- recipientName must match: ${SLIP_OWNER_NAME}
+- amount must match expected: ${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'any amount'}
+- date shown IN slip must be today: ${nowStr}
+- transactionRef must exist in the slip
 
-C) LAYOUT & ALIGNMENT:
-   - Bank slips have strict grid layouts — all text aligns perfectly
-   - Edited text is often slightly misaligned: wrong baseline, wrong horizontal position
-   - Check if the amount label and amount value are properly aligned with other rows
-
-D) COLOR & LIGHTING:
-   - All text should have consistent color saturation and brightness
-   - Edited areas often show: different brightness, subtle color cast, or unnatural contrast
-   - Check if shadows/lighting are consistent across the entire slip
-
-E) SCREENSHOT vs PHOTO:
-   - Real mobile screenshots have: sharp pixels, consistent DPI, no reflection/shadow
-   - Edited screenshots may show: compression artifacts, lossy JPEG artifacts around text
-   - Photos of screens have: moire patterns, reflection, slight blur — these are OK if authentic
-
-F) AMOUNT-SPECIFIC CHECK:
-   - Compare the numeric amount with the written/spelled-out amount if both exist
-   - They must match exactly
-   - If only numbers exist, verify the amount looks native to the slip design
-
-═══ STEP 2: QR CODE ANALYSIS ═══
-Look for QR code anywhere on slip. If found:
-- Extract QR data/content if readable
-- Describe its visual pattern for duplicate detection
-
-═══ STEP 3: TEXT EXTRACTION ═══
-Extract all visible text carefully.
-
-Return JSON ONLY (absolutely no other text, no markdown):
+Return JSON ONLY (no markdown, no extra text):
 {
   "isRealSlip": true/false,
   "editingSuspected": true/false,
-  "editingReason": "detailed reason - specify WHICH element looks edited and HOW",
+  "editingReason": "which element looks edited and how, or null",
   "editingConfidence": "high/medium/low",
   "fontConsistent": true/false,
   "pixelAnomalyDetected": true/false,
-  "recipientName": "FULL NAME IN CAPS or null",
+  "recipientName": "FULL NAME read from slip image or null",
   "amount": 123456,
-  "amountRaw": "exact text of amount as shown",
-  "date": "DD/MM/YYYY",
-  "time": "HH:MM",
-  "transactionRef": "reference number or null",
+  "amountRaw": "exact amount text as shown in slip",
+  "date": "DD/MM/YYYY read from slip image",
+  "time": "HH:MM read from slip image",
+  "transactionRef": "reference number read from slip or null",
   "qrFound": true/false,
   "qrData": "QR content or null",
-  "qrFingerprint": "visual description of QR pattern",
-  "rawText": "all text found",
+  "qrFingerprint": "visual description of QR or null",
+  "rawText": "all text found in image",
   "confidence": "high/medium/low"
 }
 
-IMPORTANT RULES:
-- If editingSuspected = true, set editingConfidence carefully
-- When in doubt, set editingSuspected = true (false negatives are dangerous)
-- A slip that LOOKS real but has ONE suspicious element should still be flagged
-- The expected amount is: ${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown'}
-- Recipient should be: ${SLIP_OWNER_NAME}
-- Current date/time: ${nowStr}
+RULES:
+- Read ALL fields FROM THE IMAGE — do not guess or use file metadata
+- If editingSuspected = true with high/medium confidence → flag immediately
+- If recipient name does not match ${SLIP_OWNER_NAME} → isRealSlip = false
+- If date in slip does not match today (${nowStr}) → flag it
+- If ANY of the 4 fields is missing → set the missing field as null
 `;
+
 
       const geminiBody = {
         contents: [{
@@ -11295,69 +11274,11 @@ function previewDepositSlip(){
         return;
       }
 
-      // ── 2. ตรวจ วัน/เดือน/ปี/เวลา ให้ตรงกับวันที่อัปโหลด ──
+      // ── 2. ส่งให้ Gemini ตรวจ 4 ด่าน: ชื่อ + จำนวน + วันที่ + เลข Ref ──
+      // (ไม่ตรวจ metadata ไฟล์ เพราะ screenshot อาจถูก save ต่างวัน)
+      // Gemini จะอ่านวันที่จากในรูปสลิปโดยตรง
       const fileDate = new Date(fileModifiedTime);
-      const nowDate  = new Date(uploadTime);
       const isValidDate = fileModifiedTime > 1000000000000;
-
-      if(isValidDate){
-        const fileYear  = fileDate.getFullYear();
-        const fileMon   = fileDate.getMonth();
-        const fileDay   = fileDate.getDate();
-        const nowYear   = nowDate.getFullYear();
-        const nowMon    = nowDate.getMonth();
-        const nowDay    = nowDate.getDate();
-
-        // ── ตรวจปีไม่ตรง ──
-        if(fileYear !== nowYear){
-          validEl.style.background='rgba(220,38,38,0.15)';
-          validEl.style.border='1px solid rgba(220,38,38,0.4)';
-          validEl.style.color='#f87171';
-          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ປີໄຟລ໌: ${fileYear} ≠ ປີປັດຈຸບັນ: ${nowYear}<br>
-            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ</span>`;
-          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
-          return;
-        }
-
-        // ── ตรวจเดือนไม่ตรง ──
-        if(fileMon !== nowMon){
-          const MONTHS=['ມ.ກ','ກ.ພ','ມີ.ນ','ເມ.ສ','ພ.ພ','ມິ.ຖ','ກ.ລ','ສ.ຫ','ກ.ຍ','ຕ.ລ','ພ.ຈ','ທ.ວ'];
-          validEl.style.background='rgba(220,38,38,0.15)';
-          validEl.style.border='1px solid rgba(220,38,38,0.4)';
-          validEl.style.color='#f87171';
-          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ເດືອນ: ${MONTHS[fileMon]} ≠ ເດືອນນີ້: ${MONTHS[nowMon]}<br>
-            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນເດືອນນີ້ເທົ່ານັ້ນ</span>`;
-          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
-          return;
-        }
-
-        // ── ตรวจวันไม่ตรง ──
-        if(fileDay !== nowDay){
-          validEl.style.background='rgba(220,38,38,0.15)';
-          validEl.style.border='1px solid rgba(220,38,38,0.4)';
-          validEl.style.color='#f87171';
-          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ວັນທີ: ${fileDay} ≠ ວັນທີປັດຈຸບັນ: ${nowDay}<br>
-            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ</span>`;
-          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
-          return;
-        }
-
-        // ── ตรวจเวลาเกิน 10 นาที (ในวันเดียวกัน) ──
-        if(timeDiffMin > 10){
-          const mins = Math.round(timeDiffMin);
-          const timeStr = mins >= 60
-            ? `${Math.floor(mins/60)} ຊ.ຮ. ${mins%60} ນາທີ`
-            : `${mins} ນາທີ`;
-          const fileDateStr = fileDate.toLocaleString('lo-LA');
-          validEl.style.background='rgba(220,38,38,0.15)';
-          validEl.style.border='1px solid rgba(220,38,38,0.4)';
-          validEl.style.color='#f87171';
-          validEl.innerHTML=`❌ ສລິບເກົ່າເກີນໄປ — ຖ່າຍໄວ້ ${timeStr} ກ່ອນ<br>
-            <span style="font-size:11px;opacity:0.8">ເວລາສລິບ: ${fileDateStr}<br>ກາລຸນາໃຊ້ສລິບພາຍໃນ 10 ນາທີຫຼັງໂອນ</span>`;
-          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
-          return;
-        }
-      }
 
       // ── 3. ส่งให้ Gemini ตรวจ 4 ด่าน: ชื่อ + จำนวน + วันที่ + เลข Ref ──
       validEl.style.background='rgba(234,179,8,0.08)';
@@ -11526,8 +11447,7 @@ function resetSlipSession() {
   }
   stopSlipCountdown();
 
-  // แจ้งเตือนหมดเวลา
-  showNotif('⏰ ໝົດເວລາ 10 ນາທີ — ກາລຸນາໂອນເງິນ ແລ້ວ ອັດໂຫລດສລິບໃໝ່', 'error');
+  showNotif('❌ ເຕີມເງິນລົ້ມເຫຼວ — ໝົດເວລາ 10 ນາທີ ກາລຸນາໂອນເງິນໃໝ່', 'error');
 
   // แสดง popup แจ้งเตือนชัดเจน
   const validElNew = document.getElementById('slipValidResult');
@@ -11536,9 +11456,8 @@ function resetSlipSession() {
     validElNew.style.background = 'rgba(220,38,38,0.15)';
     validElNew.style.border = '1px solid rgba(220,38,38,0.4)';
     validElNew.style.color = '#f87171';
-    validElNew.innerHTML = `⏰ <strong>ໝົດເວລາ 10 ນາທີ!</strong><br>
-      <span style="font-size:11px;opacity:0.85">ກາລຸນາໂອນເງິນໃໝ່ ແລ້ວ ອັດໂຫລດສລິບໃໝ່ອີກຄັ້ງ<br>
-      ສລິບຕ້ອງຢູ່ພາຍໃນ 10 ນາທີຫຼັງໂອນ</span>`;
+    validElNew.innerHTML = `❌ <strong>ເຕີມເງິນລົ້ມເຫຼວ</strong><br>
+      <span style="font-size:11px;opacity:0.85">ໝົດເວລາ 10 ນາທີ — ກາລຸນາໂອນເງິນໃໝ່ ແລ້ວ ອັດໂຫລດສລິບໃໝ່ອີກຄັ້ງ</span>`;
   }
 }
 
