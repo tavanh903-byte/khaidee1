@@ -10929,9 +10929,13 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     try {
       const promptText = 'You are a FRAUD DETECTION expert analyzing a bank transfer slip image.\nYour job is to detect FAKE or EDITED slips. Be STRICT and SUSPICIOUS.\n\nCheck ALL fraud indicators:\nA) FONT CONSISTENCY - all numbers must use same font, size, weight, color\nB) PIXEL ANALYSIS - edited text has jagged edges, halos, copy-paste artifacts\nC) LAYOUT - all text must align perfectly, edited text is often misaligned\nD) SCREENSHOT vs PHOTO - real screenshots have sharp pixels, consistent DPI\n\nSTEP 2: Look for QR code. Extract QR data if readable.\n\nSTEP 3: Extract all visible text carefully.\n\nSTEP 4: REAL SLIP VALIDATION (MOST IMPORTANT)\nA real bank transfer slip MUST contain ALL THREE:\n1. RECIPIENT NAME (e.g. SENGTAVANH BOUNXAISENG)\n2. TRANSFER AMOUNT (numeric money amount)\n3. REFERENCE/TRANSACTION ID\nIf ANY missing -> isRealSlip = false\n\nReturn JSON ONLY (no markdown, no extra text):\n{\n  "isRealSlip": true,\n  "missingFields": [],\n  "editingSuspected": false,\n  "editingReason": "reason or null",\n  "editingConfidence": "high/medium/low",\n  "fontConsistent": true,\n  "pixelAnomalyDetected": false,\n  "recipientName": "FULL NAME or null",\n  "amount": 123456,\n  "amountRaw": "exact text",\n  "date": "DD/MM/YYYY",\n  "time": "HH:MM",\n  "transactionRef": "ref number or null",\n  "qrFound": false,\n  "qrData": null,\n  "qrFingerprint": null,\n  "rawText": "all text",\n  "confidence": "high/medium/low"\n}\n\nExpected recipient: ' + SLIP_OWNER_NAME + '\nExpected amount: ' + (expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown') + '\nCurrent time: ' + nowStr;
 
-      const edgeBody = {
-        image: { mimeType: mimeType, data: base64Data },
-        prompt: promptText,
+      const geminiBody = {
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: mimeType, data: base64Data } },
+            { text: promptText }
+          ]
+        }],
         generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
       };
 
@@ -10939,7 +10943,7 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
         fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(edgeBody)
+          body: JSON.stringify(geminiBody)
         }),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))
       ]);
@@ -10955,9 +10959,8 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     }
 
     const data = await response.json();
-    // รองรับทั้ง Edge Function format { text: "..." } และ Gemini format { candidates: [...] }
-    const text = data.text || data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log('Edge Function raw response:', JSON.stringify(data).slice(0,500));
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('Gemini raw response:', JSON.stringify(data).slice(0,500));
 
     let parsed;
     try {
