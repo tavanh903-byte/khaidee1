@@ -10987,7 +10987,7 @@ IMPORTANT:
 
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    alert('DEBUG Gemini text: ' + text.slice(0,300));
+    alert('DEBUG raw: ' + JSON.stringify(data).slice(0,400));
     console.log('Gemini response status:', response.status);
     console.log('Gemini raw data:', JSON.stringify(data).slice(0, 500));
     console.log('Gemini text:', text.slice(0, 300));
