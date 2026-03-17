@@ -11011,8 +11011,8 @@ IMPORTANT:
     if(parsed.isRealSlip === false){
       return {
         verified: false,
-        errors: ['🚨 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານຈິງ — ຖືກປະຕິເສດ'],
-        details: {}, isSuspicious: true, reason: 'not_real_slip'
+        errors: ['🚫 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບໂອນເງິນຈາກທະນາຄານ\n\nກາລຸນາຖ່າຍ Screenshot ສລິບໂອນເງິນຈາກແອັບທະນາຄານຂອງທ່ານໂດຍກົງ ແລ້ວອັບໂຫລດໃໝ່'],
+        details: {}, isSuspicious: true, reason: 'not_real_slip', notSlip: true
       };
     }
     // ตรวจ font ไม่สม่ำเสมอ (สัญญาณหลักของการแต่งตัวเลข)
@@ -11394,37 +11394,63 @@ function previewDepositSlip(){
       } else if(nameCheck.verified === false){
         const errList = (nameCheck.errors||[]).join('<br>');
         const isSuspicious = nameCheck.isSuspicious || nameCheck.reason === 'multiple_errors';
+        const isNotSlip = nameCheck.reason === 'not_real_slip';
         const bgColor = isSuspicious ? 'rgba(239,68,68,0.2)' : 'rgba(220,38,38,0.12)';
         const borderColor = isSuspicious ? '2px solid rgba(239,68,68,0.8)' : '1px solid rgba(220,38,38,0.5)';
         validEl.style.background=bgColor;
         validEl.style.border=borderColor;
         validEl.style.color='#f87171';
-        validEl.innerHTML=`${isSuspicious ? '🚫 ສລິບຖືກບລັອກ — ພົບຫຼາຍລາຍການຜິດປົກກະຕິ' : '❌ ສລິບບໍ່ຜ່ານ — ພົບຂໍ້ຜິດພາດ'}
-          <div style="margin-top:8px;font-size:11px;line-height:2;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
-            ${errList}
-          </div>
-          ${isSuspicious ? '<div style="margin-top:6px;font-size:11px;color:#fca5a5;font-weight:700">⛔ ບໍ່ສາມາດສົ່ງໄດ້ — Admin ໄດ້ຮັບແຈ້ງເຕືອນແລ້ວ</div>' : ''}`;
+        if(isNotSlip){
+          validEl.innerHTML=`<div style="font-size:15px;font-weight:700;margin-bottom:8px">🚫 ບໍ່ແມ່ນສລິບໂອນເງິນ</div>
+            <div style="font-size:12px;line-height:1.9;background:rgba(239,68,68,0.08);padding:10px;border-radius:8px">
+              ຮູບທີ່ທ່ານອັບໂຫລດ <strong>ບໍ່ແມ່ນສລິບໂອນເງິນຈາກທະນາຄານ</strong><br>
+              ກາລຸນາດຳເນີນການດັ່ງນີ້:<br>
+              &nbsp;📱 ເປີດແອັບທະນາຄານຂອງທ່ານ<br>
+              &nbsp;🔍 ຊອກຫາລາຍການໂອນເງິນຫຼ້າສຸດ<br>
+              &nbsp;📸 ຖ່າຍ Screenshot ສລິບໂອນເງິນ<br>
+              &nbsp;⬆️ ອັບໂຫລດສລິບນັ້ນໃສ່ໃໝ່
+            </div>
+            <button onclick="document.getElementById('depositSlipInput').value='';document.getElementById('depositSlipPreview').innerHTML='';document.getElementById('slipValidResult').style.display='none';" style="margin-top:10px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);color:#f87171;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
+              🔄 ເລືອກຮູບໃໝ່
+            </button>`;
+        } else {
+          validEl.innerHTML=`${isSuspicious ? '🚫 ສລິບຖືກບລັອກ — ພົບຫຼາຍລາຍການຜິດປົກກະຕິ' : '❌ ສລິບບໍ່ຜ່ານ — ພົບຂໍ້ຜິດພາດ'}
+            <div style="margin-top:8px;font-size:11px;line-height:2;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
+              ${errList}
+            </div>
+            ${isSuspicious ? '<div style="margin-top:6px;font-size:11px;color:#fca5a5;font-weight:700">⛔ ບໍ່ສາມາດສົ່ງໄດ້ — Admin ໄດ້ຮັບແຈ້ງເຕືອນແລ້ວ</div>' : ''}`;
+        }
         if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
         if(isSuspicious) addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:nameCheck.reason});
       } else {
         // Gemini error — บล็อก แสดงสาเหตุ
         const reason = nameCheck?.reason || 'unknown';
-        const reasonMsg = reason === 'timeout' ? 'ລະບົບໃຊ້ເວລາດົນ — ກາລຸນາລອງໃໝ່' :
-                          reason === 'api_error' ? 'ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ — ລອງໃໝ່' :
-                          reason === 'empty_response' ? 'AI ບໍ່ສາມາດອ່ານຮູບໄດ້ — ໃຊ້ຮູບທີ່ຊັດກວ່ານີ້' :
-                          'AI ກວດສລິບບໍ່ສຳເລັດ — ລອງໃໝ່';
-        validEl.style.background='rgba(220,38,38,0.12)';
-        validEl.style.border='1px solid rgba(220,38,38,0.4)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML=`❌ ${reasonMsg}
-          <div style="margin-top:8px;font-size:11px;line-height:1.8;opacity:0.85;background:rgba(220,38,38,0.08);padding:8px;border-radius:8px">
-            ✅ ສລິບຕ້ອງມີຄົບ 4 ລາຍການ:<br>
-            &nbsp;&nbsp;1. ຊື່ຜູ້ຮັບ (Merchant Name)<br>
-            &nbsp;&nbsp;2. ຈຳນວນເງິນ (Amount)<br>
-            &nbsp;&nbsp;3. ວັນທີ/ເວລາທີ່ໂອນ (ບໍ່ເກີນ 10 ນາທີ)<br>
-            &nbsp;&nbsp;4. ເລກອ້າງອີງ (Reference)<br>
-            ✅ ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ
-          </div>`;
+        const isNetworkError = reason === 'timeout' || reason === 'network_error' || reason === 'api_error';
+        const reasonMsg = reason === 'timeout' ? '⏱️ ລະບົບໃຊ້ເວລາດົນ — ກາລຸນາລອງໃໝ່' :
+                          reason === 'api_error' ? '🔧 ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ — ກາລຸນາລອງໃໝ່ອີກຄັ້ງ' :
+                          reason === 'network_error' ? '📡 ເຊື່ອມຕໍ່ລະບົບ AI ບໍ່ໄດ້ — ກວດສອບອິນເຕີເນັດ ແລ້ວລອງໃໝ່' :
+                          reason === 'empty_response' ? '📷 AI ບໍ່ສາມາດອ່ານຮູບນີ້ໄດ້ — ກາລຸນາໃຊ້ຮູບທີ່ຊັດກວ່ານີ້' :
+                          '❌ AI ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່';
+        validEl.style.background= isNetworkError ? 'rgba(234,179,8,0.12)' : 'rgba(220,38,38,0.12)';
+        validEl.style.border= isNetworkError ? '1px solid rgba(234,179,8,0.4)' : '1px solid rgba(220,38,38,0.4)';
+        validEl.style.color= isNetworkError ? '#fbbf24' : '#f87171';
+        validEl.innerHTML=`${reasonMsg}
+          <div style="margin-top:8px;font-size:11px;line-height:1.9;opacity:0.9;background:rgba(0,0,0,0.15);padding:10px;border-radius:8px">
+            ${isNetworkError
+              ? `ລະບົບ AI ຂັດຂ້ອງ — ກາລຸນາ:<br>
+                 &nbsp;🔄 ລໍຖ້າ 10-20 ວິນາທີ ແລ້ວລອງໃໝ່<br>
+                 &nbsp;📡 ກວດສອບອິນເຕີເນັດຂອງທ່ານ`
+              : `ສລິບຕ້ອງມີຄົບ 4 ລາຍການ:<br>
+                 &nbsp;1. ຊື່ຜູ້ຮັບ (Merchant Name)<br>
+                 &nbsp;2. ຈຳນວນເງິນ (Amount)<br>
+                 &nbsp;3. ວັນທີ/ເວລາທີ່ໂອນ (ບໍ່ເກີນ 10 ນາທີ)<br>
+                 &nbsp;4. ເລກອ້າງອີງ (Reference)<br>
+                 📸 ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ`
+            }
+          </div>
+          <button onclick="previewDepositSlip()" style="margin-top:10px;width:100%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
+            🔄 ລອງກວດໃໝ່ອີກຄັ້ງ
+          </button>`;
         if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
       }
     };
