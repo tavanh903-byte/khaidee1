@@ -11359,110 +11359,90 @@ function previewDepositSlip(){
         }
       }
 
-      // ── 3. ตรวจว่าเป็น Slip จริง ──
-      const analysis = await analyzeSlipImage(compressed);
+      // ── 3. ส่งให้ Gemini ตรวจ 4 ด่าน: ชื่อ + จำนวน + วันที่ + เลข Ref ──
+      validEl.style.background='rgba(234,179,8,0.08)';
+      validEl.style.border='1px solid rgba(234,179,8,0.25)';
+      validEl.style.color='#fbbf24';
+      validEl.innerHTML=`⏳ Gemini AI ກຳລັງກວດສລິບ 4 ລາຍການ...`;
 
-      if(!analysis.likelySlip || analysis.score < 20){
-        // score ต่ำมากๆ — น่าจะไม่ใช่ slip แต่ให้ผ่าน Claude ตรวจแทน
-        validEl.style.background='rgba(234,179,8,0.08)';
-        validEl.style.border='1px solid rgba(234,179,8,0.25)';
-        validEl.style.color='#fbbf24';
-        validEl.innerHTML=`⏳ ກຳລັງກວດສລິບ...`;
-        // ไม่ block — ให้ Claude AI ตัดสินแทน (fall through to OCR check)
-      }
-      if(analysis.score < 20){
-        // ยังคงให้ผ่านไป Claude OCR แทน
-      } else if(analysis.score < 45){
-        validEl.style.background='rgba(234,179,8,0.12)';
-        validEl.style.border='1px solid rgba(234,179,8,0.35)';
-        validEl.style.color='#fbbf24';
-        validEl.innerHTML=`⚠️ ສລິບໜ້າສົງໄສ — Admin ຈະກວດສອບຄືນ<br>
-          <span style="font-size:11px;opacity:0.8">ສາມາດສົ່ງໄດ້ Admin ຈະພິຈາລະນາ</span>`;
+      const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
+      const nameCheck = await verifySlipOwnerName(compressed, expectedAmt||null);
+      const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
+
+      if(nameCheck.verified === true){
+        // ✅ Gemini ยืนยันครบ 4 ด่าน — Auto approve ได้เลย
+        const d = nameCheck.details||{};
+        validEl.style.background='rgba(34,197,94,0.12)';
+        validEl.style.border='1px solid rgba(34,197,94,0.35)';
+        validEl.style.color='#4ade80';
+        validEl.innerHTML=`✅ Gemini ກວດຜ່ານຄົບ 4 ລາຍການ${timeInfo}
+          <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
+            👤 ຊື່ຜູ້ຮັບ: <strong>${d.recipientName||nameCheck.recipientName||'-'}</strong><br>
+            💰 ຈຳນວນ: <strong>${d.slipAmount?d.slipAmount.toLocaleString():nameCheck.amount?nameCheck.amount.toLocaleString():'?'} ກີບ</strong><br>
+            📅 ວັນທີ/ເວລາ: <strong>${nameCheck.date||'-'} ${nameCheck.time||''}</strong><br>
+            🔢 Ref: <strong>${nameCheck.transactionRef||'-'}</strong>
+          </div>`;
         if(confirmBtn){
           confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
-          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
+          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='90';
+          confirmBtn.dataset.slipWarning='0'; confirmBtn.dataset.slipData=compressed;
           confirmBtn.dataset.slipTime=fileModifiedTime;
+          if(nameCheck.qrData) confirmBtn.dataset.qrData=nameCheck.qrData;
+          if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
+          if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint=nameCheck.qrFingerprint;
+          // Auto-fill Ref
+          const _refInput = document.getElementById('depositRef');
+          if(_refInput && nameCheck.transactionRef){
+            _refInput.value=nameCheck.transactionRef;
+            _refInput.readOnly=true;
+            _refInput.style.borderColor='var(--gold)';
+            _refInput.style.background='rgba(201,168,76,0.08)';
+            _refInput.style.color='var(--gold)';
+            _refInput.style.cursor='not-allowed';
+          }
         }
-      } else {
-        // ── 4. ตรวจครบเซ็ต: ชื่อ + จำนวนเงิน + วันที่ + เวลา (Claude OCR) ──
-        validEl.style.background='rgba(234,179,8,0.08)';
-        validEl.style.border='1px solid rgba(234,179,8,0.25)';
-        validEl.style.color='#fbbf24';
-        validEl.innerHTML=`⏳ ກຳລັງກວດສລິບ — ຊື່, ຈຳນວນເງິນ, ວັນທີ, ເວລາ...`;
-
-        const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
-        const nameCheck = await verifySlipOwnerName(compressed, expectedAmt||null);
-
-        const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
-
-        if(nameCheck.verified === true){
-          // ✅ ผ่านทุกอย่าง
-          const d = nameCheck.details||{};
-          validEl.style.background='rgba(34,197,94,0.12)';
-          validEl.style.border='1px solid rgba(34,197,94,0.35)';
-          validEl.style.color='#4ade80';
-          validEl.innerHTML=`✅ ສລິບຖືກຕ້ອງທຸກລາຍການ${timeInfo}
-            <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
-              👤 ຜູ້ຮັບ: <strong>${d.recipientName||nameCheck.recipientName}</strong><br>
-              💰 ຈຳນວນ: <strong>${d.slipAmount?d.slipAmount.toLocaleString():'?'} ກີບ</strong><br>
-              🕐 ເວລາ: <strong>${d.slipDateTime||'-'}</strong> (ກ່ອນ ${d.diffMin||0} ນາທີ)
-              ${nameCheck.transactionRef?`<br>🔢 Ref: <strong>${nameCheck.transactionRef}</strong>`:''}
-              ${nameCheck.qrFound?'<br>📱 QR: <strong>✅ ກວດພົບ QR ໃນສລິບ</strong>':'<br>📱 QR: ບໍ່ພົບ QR'}
-            </div>`;
-          if(confirmBtn){
-            confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
-            confirmBtn.dataset.slipWarning='0'; confirmBtn.dataset.slipData=compressed;
-            confirmBtn.dataset.slipTime=fileModifiedTime;
-            // ✅ เก็บ QR + Ref เพื่อ duplicate check
-            if(nameCheck.qrData) confirmBtn.dataset.qrData = nameCheck.qrData;
-            if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef = nameCheck.transactionRef;
-            if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint = nameCheck.qrFingerprint;
-            // ✅ Auto-fill + lock Ref ID
-            const _refInput = document.getElementById('depositRef');
-            if(_refInput && nameCheck.transactionRef){
-              _refInput.value = nameCheck.transactionRef;
-              _refInput.readOnly = true;
-              _refInput.style.borderColor = 'var(--gold)';
-              _refInput.style.background = 'rgba(201,168,76,0.08)';
-              _refInput.style.color = 'var(--gold)';
-              _refInput.style.cursor = 'not-allowed';
-              _refInput.title = 'Ref ID ຖືກກວດຈາກສລິບອັດຕະໂນມັດ — ບໍ່ສາມາດແກ້ໄຂໄດ້';
-            }
-          }
-        } else if(nameCheck.verified === false){
-          const errList = (nameCheck.errors||[]).join('<br>');
-          const isSuspicious = nameCheck.isSuspicious || nameCheck.reason === 'editing_suspected' || nameCheck.reason === 'not_real_slip';
-          validEl.style.background = isSuspicious ? 'rgba(239,68,68,0.2)' : 'rgba(220,38,38,0.15)';
-          validEl.style.border = isSuspicious ? '1px solid rgba(239,68,68,0.6)' : '1px solid rgba(220,38,38,0.4)';
+      } else if(nameCheck.verified === false){
+        const errList = (nameCheck.errors||[]).join('<br>');
+        const isSuspicious = nameCheck.isSuspicious||false;
+        if(isSuspicious){
+          // 🚫 สลิปน่าสงสัย/ปลอมแปลง — บล็อกทันที ห้ามส่ง
+          validEl.style.background='rgba(239,68,68,0.25)';
+          validEl.style.border='2px solid rgba(239,68,68,0.8)';
           validEl.style.color='#f87171';
-          validEl.innerHTML=`${isSuspicious?'🚫 ສລິບໜ້າສົງໄສ — ຖືກປະຕິເສດ':'❌ ສລິບບໍ່ຜ່ານ — ກວດພົບຂໍ້ຜິດພາດ'}:<br>
+          validEl.innerHTML=`🚫 ສລິບຖືກປະຕິເສດ — ກວດພົບການປອມແປງ:<br>
             <div style="margin-top:6px;font-size:11px;line-height:1.9">${errList}</div>
-            ${isSuspicious?'<div style="margin-top:6px;font-size:10px;color:#fca5a5;font-weight:700">⛔ ການສໍ້ໂກງສລິບຈະຖືກລາຍງານໄປ Admin</div>':''}`;
-          if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
-          // แจ้ง Admin ถ้าน่าสงสัย
-          if(isSuspicious){
-            addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:parseInt(document.getElementById('depositAmt')?.value||'0'), reason: nameCheck.reason});
-          }
+            <div style="margin-top:8px;font-size:11px;color:#fca5a5;font-weight:700;background:rgba(239,68,68,0.15);padding:6px 8px;border-radius:6px">⛔ ສລິບນີ້ຖືກບລັອກ — ບໍ່ສາມາດສົ່ງໄດ້ Admin ໄດ້ຮັບແຈ້ງເຕືອນແລ້ວ</div>`;
+          // บล็อก confirm button ทันที
+          if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
+          addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:nameCheck.reason});
         } else {
-          // ⚠️ OCR ล้มเหลว (network/timeout) — ให้ Admin ตรวจ ไม่บล็อก
-          const _failReason = nameCheck?.reason;
-          const _failMsg = _failReason === 'timeout'
-            ? '⏱️ ກວດສລິບໃຊ້ເວລາດົນ'
-            : _failReason === 'api_error'
-            ? '⚠️ ລະບົບກວດສລິບຊົ່ວຄາວລົ້ມເຫຼວ'
-            : '⚠️ ກວດສລິບອັດຕະໂນມັດບໍ່ໄດ້';
+          // ⚠️ ขาดข้อมูลบางอย่าง — ส่ง Admin ตรวจแทน ยังกด confirm ได้
           validEl.style.background='rgba(234,179,8,0.12)';
-          validEl.style.border='1px solid rgba(234,179,8,0.35)';
+          validEl.style.border='1px solid rgba(234,179,8,0.4)';
           validEl.style.color='#fbbf24';
-          validEl.innerHTML=`${_failMsg}${timeInfo}<br><span style="font-size:11px;opacity:0.8">✅ ສາມາດສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້ທ່ານໃນໄວໆ</span>`;
+          validEl.innerHTML=`⚠️ ຂໍ້ມູນບໍ່ຄົບ — ສົ່ງ Admin ກວດ:<br>
+            <div style="margin-top:6px;font-size:11px;line-height:1.9">${errList}</div>
+            <div style="margin-top:6px;font-size:11px;opacity:0.8">✅ ສາມາດສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້</div>`;
           if(confirmBtn){
             confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
+            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='30';
             confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
             confirmBtn.dataset.slipTime=fileModifiedTime;
           }
+          addAdminNotification('deposit_manual',{user:currentUser?.name||'?', amount:expectedAmt, reason:'incomplete_slip'});
+        }
+      } else {
+        // ⚠️ Gemini error / timeout — ส่ง Admin ตรวจ
+        validEl.style.background='rgba(234,179,8,0.12)';
+        validEl.style.border='1px solid rgba(234,179,8,0.35)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⚠️ Gemini ກວດບໍ່ສຳເລັດ${timeInfo}<br>
+          <span style="font-size:11px;opacity:0.8">ສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້</span>`;
+        if(confirmBtn){
+          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='0';
+          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
+          confirmBtn.dataset.slipTime=fileModifiedTime;
         }
       }
     };
@@ -11632,9 +11612,8 @@ function doDeposit(){
     // ══════════════════════════════════════════════
     // ✅ AUTO-APPROVE: ถ้าสลิปผ่านทุกเงื่อนไข
     // ══════════════════════════════════════════════
-    if(!slipWarning && slipScore >= 55){
-      // ผ่านทุกอย่าง: ชื่อ + จำนวน + วันที่ + เวลา + รูปเป็น slip จริง
-      
+    if(!slipWarning){
+      // ✅ Gemini ยืนยันครบ 4 ด่าน — Auto approve ทันที
       // อัพเดท wallet ทันที
       const newWallet = (currentUser.wallet||0) + amt;
       updateBalanceUI(newWallet);
