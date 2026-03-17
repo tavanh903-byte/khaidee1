@@ -11255,15 +11255,16 @@ function previewDepositSlip(){
   reader.onload = async function(e){
     const dataUrl = e.target.result;
 
-    // Compress
+    // Compress ให้เล็กมาก เพื่อให้ Edge Function ไม่ timeout
     const imgEl = new Image();
     imgEl.onload = async function(){
       const canvas = document.createElement('canvas');
-      const MAX=700; let w=imgEl.width,h=imgEl.height;
+      const MAX=500; let w=imgEl.width,h=imgEl.height;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      if(h>800){w=Math.round(w*800/h);h=800;}
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(imgEl,0,0,w,h);
-      const compressed=canvas.toDataURL('image/jpeg',0.75);
+      const compressed=canvas.toDataURL('image/jpeg',0.6);
 
       // Preview
       prev.innerHTML=`<img src="${compressed}" style="max-width:130px;border-radius:6px;border:2px solid var(--gold)">`;
@@ -11361,12 +11362,22 @@ function previewDepositSlip(){
           addAdminNotification('deposit_manual',{user:currentUser?.name||'?', amount:expectedAmt, reason:'incomplete_slip'});
         }
       } else {
-        // ⚠️ Gemini error / timeout — บล็อกทันที ไม่ให้ส่ง
+        // ⚠️ Gemini error / timeout — บล็อกทันที
+        const reason = nameCheck?.reason || 'unknown';
+        const reasonMsg = reason === 'timeout' ? 'ໃຊ້ເວລາດົນເກີນໄປ' :
+                          reason === 'api_error' ? 'ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ' :
+                          reason === 'empty_response' ? 'AI ບໍ່ສາມາດອ່ານຮູບໄດ້' :
+                          reason === 'parse_error' ? 'AI ອ່ານຮູບບໍ່ສຳເລັດ' : 'ກວດບໍ່ສຳເລັດ';
         validEl.style.background='rgba(220,38,38,0.15)';
         validEl.style.border='1px solid rgba(220,38,38,0.4)';
         validEl.style.color='#f87171';
-        validEl.innerHTML=`❌ ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່<br>
-          <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທະນາຄານທີ່ຖືກຕ້ອງ ແລ້ວລອງໃໝ່ອີກຄັ້ງ</span>`;
+        validEl.innerHTML=`❌ ${reasonMsg}<br>
+          <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
+            ກາລຸນາໃຊ້ສລິບທະນາຄານທີ່ຖືກຕ້ອງ:<br>
+            ✅ ສລິບຕ້ອງມີ ຊື່ຜູ້ຮັບ, ຈຳນວນເງິນ, ວັນທີ, ເລກ Ref<br>
+            ✅ ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ<br>
+            ❌ ບໍ່ໃຊ້ຮູບທີ່ບໍ່ແມ່ນສລິບ
+          </div>`;
         if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
       }
     };
