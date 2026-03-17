@@ -2523,10 +2523,6 @@ async function syncFromSupabase(){
         <div style="background:#fff;border-radius:14px;padding:16px;text-align:center;margin-bottom:12px">
           <div style="font-size:12px;font-weight:700;color:#c0202a;margin-bottom:8px">JDB Bank · ສະແກນເພື່ອຈ່າຍ</div>
           <img id="qrCodeImg" alt="QR Code" style="width:200px;max-width:100%;height:auto;display:block;margin:0 auto;border-radius:6px">
-          <button onclick="downloadQRCode()" style="margin-top:10px;padding:8px 20px;background:linear-gradient(135deg,#0066cc,#0052a3);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,102,204,0.3)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
-            ບັນທຶກຮູບ QR Code
-          </button>
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;text-align:left">
             <div style="font-size:11px;color:#888;margin-bottom:2px">ຊື່ບັນຊີ</div>
             <div style="font-size:14px;font-weight:700;color:#1a1a1a">SENGTAVANH BOUNXAISENG</div>
@@ -2624,26 +2620,11 @@ async function syncFromSupabase(){
         <!-- Upload Slip -->
         <div style="margin-bottom:4px">
           <div style="font-size:12px;color:var(--text2);margin-bottom:6px">ອັດໂຫລດສລິບການໂອນ *</div>
-
-          <!-- ⚠️ คำแนะนำแคปสลิป -->
-          <div style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.35);border-radius:10px;padding:10px 12px;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:6px">📋 ວິທີສົ່ງສລິບທີ່ຖືກຕ້ອງ</div>
-            <div style="font-size:11px;color:var(--text2);line-height:2">
-              📱 <strong style="color:var(--text1)">ແຄັບໜ້າຈໍໂທລະສັບ (Screenshot)</strong> ໜ້າສລິບໂດຍກົງ<br>
-              ✅ <strong style="color:var(--text1)">ຕ້ອງເຫັນຂໍ້ມູນຄົບ:</strong> ຊື່ຜູ້ຮັບ · ຈຳນວນ · ວັນທີ · ເລກ Ref<br>
-              🔍 <strong style="color:var(--text1)">ຮູບຕ້ອງຊັດ</strong> — ອ່ານໄດ້ທຸກຕົວ ບໍ່ເບີ ບໍ່ມົວ<br>
-              🚫 <strong style="color:#f87171">ຫ້າມ:</strong> ຖ່າຍຮູບສລິບດ້ວຍກ້ອງ, ສລິບດັດແກ້, ສົ່ງຊ້ຳ<br>
-              ⚠️ <strong style="color:#f87171">ຮູບທີ່ບໍ່ຊັດ ຫຼື ບໍ່ແມ່ນ Screenshot</strong> — ລະບົບຈະ<strong style="color:#f87171">ບລ໊ອກທັນທີ</strong>
-            </div>
-          </div>
-
-          <div class="upload-box" id="slipUploadBox" onclick="document.getElementById('depositSlipInput').click()" style="min-height:80px;border-style:dashed;border-color:rgba(201,168,76,0.4)">
-            <div style="font-size:28px;margin-bottom:4px">📲</div>
-            <div style="font-size:13px;font-weight:700;color:var(--gold)">ກົດເພື່ອອັບໂຫລດ Screenshot ສລິບ</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">ແຄັບໜ້າຈໍສລິບຈາກໂທລະສັບ · PNG / JPG ເທົ່ານັ້ນ</div>
+          <div class="upload-box" id="slipUploadBox" onclick="document.getElementById('depositSlipInput').click()" style="min-height:70px;border-style:dashed">
+            📎 ກົດເພື່ອເລືອກຮູບສລິບ
             <div id="depositSlipPreview" style="margin-top:8px"></div>
           </div>
-          <input type="file" id="depositSlipInput" accept="image/png,image/jpeg,image/jpg" style="display:none" onchange="previewDepositSlip()">
+          <input type="file" id="depositSlipInput" accept="image/*" style="display:none" onchange="previewDepositSlip()">
           <!-- Slip validation result -->
           <div id="slipValidResult" style="margin-top:8px;font-size:12px;border-radius:8px;padding:8px 12px;display:none"></div>
         </div>
@@ -10809,22 +10790,6 @@ function goDepStep2(){
   // เริ่มนับถอยหลัง 10 นาที
   startSlipCountdown();
 }
-function downloadQRCode(){
-  const img = document.getElementById('qrCodeImg');
-  if(!img || !img.src) return showNotif('ບໍ່ພົບຮູບ QR Code','error');
-  try {
-    const a = document.createElement('a');
-    a.href = img.src;
-    a.download = 'KhaideeWallet_QR.jpg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showNotif('✅ ບັນທຶກຮູບ QR Code ສຳເລັດ','success');
-  } catch(e) {
-    // Fallback: open in new tab
-    window.open(img.src, '_blank');
-  }
-}
 function goDepStep1(){
   document.getElementById('dep-step2').style.display='none';
   document.getElementById('dep-step1').style.display='block';
@@ -10927,40 +10892,115 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     let response;
     const timeoutId = null;
     try {
-      const promptText = 'You are a FRAUD DETECTION expert analyzing a bank transfer slip image.\nYour job is to detect FAKE or EDITED slips. Be STRICT and SUSPICIOUS.\n\nCheck ALL fraud indicators:\nA) FONT CONSISTENCY - all numbers must use same font, size, weight, color\nB) PIXEL ANALYSIS - edited text has jagged edges, halos, copy-paste artifacts\nC) LAYOUT - all text must align perfectly, edited text is often misaligned\nD) SCREENSHOT vs PHOTO - real screenshots have sharp pixels, consistent DPI\n\nSTEP 2: Look for QR code. Extract QR data if readable.\n\nSTEP 3: Extract all visible text carefully.\n\nSTEP 4: REAL SLIP VALIDATION (MOST IMPORTANT)\nA real bank transfer slip MUST contain ALL THREE:\n1. RECIPIENT NAME (e.g. SENGTAVANH BOUNXAISENG)\n2. TRANSFER AMOUNT (numeric money amount)\n3. REFERENCE/TRANSACTION ID\nIf ANY missing -> isRealSlip = false\n\nReturn JSON ONLY (no markdown, no extra text):\n{\n  "isRealSlip": true,\n  "missingFields": [],\n  "editingSuspected": false,\n  "editingReason": "reason or null",\n  "editingConfidence": "high/medium/low",\n  "fontConsistent": true,\n  "pixelAnomalyDetected": false,\n  "recipientName": "FULL NAME or null",\n  "amount": 123456,\n  "amountRaw": "exact text",\n  "date": "DD/MM/YYYY",\n  "time": "HH:MM",\n  "transactionRef": "ref number or null",\n  "qrFound": false,\n  "qrData": null,\n  "qrFingerprint": null,\n  "rawText": "all text",\n  "confidence": "high/medium/low"\n}\n\nExpected recipient: ' + SLIP_OWNER_NAME + '\nExpected amount: ' + (expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown') + '\nCurrent time: ' + nowStr;
+      response = await Promise.race([fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mimeType, data: base64Data }
+            },
+            {
+              type: 'text',
+              text: `You are a FRAUD DETECTION expert analyzing a bank transfer slip image.
+Your job is to detect FAKE or EDITED slips. Be STRICT and SUSPICIOUS.
 
-      const geminiBody = {
-        contents: [{
-          parts: [
-            { inlineData: { mimeType: mimeType, data: base64Data } },
-            { text: promptText }
+═══ STEP 1: DEEP AUTHENTICITY CHECK ═══
+
+Check ALL of these fraud indicators carefully:
+
+A) FONT CONSISTENCY — Most critical for edited amounts:
+   - All numbers on the slip must use the EXACT SAME font, size, weight, and color
+   - Edited amounts often have: slightly different font weight, color shade, letter spacing, or baseline alignment
+   - Compare the amount number carefully with other numbers on the slip (e.g., reference number, date)
+   - If ANY digit looks different in thickness, shade, or position → editingSuspected = true
+
+B) PIXEL & EDGE ANALYSIS:
+   - Real text has smooth, consistent anti-aliasing edges
+   - Edited text often has: jagged edges, halos, blurry borders, or unusually sharp edges
+   - Look for copy-paste artifacts: unnatural background color under text, white boxes, color bleeding
+   - Check if background texture/pattern is broken or interrupted near the amount
+
+C) LAYOUT & ALIGNMENT:
+   - Bank slips have strict grid layouts — all text aligns perfectly
+   - Edited text is often slightly misaligned: wrong baseline, wrong horizontal position
+   - Check if the amount label and amount value are properly aligned with other rows
+
+D) COLOR & LIGHTING:
+   - All text should have consistent color saturation and brightness
+   - Edited areas often show: different brightness, subtle color cast, or unnatural contrast
+   - Check if shadows/lighting are consistent across the entire slip
+
+E) SCREENSHOT vs PHOTO:
+   - Real mobile screenshots have: sharp pixels, consistent DPI, no reflection/shadow
+   - Edited screenshots may show: compression artifacts, lossy JPEG artifacts around text
+   - Photos of screens have: moire patterns, reflection, slight blur — these are OK if authentic
+
+F) AMOUNT-SPECIFIC CHECK:
+   - Compare the numeric amount with the written/spelled-out amount if both exist
+   - They must match exactly
+   - If only numbers exist, verify the amount looks native to the slip design
+
+═══ STEP 2: QR CODE ANALYSIS ═══
+Look for QR code anywhere on slip. If found:
+- Extract QR data/content if readable
+- Describe its visual pattern for duplicate detection
+
+═══ STEP 3: TEXT EXTRACTION ═══
+Extract all visible text carefully.
+
+Return JSON ONLY (absolutely no other text, no markdown):
+{
+  "isRealSlip": true/false,
+  "editingSuspected": true/false,
+  "editingReason": "detailed reason - specify WHICH element looks edited and HOW",
+  "editingConfidence": "high/medium/low",
+  "fontConsistent": true/false,
+  "pixelAnomalyDetected": true/false,
+  "recipientName": "FULL NAME IN CAPS or null",
+  "amount": 123456,
+  "amountRaw": "exact text of amount as shown",
+  "date": "DD/MM/YYYY",
+  "time": "HH:MM",
+  "transactionRef": "reference number or null",
+  "qrFound": true/false,
+  "qrData": "QR content or null",
+  "qrFingerprint": "visual description of QR pattern",
+  "rawText": "all text found",
+  "confidence": "high/medium/low"
+}
+
+IMPORTANT RULES:
+- If editingSuspected = true, set editingConfidence carefully
+- When in doubt, set editingSuspected = true (false negatives are dangerous)
+- A slip that LOOKS real but has ONE suspicious element should still be flagged
+- The expected amount is: \${expectedAmount ? expectedAmount.toLocaleString() + ' LAK' : 'unknown'}
+- Recipient should be: \${SLIP_OWNER_NAME}
+- Current date/time: \${nowStr}
+`
+            }
           ]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
-      };
-
-      response = await Promise.race([
-        fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(geminiBody)
-        }),
+        }]
+      })
+    }),
         new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))
       ]);
 
     } catch(fetchErr) {
-      console.error('Gemini fetch error:', fetchErr.message, fetchErr);
-      return { verified: null, reason: fetchErr.message==='timeout'?'timeout':'api_error', networkFail: true };
+      return { verified: null, reason: 'timeout', networkFail: true };
     }
     if (!response.ok) {
-      const errText = await response.text().catch(()=>'');
-      console.error('Gemini HTTP error:', response.status, errText);
+      console.warn('Claude OCR HTTP error:', response.status);
       return { verified: null, reason: 'api_error', networkFail: true };
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log('Gemini raw response:', JSON.stringify(data).slice(0,500));
+    const text = data.content?.find(b => b.type === 'text')?.text || '';
 
     let parsed;
     try {
@@ -10974,21 +11014,11 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     const errors = [];
     const details = {};
 
-    // 0. ตรวจว่าเป็น slip จริง — ต้องมี ชื่อ + จำนวนเงิน + เลขอ้างอิง
-    const hasName = parsed.recipientName && parsed.recipientName !== 'null' && String(parsed.recipientName).trim().length > 1;
-    const hasAmount = parsed.amount && parseInt(String(parsed.amount).replace(/[^0-9]/g,'')) > 0;
-    const hasRef = parsed.transactionRef && parsed.transactionRef !== 'null' && String(parsed.transactionRef).trim().length > 2;
-
-    // ถ้าขาดอย่างใดอย่างหนึ่ง หรือ AI บอกว่าไม่ใช่สลิปจริง — ต้องครบทั้ง 3
-    if(parsed.isRealSlip === false || !hasName || !hasAmount || !hasRef){
-      const missing = [];
-      if(!hasName) missing.push('ຊື່ຜູ້ຮັບ');
-      if(!hasAmount) missing.push('ຈຳນວນເງິນ');
-      if(!hasRef) missing.push('ເລກອ້າງອີງ');
-      const missingMsg = missing.length > 0 ? ' (ບໍ່ພົບ: ' + missing.join(', ') + ')' : '';
+    // 0. ตรวจว่าเป็น slip จริง ไม่ใช่รูปแต่ง (เข้มงวดขึ้น)
+    if(parsed.isRealSlip === false){
       return {
         verified: false,
-        errors: ['🚨 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານ' + missingMsg + ' — ຖືກປະຕິເສດທັນທີ'],
+        errors: ['🚨 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບທະນາຄານຈິງ — ຖືກປະຕິເສດ'],
         details: {}, isSuspicious: true, reason: 'not_real_slip'
       };
     }
@@ -11218,9 +11248,12 @@ function previewDepositSlip(){
 
   if(!input.files[0]) return;
   const file = input.files[0];
-  // ❌ ลบการตรวจ file.lastModified ออก — แก้ได้ง่าย ใช้ไม่ได้
-  // ✅ ใช้เวลาอัปโหลดจริงเท่านั้น เปรียบกับเวลาในรูปที่ Claude อ่าน
+  const fileModifiedTime = file.lastModified; // เวลาที่รูปถ่าย/แก้ไขล่าสุด
   const uploadTime = Date.now();
+
+  // ตรวจเวลา: ถ้ารูปถ่ายก่อนหน้านี้เกิน 30 นาที = อาจเป็นรูปเก่า
+  const timeDiffMs = uploadTime - fileModifiedTime;
+  const timeDiffMin = timeDiffMs / 60000;
 
   prev.innerHTML='<div style="color:var(--text2);font-size:12px">⏳ ກຳລັງກວດສອບ...</div>';
   if(validEl) validEl.style.display='none';
@@ -11237,59 +11270,8 @@ function previewDepositSlip(){
       const MAX=700; let w=imgEl.width,h=imgEl.height;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
       canvas.width=w; canvas.height=h;
-      const ctx2d = canvas.getContext('2d');
-      ctx2d.drawImage(imgEl,0,0,w,h);
+      canvas.getContext('2d').drawImage(imgEl,0,0,w,h);
       const compressed=canvas.toDataURL('image/jpeg',0.75);
-
-      // ════ ตรวจความชัด (Laplacian variance) ════
-      const blurCanvas = document.createElement('canvas');
-      blurCanvas.width = Math.min(w, 300);
-      blurCanvas.height = Math.min(h, 300);
-      const bctx = blurCanvas.getContext('2d');
-      bctx.drawImage(imgEl, 0, 0, blurCanvas.width, blurCanvas.height);
-      const imgData = bctx.getImageData(0, 0, blurCanvas.width, blurCanvas.height);
-      const pixels = imgData.data;
-      const gray = [];
-      for(let i=0;i<pixels.length;i+=4){
-        gray.push(0.299*pixels[i]+0.587*pixels[i+1]+0.114*pixels[i+2]);
-      }
-      const W = blurCanvas.width, H = blurCanvas.height;
-      let lap = 0, count = 0;
-      for(let y=1;y<H-1;y++){
-        for(let x=1;x<W-1;x++){
-          const idx = y*W+x;
-          const v = -gray[idx-W-1] - gray[idx-W] - gray[idx-W+1]
-                    - gray[idx-1]  + 8*gray[idx] - gray[idx+1]
-                    - gray[idx+W-1] - gray[idx+W] - gray[idx+W+1];
-          lap += v*v; count++;
-        }
-      }
-      const blurScore = count > 0 ? lap/count : 0;
-      const BLUR_THRESHOLD = 80; // ยิ่งต่ำ = ยิ่งเบลอ
-      if(blurScore < BLUR_THRESHOLD){
-        // ❌ รูปเบลอเกินไป — บล็อก
-        prev.innerHTML=`<div style="color:#f87171;font-size:13px;font-weight:700;text-align:center;padding:6px">
-          ❌ ຮູບບໍ່ຊັດ — ບລ໊ອກທັນທີ
-        </div>`;
-        if(validEl){
-          validEl.style.display='block';
-          validEl.style.background='rgba(220,38,38,0.15)';
-          validEl.style.border='2px solid rgba(220,38,38,0.5)';
-          validEl.style.color='#f87171';
-          validEl.innerHTML=`❌ <strong>ຮູບ Screenshot ບໍ່ຊັດ — ລະບົບບລ໊ອກທັນທີ</strong>
-            <div style="margin-top:6px;font-size:11px;line-height:2;color:#fca5a5">
-              📲 ແຄັບໜ້າຈໍໃໝ່ອີກຄັ້ງ — ຫ້າມຖ່າຍຮູບສລິບດ້ວຍກ້ອງ<br>
-              🔍 ຕ້ອງເຫັນທຸກຕົວ: ຊື່ · ຈຳນວນ · ວັນທີ · Ref<br>
-              💡 ໃຊ້ Screenshot ໂດຍກົງຈາກໜ້າ App ທະນາຄານ<br>
-              📐 ຢ່າ Crop ໃຫ້ຫາຍຂໍ້ມູນ<br>
-              🔄 <strong style="color:#f87171">ກາລຸນາ Screenshot ໃໝ່ ແລ້ວອັບໂຫລດໃໝ່</strong>
-            </div>`;
-        }
-        if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
-        input.value='';
-        return;
-      }
-      // ════ ผ่านตรวจ blur → ส่ง AI ต่อ ════
 
       // Preview
       prev.innerHTML=`<img src="${compressed}" style="max-width:130px;border-radius:6px;border:2px solid var(--gold)">`;
@@ -11308,96 +11290,176 @@ function previewDepositSlip(){
         return;
       }
 
-      // ── 2. ✅ ข้ามการตรวจ file metadata ทั้งหมด
-      // เวลา/วันที่ต้องอ่านจากในรูปภาพโดย Claude เท่านั้น
-      // file.lastModified แก้ได้ง่าย — ห้ามใช้เป็นเกณฑ์ตัดสิน
+      // ── 2. ตรวจ วัน/เดือน/ปี/เวลา ให้ตรงกับวันที่อัปโหลด ──
+      const fileDate = new Date(fileModifiedTime);
+      const nowDate  = new Date(uploadTime);
+      const isValidDate = fileModifiedTime > 1000000000000;
 
-      // ── 3. ✅ ส่ง Claude AI อ่านรูปภาพโดยตรง — ตัดสินทุกอย่างจากเนื้อหาในรูปเท่านั้น ──
-      validEl.style.display='block';
-      validEl.style.background='rgba(234,179,8,0.08)';
-      validEl.style.border='1px solid rgba(234,179,8,0.25)';
-      validEl.style.color='#fbbf24';
-      validEl.innerHTML=`⏳ ກຳລັງກວດສລິບດ້ວຍ AI — ກາລຸນາລໍຖ້າ...`;
+      if(isValidDate){
+        const fileYear  = fileDate.getFullYear();
+        const fileMon   = fileDate.getMonth();
+        const fileDay   = fileDate.getDate();
+        const nowYear   = nowDate.getFullYear();
+        const nowMon    = nowDate.getMonth();
+        const nowDay    = nowDate.getDate();
 
-      const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
-      const nameCheck = await verifySlipOwnerName(compressed, expectedAmt||null);
+        // ── ตรวจปีไม่ตรง ──
+        if(fileYear !== nowYear){
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ປີໄຟລ໌: ${fileYear} ≠ ປີປັດຈຸບັນ: ${nowYear}<br>
+            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
 
-      // 🚫 ข้อ 1: ไม่ใช่สลิปจริง — บล็อกทันที ไม่มีข้อยกเว้น
-      if(nameCheck.reason === 'not_real_slip'){
-        validEl.style.background='rgba(220,38,38,0.2)';
-        validEl.style.border='2px solid rgba(220,38,38,0.7)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML=`🚫 ຮູບນີ້ບໍ່ແມ່ນສລິບທະນາຄານ — ຖືກປະຕິເສດທັນທີ<br>
-          <div style="margin-top:6px;font-size:11px">ກາລຸນາອັດໂຫລດຮູບສລິບການໂອນເງິນຈິງເທົ່ານັ້ນ</div>`;
-        if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
-        addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:'not_real_slip'});
-        return;
+        // ── ตรวจเดือนไม่ตรง ──
+        if(fileMon !== nowMon){
+          const MONTHS=['ມ.ກ','ກ.ພ','ມີ.ນ','ເມ.ສ','ພ.ພ','ມິ.ຖ','ກ.ລ','ສ.ຫ','ກ.ຍ','ຕ.ລ','ພ.ຈ','ທ.ວ'];
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ເດືອນ: ${MONTHS[fileMon]} ≠ ເດືອນນີ້: ${MONTHS[nowMon]}<br>
+            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນເດືອນນີ້ເທົ່ານັ້ນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
+
+        // ── ตรวจวันไม่ตรง ──
+        if(fileDay !== nowDay){
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບບໍ່ຖືກຕ້ອງ — ວັນທີ: ${fileDay} ≠ ວັນທີປັດຈຸບັນ: ${nowDay}<br>
+            <span style="font-size:11px;opacity:0.8">ກາລຸນາໃຊ້ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
+
+        // ── ตรวจเวลาเกิน 10 นาที (ในวันเดียวกัน) ──
+        if(timeDiffMin > 10){
+          const mins = Math.round(timeDiffMin);
+          const timeStr = mins >= 60
+            ? `${Math.floor(mins/60)} ຊ.ຮ. ${mins%60} ນາທີ`
+            : `${mins} ນາທີ`;
+          const fileDateStr = fileDate.toLocaleString('lo-LA');
+          validEl.style.background='rgba(220,38,38,0.15)';
+          validEl.style.border='1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`❌ ສລິບເກົ່າເກີນໄປ — ຖ່າຍໄວ້ ${timeStr} ກ່ອນ<br>
+            <span style="font-size:11px;opacity:0.8">ເວລາສລິບ: ${fileDateStr}<br>ກາລຸນາໃຊ້ສລິບພາຍໃນ 10 ນາທີຫຼັງໂອນ</span>`;
+          if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+          return;
+        }
       }
 
-      // ✅ ข้อ 2: ผ่านทุกอย่าง — auto-fill Ref ID และปลดล็อกปุ่ม
-      if(nameCheck.verified === true){
-        const d = nameCheck.details||{};
-        validEl.style.background='rgba(34,197,94,0.12)';
-        validEl.style.border='1px solid rgba(34,197,94,0.35)';
-        validEl.style.color='#4ade80';
-        validEl.innerHTML=`✅ ສລິບຖືກຕ້ອງທຸກລາຍການ
-          <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
-            👤 ຜູ້ຮັບ: <strong>${d.recipientName||nameCheck.recipientName}</strong><br>
-            💰 ຈຳນວນ: <strong>${d.slipAmount?d.slipAmount.toLocaleString():'?'} ກີບ</strong><br>
-            🕐 ເວລາ: <strong>${d.slipDateTime||'-'}</strong> (ກ່ອນ ${d.diffMin||0} ນາທີ)
-            ${nameCheck.transactionRef?`<br>🔢 Ref: <strong>${nameCheck.transactionRef}</strong>`:''}
-            ${nameCheck.qrFound?'<br>📱 QR: <strong>✅ ກວດພົບ QR</strong>':''}
-          </div>`;
+      // ── 3. ตรวจว่าเป็น Slip จริง ──
+      const analysis = await analyzeSlipImage(compressed);
+
+      if(!analysis.likelySlip || analysis.score < 20){
+        // score ต่ำมากๆ — น่าจะไม่ใช่ slip แต่ให้ผ่าน Claude ตรวจแทน
+        validEl.style.background='rgba(234,179,8,0.08)';
+        validEl.style.border='1px solid rgba(234,179,8,0.25)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⏳ ກຳລັງກວດສລິບ...`;
+        // ไม่ block — ให้ Claude AI ตัดสินแทน (fall through to OCR check)
+      }
+      if(analysis.score < 20){
+        // ยังคงให้ผ่านไป Claude OCR แทน
+      } else if(analysis.score < 45){
+        validEl.style.background='rgba(234,179,8,0.12)';
+        validEl.style.border='1px solid rgba(234,179,8,0.35)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⚠️ ສລິບໜ້າສົງໄສ — Admin ຈະກວດສອບຄືນ<br>
+          <span style="font-size:11px;opacity:0.8">ສາມາດສົ່ງໄດ້ Admin ຈະພິຈາລະນາ</span>`;
         if(confirmBtn){
           confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=99;
-          confirmBtn.dataset.slipWarning='0'; confirmBtn.dataset.slipData=compressed;
-          confirmBtn.dataset.slipTime=uploadTime;
-          if(nameCheck.qrData) confirmBtn.dataset.qrData=nameCheck.qrData;
-          if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
-          if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint=nameCheck.qrFingerprint;
-          // ✅ ข้อ 2: Auto-fill Ref ID + ล็อคห้ามแก้
-          const _refInput = document.getElementById('depositRef');
-          if(_refInput && nameCheck.transactionRef){
-            _refInput.value = nameCheck.transactionRef;
-            _refInput.readOnly = true;
-            _refInput.style.borderColor = 'var(--gold)';
-            _refInput.style.background = 'rgba(201,168,76,0.08)';
-            _refInput.style.color = 'var(--gold)';
-            _refInput.style.cursor = 'not-allowed';
-            _refInput.title = 'Ref ID ຖືກອ່ານຈາກສລິບອັດຕະໂນມັດ — ບໍ່ສາມາດແກ້ໄຂໄດ້';
+          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
+          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
+          confirmBtn.dataset.slipTime=fileModifiedTime;
+        }
+      } else {
+        // ── 4. ตรวจครบเซ็ต: ชื่อ + จำนวนเงิน + วันที่ + เวลา (Claude OCR) ──
+        validEl.style.background='rgba(234,179,8,0.08)';
+        validEl.style.border='1px solid rgba(234,179,8,0.25)';
+        validEl.style.color='#fbbf24';
+        validEl.innerHTML=`⏳ ກຳລັງກວດສລິບ — ຊື່, ຈຳນວນເງິນ, ວັນທີ, ເວລາ...`;
+
+        const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
+        const nameCheck = await verifySlipOwnerName(compressed, expectedAmt||null);
+
+        const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
+
+        if(nameCheck.verified === true){
+          // ✅ ผ่านทุกอย่าง
+          const d = nameCheck.details||{};
+          validEl.style.background='rgba(34,197,94,0.12)';
+          validEl.style.border='1px solid rgba(34,197,94,0.35)';
+          validEl.style.color='#4ade80';
+          validEl.innerHTML=`✅ ສລິບຖືກຕ້ອງທຸກລາຍການ${timeInfo}
+            <div style="margin-top:6px;font-size:11px;line-height:1.8;opacity:0.85">
+              👤 ຜູ້ຮັບ: <strong>${d.recipientName||nameCheck.recipientName}</strong><br>
+              💰 ຈຳນວນ: <strong>${d.slipAmount?d.slipAmount.toLocaleString():'?'} ກີບ</strong><br>
+              🕐 ເວລາ: <strong>${d.slipDateTime||'-'}</strong> (ກ່ອນ ${d.diffMin||0} ນາທີ)
+              ${nameCheck.transactionRef?`<br>🔢 Ref: <strong>${nameCheck.transactionRef}</strong>`:''}
+              ${nameCheck.qrFound?'<br>📱 QR: <strong>✅ ກວດພົບ QR ໃນສລິບ</strong>':'<br>📱 QR: ບໍ່ພົບ QR'}
+            </div>`;
+          if(confirmBtn){
+            confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
+            confirmBtn.dataset.slipWarning='0'; confirmBtn.dataset.slipData=compressed;
+            confirmBtn.dataset.slipTime=fileModifiedTime;
+            // ✅ เก็บ QR + Ref เพื่อ duplicate check
+            if(nameCheck.qrData) confirmBtn.dataset.qrData = nameCheck.qrData;
+            if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef = nameCheck.transactionRef;
+            if(nameCheck.qrFingerprint) confirmBtn.dataset.qrFingerprint = nameCheck.qrFingerprint;
+            // ✅ Auto-fill + lock Ref ID
+            const _refInput = document.getElementById('depositRef');
+            if(_refInput && nameCheck.transactionRef){
+              _refInput.value = nameCheck.transactionRef;
+              _refInput.readOnly = true;
+              _refInput.style.borderColor = 'var(--gold)';
+              _refInput.style.background = 'rgba(201,168,76,0.08)';
+              _refInput.style.color = 'var(--gold)';
+              _refInput.style.cursor = 'not-allowed';
+              _refInput.title = 'Ref ID ຖືກກວດຈາກສລິບອັດຕະໂນມັດ — ບໍ່ສາມາດແກ້ໄຂໄດ້';
+            }
+          }
+        } else if(nameCheck.verified === false){
+          const errList = (nameCheck.errors||[]).join('<br>');
+          const isSuspicious = nameCheck.isSuspicious || nameCheck.reason === 'editing_suspected' || nameCheck.reason === 'not_real_slip';
+          validEl.style.background = isSuspicious ? 'rgba(239,68,68,0.2)' : 'rgba(220,38,38,0.15)';
+          validEl.style.border = isSuspicious ? '1px solid rgba(239,68,68,0.6)' : '1px solid rgba(220,38,38,0.4)';
+          validEl.style.color='#f87171';
+          validEl.innerHTML=`${isSuspicious?'🚫 ສລິບໜ້າສົງໄສ — ຖືກປະຕິເສດ':'❌ ສລິບບໍ່ຜ່ານ — ກວດພົບຂໍ້ຜິດພາດ'}:<br>
+            <div style="margin-top:6px;font-size:11px;line-height:1.9">${errList}</div>
+            ${isSuspicious?'<div style="margin-top:6px;font-size:10px;color:#fca5a5;font-weight:700">⛔ ການສໍ້ໂກງສລິບຈະຖືກລາຍງານໄປ Admin</div>':''}`;
+          if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
+          // แจ้ง Admin ถ้าน่าสงสัย
+          if(isSuspicious){
+            addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:parseInt(document.getElementById('depositAmt')?.value||'0'), reason: nameCheck.reason});
+          }
+        } else {
+          // ⚠️ OCR ล้มเหลว (network/timeout) — ให้ Admin ตรวจ ไม่บล็อก
+          const _failReason = nameCheck?.reason;
+          const _failMsg = _failReason === 'timeout'
+            ? '⏱️ ກວດສລິບໃຊ້ເວລາດົນ'
+            : _failReason === 'api_error'
+            ? '⚠️ ລະບົບກວດສລິບຊົ່ວຄາວລົ້ມເຫຼວ'
+            : '⚠️ ກວດສລິບອັດຕະໂນມັດບໍ່ໄດ້';
+          validEl.style.background='rgba(234,179,8,0.12)';
+          validEl.style.border='1px solid rgba(234,179,8,0.35)';
+          validEl.style.color='#fbbf24';
+          validEl.innerHTML=`${_failMsg}${timeInfo}<br><span style="font-size:11px;opacity:0.8">✅ ສາມາດສົ່ງໄດ້ — Admin ຈະກວດ ແລະ ເຕີມເງິນໃຫ້ທ່ານໃນໄວໆ</span>`;
+          if(confirmBtn){
+            confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore=analysis.score;
+            confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
+            confirmBtn.dataset.slipTime=fileModifiedTime;
           }
         }
-
-      } else if(nameCheck.verified === false){
-        // ❌ ข้อมูลไม่ผ่าน — บล็อก
-        const errList = (nameCheck.errors||[]).join('<br>');
-        const isSuspicious = nameCheck.isSuspicious || nameCheck.reason === 'editing_suspected' || nameCheck.reason === 'not_real_slip';
-        validEl.style.background = isSuspicious ? 'rgba(239,68,68,0.2)' : 'rgba(220,38,38,0.15)';
-        validEl.style.border = isSuspicious ? '2px solid rgba(239,68,68,0.6)' : '1px solid rgba(220,38,38,0.4)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML=`${isSuspicious?'🚫 ສລິບໜ້າສົງໄສ — ຖືກປະຕິເສດ':'❌ ສລິບບໍ່ຜ່ານ'}:<br>
-          <div style="margin-top:6px;font-size:11px;line-height:1.9">${errList}</div>
-          ${isSuspicious?'<div style="margin-top:6px;font-size:10px;color:#fca5a5;font-weight:700">⛔ ຈະຖືກລາຍງານໄປ Admin</div>':''}`;
-        if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
-        if(isSuspicious){
-          addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:nameCheck.reason});
-        }
-
-      } else {
-        // ❌ AI ล้มเหลว (network/timeout/api_error) — บล็อกทันที ห้ามผ่าน
-        // เพราะถ้าปล่อยผ่าน คนสามารถอัปโหลดรูปอะไรก็ได้แล้วได้เงินฟรี
-        validEl.style.background='rgba(220,38,38,0.2)';
-        validEl.style.border='2px solid rgba(220,38,38,0.6)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML=`❌ ລະບົບກວດສລິບບໍ່ສາມາດເຮັດວຽກໄດ້ຕອນນີ້<br>
-          <div style="margin-top:6px;font-size:11px;line-height:1.8">
-            ກາລຸນາລໍຖ້າສັກຄູ່ ແລ້ວລອງໃໝ່<br>
-            ຫຼື ຕິດຕໍ່ Admin ເພື່ອຂໍຄວາມຊ່ວຍເຫຼືອ
-          </div>`;
-        if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
       }
-
     };
     imgEl.src=dataUrl;
   };
