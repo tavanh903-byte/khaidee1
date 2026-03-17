@@ -10977,15 +10977,17 @@ IMPORTANT:
       ]);
 
     } catch(fetchErr) {
+      alert('DEBUG fetch error: ' + fetchErr.message);
       return { verified: null, reason: 'timeout', networkFail: true };
     }
     if (!response.ok) {
-      console.warn('Claude OCR HTTP error:', response.status);
+      response.text().then(t=>alert('DEBUG HTTP ' + response.status + ': ' + t.slice(0,200)));
       return { verified: null, reason: 'api_error', networkFail: true };
     }
 
     const data = await response.json();
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    alert('DEBUG Gemini text: ' + text.slice(0,300));
     console.log('Gemini response status:', response.status);
     console.log('Gemini raw data:', JSON.stringify(data).slice(0, 500));
     console.log('Gemini text:', text.slice(0, 300));
