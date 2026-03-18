@@ -3189,25 +3189,55 @@ async function syncFromSupabase(){
       <button class="btn btn-gold" onclick="fpCheckEmail()" style="width:100%;margin-bottom:8px">🔍 ຄົ້ນຫາບັນຊີ</button>
       <button class="btn btn-outline" onclick="closeModal('forgotPassModal');openModal('loginModal')" style="width:100%">← ກັບໄປ Login</button>
     </div>
-    <!-- Step 2: Found account - show info & set new pass -->
+    <!-- Step 2: Found account -->
     <div id="fpStep2" style="display:none">
       <div style="background:rgba(12,204,102,.08);border:1px solid rgba(12,204,102,.3);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
         <div style="font-size:13px;color:#0c6;font-weight:700;margin-bottom:4px">✅ ພົບບັນຊີ!</div>
         <div style="font-size:12px;color:var(--text2)" id="fpFoundInfo"></div>
       </div>
-      <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px;font-size:11px;color:var(--gold);margin-bottom:14px;line-height:1.7">
-        ⚠️ ລະຫັດຜ່ານຈະຖືກສ້ອມໃໝ່ທັນທີ<br>ກະລຸນາຈື່ລະຫັດຜ່ານໃໝ່ຂອງທ່ານ
+      <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px;font-size:11px;color:var(--gold);margin-bottom:14px;line-height:1.7;text-align:center">
+        🔐 ລະບົບຈະສ້າງ OTP ສົ່ງໃຫ້ Admin<br>ຂໍ OTP ຈາກ Admin ເພື່ອຢືນຢັນຕົວຕົນ
+      </div>
+      <button class="btn btn-gold" onclick="fpRequestOTP()" style="width:100%;margin-bottom:8px">📩 ຂໍ OTP ຈາກ Admin</button>
+      <button class="btn btn-outline" onclick="document.getElementById('fpStep1').style.display='block';document.getElementById('fpStep2').style.display='none'" style="width:100%">← ກັບຄືນ</button>
+    </div>
+
+    <!-- Step 2.5: Enter OTP -->
+    <div id="fpStep25" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:32px;margin-bottom:8px">📱</div>
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:4px">ໃສ່ລະຫັດ OTP</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7">ຂໍ OTP ຈາກ Admin ຜ່ານ WhatsApp<br>ຫຼື ຫ້ອງແຊດໃນແອັບ</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px" id="fpOtpBoxes">
+        <input type="number" maxlength="1" class="form-input" style="width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;padding:0" id="otp0" oninput="fpOtpInput(0,this)">
+        <input type="number" maxlength="1" class="form-input" style="width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;padding:0" id="otp1" oninput="fpOtpInput(1,this)">
+        <input type="number" maxlength="1" class="form-input" style="width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;padding:0" id="otp2" oninput="fpOtpInput(2,this)">
+        <input type="number" maxlength="1" class="form-input" style="width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;padding:0" id="otp3" oninput="fpOtpInput(3,this)">
+        <input type="number" maxlength="1" class="form-input" style="width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;padding:0" id="otp4" oninput="fpOtpInput(4,this)">
+        <input type="number" maxlength="1" class="form-input" style="width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;padding:0" id="otp5" oninput="fpOtpInput(5,this)">
+      </div>
+      <div id="fpOtpTimer" style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:12px">⏱ OTP ໝົດອາຍຸໃນ <span id="fpOtpCountdown" style="color:var(--gold);font-weight:700">10:00</span></div>
+      <div id="fpOtpError" style="display:none;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:8px;padding:8px;text-align:center;font-size:12px;color:#f87171;margin-bottom:12px"></div>
+      <button class="btn btn-gold" onclick="fpVerifyOTP()" style="width:100%;margin-bottom:8px">✅ ຢືນຢັນ OTP</button>
+      <button class="btn btn-outline" onclick="fpRequestOTP()" style="width:100%;margin-bottom:8px;font-size:12px">🔄 ຂໍ OTP ໃໝ່</button>
+      <button class="btn btn-outline" onclick="document.getElementById('fpStep25').style.display='none';document.getElementById('fpStep2').style.display='block'" style="width:100%">← ກັບຄືນ</button>
+    </div>
+
+    <!-- Step 2.8: Set new password (after OTP verified) -->
+    <div id="fpStep28" style="display:none">
+      <div style="background:rgba(12,204,102,.08);border:1px solid rgba(12,204,102,.3);border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#0c6;margin-bottom:14px">
+        ✅ OTP ຜ່ານແລ້ວ — ຕັ້ງລະຫັດຜ່ານໃໝ່ໄດ້ເລີຍ
       </div>
       <div class="form-group">
         <label class="form-label">🔑 ລະຫັດຜ່ານໃໝ່</label>
-        <input class="form-input" type="password" id="fpNewPass" placeholder="ລະຫັດຜ່ານໃໝ່ (ຢ່າງໜ້ອຍ 6 ຕົວ)">
+        <input class="form-input" type="password" id="fpNewPass" placeholder="ລະຫັດຜ່ານໃໝ່ (ຢ່າງໜ້ອຍ 4 ຕົວ)">
       </div>
       <div class="form-group">
         <label class="form-label">🔑 ຢືນຢັນລະຫັດໃໝ່</label>
         <input class="form-input" type="password" id="fpConfirmPass" placeholder="ໃສ່ລະຫັດຜ່ານໃໝ່ອີກຄັ້ງ">
       </div>
       <button class="btn btn-gold" onclick="fpResetPassword()" style="width:100%;margin-bottom:8px">✅ ຕັ້ງລະຫັດຜ່ານໃໝ່</button>
-      <button class="btn btn-outline" onclick="document.getElementById('fpStep1').style.display='block';document.getElementById('fpStep2').style.display='none'" style="width:100%">← ກັບຄືນ</button>
     </div>
     <!-- Step 3: Success -->
     <div id="fpStep3" style="display:none;text-align:center;padding:16px 0">
@@ -5752,46 +5782,154 @@ function showLogin(){
 }
 
 // ============ FORGOT PASSWORD ============
+// OTP state
+let _fpOtp = null;
+let _fpOtpUid = null;
+let _fpOtpTimer = null;
+
 function fpCheckEmail(){
   const val = document.getElementById('fpEmail').value.trim().toLowerCase();
   if(!val){ showNotif('ກະລຸນາໃສ່ອີເມລ ຫຼື ເບີໂທ'); return; }
   const isOwner = OWNER_ACCOUNTS.find(a=>a.user.toLowerCase()===val||(a.phone||'')===val);
   if(isOwner){ showNotif('❌ ບັນຊີ Admin ຕິດຕໍ່ Admin ໂດຍກົງ'); return; }
-  // Search DB by email or phone
   const db = getUsersDB();
   const found = Object.values(db).find(u=>
     (u.email||'').toLowerCase()===val || (u.phone||'').trim()===val
   );
   if(found){
     document.getElementById('fpFoundInfo').innerHTML =
-      `👤 ${found.name}<br>📧 ${found.email||'-'}<br>📱 ${found.phone||'-'}<br>🆔 ${found.id}`;
+      '👤 ' + found.name + '<br>📧 ' + (found.email||'-') + '<br>📱 ' + (found.phone||'-') + '<br>🆔 ' + found.id;
     document.getElementById('fpStep1').style.display='none';
     document.getElementById('fpStep2').style.display='block';
-    document.getElementById('fpNewPass').value='';
-    document.getElementById('fpConfirmPass').value='';
     document.getElementById('fpStep2').dataset.uid = found.id;
+    _fpOtpUid = found.id;
     return;
   }
   showNotif('❌ ບໍ່ພົບຂໍ້ມູນ ກວດສອບໃຫ້ດີ ຫຼື ສ້າງບັນຊີໃໝ່');
 }
 
+function fpRequestOTP(){
+  if(!_fpOtpUid){ showNotif('❌ ເກີດຂໍ້ຜິດພາດ'); return; }
+  // สร้าง OTP 6 หลัก
+  _fpOtp = String(Math.floor(100000 + Math.random() * 900000));
+
+  // บันทึก OTP ใน localStorage พร้อม expiry 10 นาที
+  const otpData = { otp: _fpOtp, uid: _fpOtpUid, exp: Date.now() + 10*60*1000 };
+  localStorage.setItem('kd_reset_otp', JSON.stringify(otpData));
+
+  // แจ้ง Admin
+  const db = getUsersDB();
+  const user = db[_fpOtpUid];
+  addAdminNotification('reset_password_otp', {
+    user: user?.name || '?',
+    userId: _fpOtpUid,
+    otp: _fpOtp,
+    phone: user?.phone || '-',
+    requestTime: new Date().toLocaleTimeString('lo-LA')
+  });
+
+  // บันทึกใน Supabase ด้วย
+  sbSetSetting('otp_' + _fpOtpUid, JSON.stringify(otpData)).catch(()=>{});
+
+  // แสดง Step OTP
+  document.getElementById('fpStep2').style.display='none';
+  document.getElementById('fpStep25').style.display='block';
+  for(let i=0;i<6;i++){
+    const el = document.getElementById('otp'+i);
+    if(el) el.value='';
+  }
+  document.getElementById('fpOtpError').style.display='none';
+  document.getElementById('otp0').focus();
+
+  // เริ่ม countdown 10 นาที
+  fpStartOtpCountdown(600);
+
+  showNotif('📩 ສົ່ງ OTP ໃຫ້ Admin ແລ້ວ — ຂໍ OTP ຈາກ Admin ໄດ້ເລີຍ');
+}
+
+function fpOtpInput(idx, el){
+  // กรอกได้แค่ 1 ตัว แล้วเลื่อนไปช่องถัดไป
+  const val = el.value.replace(/[^0-9]/g,'');
+  el.value = val.slice(-1);
+  if(val && idx < 5){
+    const next = document.getElementById('otp'+(idx+1));
+    if(next) next.focus();
+  }
+  // ถ้าครบ 6 หลัก auto verify
+  const full = [0,1,2,3,4,5].map(i=>(document.getElementById('otp'+i)?.value||'')).join('');
+  if(full.length === 6) fpVerifyOTP();
+}
+
+function fpVerifyOTP(){
+  const entered = [0,1,2,3,4,5].map(i=>(document.getElementById('otp'+i)?.value||'')).join('');
+  if(entered.length < 6){ showNotif('ກະລຸນາໃສ່ OTP ໃຫ້ຄົບ 6 ຕົວ'); return; }
+
+  const stored = JSON.parse(localStorage.getItem('kd_reset_otp')||'null');
+  const errEl = document.getElementById('fpOtpError');
+
+  if(!stored || stored.uid !== _fpOtpUid){
+    errEl.textContent = '❌ OTP ບໍ່ຖືກຕ້ອງ — ຂໍ OTP ໃໝ່'; errEl.style.display='block'; return;
+  }
+  if(Date.now() > stored.exp){
+    errEl.textContent = '⏱ OTP ໝົດອາຍຸແລ້ວ — ກະລຸນາຂໍ OTP ໃໝ່'; errEl.style.display='block'; return;
+  }
+  if(entered !== stored.otp){
+    errEl.textContent = '❌ OTP ຜິດ — ລອງໃໝ່ອີກຄັ້ງ'; errEl.style.display='block';
+    for(let i=0;i<6;i++){ const el=document.getElementById('otp'+i); if(el) el.value=''; }
+    document.getElementById('otp0').focus();
+    return;
+  }
+
+  // OTP ถูก!
+  localStorage.removeItem('kd_reset_otp');
+  clearInterval(_fpOtpTimer);
+  document.getElementById('fpStep25').style.display='none';
+  document.getElementById('fpStep28').style.display='block';
+  document.getElementById('fpNewPass').value='';
+  document.getElementById('fpConfirmPass').value='';
+  showNotif('✅ OTP ຖືກຕ້ອງ!');
+}
+
+function fpStartOtpCountdown(seconds){
+  clearInterval(_fpOtpTimer);
+  let remaining = seconds;
+  const countEl = document.getElementById('fpOtpCountdown');
+  _fpOtpTimer = setInterval(()=>{
+    remaining--;
+    const m = Math.floor(remaining/60);
+    const s = remaining % 60;
+    if(countEl) countEl.textContent = m+':'+(s<10?'0':'')+s;
+    if(remaining <= 0){
+      clearInterval(_fpOtpTimer);
+      if(countEl) countEl.textContent = 'ໝົດອາຍຸ';
+      localStorage.removeItem('kd_reset_otp');
+    }
+  }, 1000);
+}
+
 function fpResetPassword(){
-  const newPass     = document.getElementById('fpNewPass').value.trim();
+  const newPass = document.getElementById('fpNewPass').value.trim();
   const confirmPass = document.getElementById('fpConfirmPass').value.trim();
   if(!newPass){ showNotif('ກະລຸນາໃສ່ລະຫັດຜ່ານໃໝ່'); return; }
   if(newPass.length < 4){ showNotif('ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 4 ຕົວ'); return; }
   if(newPass !== confirmPass){ showNotif('❌ ລະຫັດຜ່ານທັງສອງບໍ່ຕົງກັນ'); return; }
-  const uid = document.getElementById('fpStep2').dataset.uid;
-  if(!uid){ showNotif('❌ ເກີດຂໍ້ຜິດພາດ'); return; }
-  // Update in DB
+  if(!_fpOtpUid){ showNotif('❌ ເກີດຂໍ້ຜິດພາດ'); return; }
   const db = getUsersDB();
-  if(!db[uid]){ showNotif('❌ ບໍ່ພົບຜູ້ໃຊ້'); return; }
-  db[uid].pass = newPass;
+  if(!db[_fpOtpUid]){ showNotif('❌ ບໍ່ພົບຜູ້ໃຊ້'); return; }
+  db[_fpOtpUid].pass = newPass;
   saveUsersDB(db);
-  // Sync if current user
-  if(currentUser && currentUser.id===uid){ currentUser.pass=newPass; saveUser(); }
-  document.getElementById('fpStep2').style.display='none';
+  if(currentUser && currentUser.id===_fpOtpUid){ currentUser.pass=newPass; saveUser(); }
+
+  // แจ้ง Admin ว่าเปลี่ยนรหัสสำเร็จ
+  addAdminNotification('password_changed', {
+    user: db[_fpOtpUid]?.name || '?',
+    userId: _fpOtpUid,
+    time: new Date().toLocaleTimeString('lo-LA')
+  });
+
+  document.getElementById('fpStep28').style.display='none';
   document.getElementById('fpStep3').style.display='block';
+  _fpOtp = null; _fpOtpUid = null;
   showNotif('✅ ຕັ້ງລະຫັດຜ່ານໃໝ່ສຳເລັດ!');
 }
 
@@ -7515,6 +7653,60 @@ function switchFinTab(tab){
   if(dTab){ dTab.style.color = tab==='deposit'?'var(--gold)':'var(--text2)'; dTab.style.borderBottomColor = tab==='deposit'?'var(--gold)':'transparent'; }
   if(wTab){ wTab.style.color = tab==='withdraw'?'var(--gold)':'var(--text2)'; wTab.style.borderBottomColor = tab==='withdraw'?'var(--gold)':'transparent'; }
   _renderFinTab(tab);
+}
+
+// ══════════════════════════════════════════
+// 🔐 Admin OTP Reset Password Panel
+// ══════════════════════════════════════════
+function renderAdminOTPRequests(){
+  const notifs = JSON.parse(localStorage.getItem('kd_admin_notifs')||'[]');
+  const otpNotifs = notifs.filter(n=>n.type==='reset_password_otp');
+  if(!otpNotifs.length) return '';
+  const cards = otpNotifs.map(n=>{
+    const d = n.data || {};
+    const isExpired = false;
+    return '<div style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(109,40,217,.06));border:1px solid rgba(124,58,237,.3);border-radius:14px;padding:14px;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+      '<div style="width:40px;height:40px;border-radius:50%;background:rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;font-size:18px">🔐</div>' +
+      '<div style="flex:1">' +
+      '<div style="font-size:13px;font-weight:700;color:#a78bfa">ຂໍ Reset ລະຫັດຜ່ານ</div>' +
+      '<div style="font-size:11px;color:var(--text2)">' + (d.user||'?') + ' — ' + (n.date||'') + '</div>' +
+      '</div></div>' +
+      '<div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px;margin-bottom:10px">' +
+      '<div style="font-size:11px;color:var(--text2);margin-bottom:4px">📱 ເບີໂທ: ' + (d.phone||'-') + '</div>' +
+      '<div style="font-size:11px;color:var(--text2);margin-bottom:8px">🆔 User ID: ' + (d.userId||'-') + '</div>' +
+      '<div style="text-align:center">' +
+      '<div style="font-size:11px;color:var(--text2);margin-bottom:4px">ລະຫັດ OTP:</div>' +
+      '<div style="font-size:32px;font-weight:900;color:#a78bfa;letter-spacing:8px;font-family:monospace">' + (d.otp||'------') + '</div>' +
+      '<div style="font-size:10px;color:var(--text2);margin-top:4px">ໝົດອາຍຸໃນ 10 ນາທີ ນັບຈາກເວລາຂໍ</div>' +
+      '</div></div>' +
+      '<div style="display:flex;gap:8px">' +
+      '<button onclick="adminSendOTPViaChat(this.dataset.uid,this.dataset.otp)" data-uid="' + (d.userId||'') + '" data-otp="' + (d.otp||'') + '" style="flex:1;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);color:#a78bfa;border-radius:10px;padding:8px;font-size:12px;cursor:pointer">💬 ສົ່ງ OTP ທາງແຊດ</button>' +
+      '<button onclick="adminCopyOTP(this.dataset.otp)" data-otp="' + (d.otp||'') + '" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:10px;padding:8px 12px;font-size:12px;cursor:pointer">📋 Copy</button>' +
+      '</div></div>';
+  }).join('');
+  return '<div style="margin-bottom:16px">' +
+    '<div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:8px;padding:0 2px">🔐 ຄຳຮ້ອງຂໍ Reset ລະຫັດ (' + otpNotifs.length + ')</div>' +
+    cards + '</div>';
+}
+
+function adminSendOTPViaChat(userId, otp){
+  if(!userId || !otp){ showNotif('❌ ຂໍ້ມູນບໍ່ຄົບ'); return; }
+  const roomId = 'admin_' + userId;
+  if(!chatMsgs[roomId]) chatMsgs[roomId] = [];
+  chatMsgs[roomId].push({
+    uid: currentUser?.id||'admin',
+    name: currentUser?.name||'Admin',
+        text: '🔐 ລະຫັດ OTP: ' + otp + ' — ໃຊ້ລະຫັດນີ້ຢືນຢັນ Reset ລະຫັດຜ່ານ ໝົດອາຍຸໃນ 10 ນາທີ',
+    time: new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'}),
+    isAdmin: true
+  });
+  saveChat();
+  showNotif('✅ ສົ່ງ OTP ທາງແຊດສຳເລັດ!');
+}
+
+function adminCopyOTP(otp){
+  navigator.clipboard?.writeText(otp).then(()=>showNotif('📋 Copy OTP ແລ້ວ: ' + otp)).catch(()=>showNotif('OTP: ' + otp));
 }
 
 function _renderFinTab(tab){
@@ -10794,6 +10986,7 @@ function renderAdminFinance(){
   </div>
   <button class="btn btn-outline" style="width:100%;margin-bottom:12px;font-size:13px" onclick="switchAdminTab('history')">📋 ດູປະຫວັດທັງໝົດ →</button>
 
+  ${renderAdminOTPRequests()}
   <div style="font-size:13px;font-weight:700;color:#f90;margin-bottom:8px">⏳ ລໍຖ້າຢືນຢັນ — ຝາກ (${pendDeps.length})</div>
   ${pendDeps.length?pendDeps.slice().reverse().map(r=>`
     <div class="admin-card" id="fin_${r.id}" style="${r.slipWarning?'border:1.5px solid rgba(251,191,36,0.6)':''}">
