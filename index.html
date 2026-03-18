@@ -2016,20 +2016,6 @@ async function syncFromSupabase(){
         <div style="font-size:10px;color:#bbb;text-align:center">🥉<br><span style="font-size:9px">ອັນດັບ3</span></div>
       </div>
 
-      <!-- AI Chat Room -->
-      <div style="padding:10px 16px;font-size:11px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;letter-spacing:1px;margin-top:4px">🤖 AI ASSISTANT</div>
-      <div class="chat-room-item" onclick="openAIChat()" style="border-bottom:1px solid rgba(123,97,255,.2);background:linear-gradient(135deg,rgba(123,97,255,.08),rgba(99,77,204,.04))">
-        <div style="position:relative;flex-shrink:0">
-          <div class="chat-avatar" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);font-size:22px">🤖</div>
-          <div style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;background:#4ade80;border-radius:50%;border:2px solid var(--dark2)"></div>
-        </div>
-        <div class="chat-room-info">
-          <div class="chat-room-name" style="color:#a78bfa">ຂາຍດີ AI Assistant</div>
-          <div class="chat-room-last" style="color:var(--text2);font-size:11px">🟢 ອອນລາຍ 24/7 — ຖາມຫຍັງກໍ່ຕອບໄດ້</div>
-        </div>
-        <div style="font-size:10px;color:#a78bfa;text-align:center">AI<br><span style="font-size:9px">Claude</span></div>
-      </div>
-
       <!-- General room -->
       <div style="padding:10px 16px;font-size:11px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;letter-spacing:1px;margin-top:4px">💬 ຫ້ອງສົນທະນາ</div>
       <div class="chat-room-item" onclick="openChatRoom('general')">
@@ -8237,186 +8223,6 @@ function sendChatMsg(){
   }
 }
 
-// ══════════════════════════════════════════
-// 🤖 AI CHAT ROOM — Claude AI Support
-// ══════════════════════════════════════════
-let aiChatHistory = [];
-
-function openAIChat() {
-  // ซ่อน chat list แสดง chat room
-  document.getElementById('chatListView').style.display = 'none';
-  document.getElementById('chatRoomView').style.display = 'flex';
-
-  // ตั้ง header
-  const avatarEl = document.getElementById('chatRoomAvatar');
-  const titleEl = document.getElementById('chatRoomTitle');
-  if(avatarEl) avatarEl.innerHTML = '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>';
-  if(titleEl) titleEl.textContent = 'ຂາຍດີ AI Assistant';
-
-  // โหลดประวัติ AI chat
-  aiChatHistory = JSON.parse(localStorage.getItem('kd_ai_chat_history') || '[]');
-
-  // ซ่อนปุ่ม quick topics
-  const topics = document.getElementById('chatQuickTopics');
-  if(topics) topics.style.display = 'none';
-
-  // เปลี่ยน placeholder
-  const input = document.getElementById('chatMsgInput');
-  if(input) input.placeholder = '💬 ຖາມ AI ຫຍັງກໍ່ໄດ້...';
-
-  // เปลี่ยน send function ชั่วคราว
-  if(input) input.onkeydown = (e) => { if(e.key === 'Enter') sendAIChatMsg(); };
-  const sendBtn = document.querySelector('.chat-send:last-of-type');
-
-  // render AI chat messages
-  renderAIChat();
-
-  // flag ว่าอยู่ใน AI chat
-  window._inAIChat = true;
-
-  // เปลี่ยน send button
-  const chatInputBar = document.querySelector('.chat-input-bar');
-  if(chatInputBar && !document.getElementById('aiSendBtn')) {
-    const btn = document.createElement('button');
-    btn.id = 'aiSendBtn';
-    btn.className = 'chat-send';
-    btn.style.background = 'linear-gradient(135deg,#7c3aed,#6d28d9)';
-    btn.textContent = '➤';
-    btn.onclick = sendAIChatMsg;
-    chatInputBar.querySelector('div').appendChild(btn);
-  }
-}
-
-function renderAIChat() {
-  const msgEl = document.getElementById('chatMessages');
-  if(!msgEl) return;
-
-  // Welcome message
-  const welcomeHtml = '<div style="display:flex;justify-content:flex-start;margin-bottom:12px">' +
-    '<div style="display:flex;gap:8px;align-items:flex-end;max-width:85%">' +
-    '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🤖</div>' +
-    '<div style="background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(109,40,217,.1));border:1px solid rgba(124,58,237,.3);border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.7">' +
-    'ສະບາຍດີ! 👋 ຂ້ອຍຄື <strong style="color:#a78bfa">ຂາຍດີ AI</strong><br>' +
-    'ສາມາດຊ່ວຍທ່ານໄດ້ກ່ຽວກັບ:<br>' +
-    '💰 ການຝາກ-ຖອນເງິນ<br>📦 ການສັ່ງຊື້ສິນຄ້າ<br>' +
-    '🏪 ການເປີດຮ້ານຂາຍ<br>🔐 ບັນຫາການໃຊ້ງານ<br>' +
-    'ຖາມໄດ້ເລີຍ! 🙏</div></div></div>';
-
-  let historyHtml = aiChatHistory.map(function(msg) {
-    const isUser = msg.role === 'user';
-    const bubbleStyle = isUser
-      ? 'background:linear-gradient(135deg,var(--gold-dark),#8b6914);border:1px solid rgba(201,168,76,.4);border-radius:18px 18px 4px 18px'
-      : 'background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(109,40,217,.08));border:1px solid rgba(124,58,237,.25);border-radius:18px 18px 18px 4px';
-    const aiAvatar = isUser ? '' : '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🤖</div>';
-    return '<div style="display:flex;justify-content:' + (isUser?'flex-end':'flex-start') + ';margin-bottom:10px">' +
-      '<div style="display:flex;gap:8px;align-items:flex-end;max-width:85%;' + (isUser?'flex-direction:row-reverse':'') + '">' +
-      aiAvatar +
-      '<div style="' + bubbleStyle + ';padding:10px 14px;font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap">' +
-      msg.content.replace(/</g,'&lt;').replace(/>/g,'&gt;') +
-      '</div></div></div>';
-  }).join('');
-
-  msgEl.innerHTML = welcomeHtml + historyHtml;
-  msgEl.scrollTop = msgEl.scrollHeight;
-}
-
-async function sendAIChatMsg() {
-  const input = document.getElementById('chatMsgInput');
-  const text = (input?.value || '').trim();
-  if(!text) return;
-  input.value = '';
-
-  // เพิ่มข้อความผู้ใช้
-  aiChatHistory.push({ role: 'user', content: text });
-  renderAIChat();
-
-  // แสดง typing indicator
-  const msgEl = document.getElementById('chatMessages');
-  const typingId = 'ai-typing-' + Date.now();
-  if(msgEl) {
-    msgEl.innerHTML += `
-      <div id="${typingId}" style="display:flex;justify-content:flex-start;margin-bottom:10px">
-        <div style="display:flex;gap:8px;align-items:flex-end">
-          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:14px">🤖</div>
-          <div style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);border-radius:18px 18px 18px 4px;padding:10px 16px;font-size:18px">
-            <span style="animation:blink 1s infinite">●</span><span style="animation:blink 1s infinite .2s">●</span><span style="animation:blink 1s infinite .4s">●</span>
-          </div>
-        </div>
-      </div>`;
-    msgEl.scrollTop = msgEl.scrollHeight;
-  }
-
-  // ดึงข้อมูลแอพสำหรับ context
-  const products = JSON.parse(localStorage.getItem('kd_products') || '[]');
-  const currentUserInfo = currentUser ? `ຊື່: ${currentUser.name}, Wallet: ${currentUser.wallet||0} ກີບ` : 'ຍັງບໍ່ໄດ້ Login';
-
-  const systemPrompt = 'ເຈົ້າຄື ຂາຍດີ AI — AI Assistant ຂອງແອັບ ຂາຍດີ Marketplace ລາວ. ' +
-    'ຕອບເປັນພາສາລາວ ສັ້ນ ກະທັດຮັດ ເຂົ້າໃຈງ່າຍ ແລ້ວໃຊ້ Emoji ເໝາະສົມ. ' +
-    'ຂໍ້ມູນແອັບ: ຊື່ແອັບ ຂາຍດີ Khaidee Marketplace. ' +
-    'ສິນຄ້າທັງໝົດ: ' + products.length + ' ລາຍການ. ' +
-    'ຜູ້ໃຊ້ປັດຈຸບັນ: ' + currentUserInfo + '. ' +
-    'Admin: WhatsApp 020-549-66168. ' +
-    'ຝາກເງິນ: ໂອນຫາ SENGTAVANH BOUNXAISENG ອັບສລິບ Admin ຍືນຢັນ ໃນ 10 ນາທີ. ' +
-    'ການຂາຍ: ສະໝັກ Seller ໃນໂປຣໄຟລ ລົງສິນຄ້າໄດ້ທັນທີ. ' +
-    'ຕອບສັ້ນ ຊັດ ບໍ່ເກີນ 150 ຄຳ ຖ້າບໍ່ຮູ້ໃຫ້ຕິດຕໍ່ Admin.';
-
-  try {
-    const messages = [
-      ...aiChatHistory.slice(-6), // ส่งแค่ 6 ข้อความล่าสุด
-    ];
-
-    const res = await fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPA_KEY },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        system: systemPrompt,
-        messages: messages
-      })
-    });
-
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || 'ຂໍໂທດ, ເກີດຂໍ້ຜິດພາດ ກາລຸນາລອງໃໝ່ 🙏';
-
-    // ลบ typing indicator
-    document.getElementById(typingId)?.remove();
-
-    // เพิ่มคำตอบ AI
-    aiChatHistory.push({ role: 'assistant', content: reply });
-
-    // บันทึก history (เก็บแค่ 20 ข้อความ)
-    if(aiChatHistory.length > 20) aiChatHistory = aiChatHistory.slice(-20);
-    localStorage.setItem('kd_ai_chat_history', JSON.stringify(aiChatHistory));
-
-    renderAIChat();
-
-  } catch(e) {
-    document.getElementById(typingId)?.remove();
-    aiChatHistory.push({ role: 'assistant', content: 'ຂໍໂທດ, ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ 🙏 ກາລຸນາລອງໃໝ່ ຫຼື ຕິດຕໍ່ Admin: WhatsApp 020-549-66168' });
-    renderAIChat();
-  }
-}
-
-// Override backToChatList ให้ reset AI chat state
-const _origBackToChatList = window.backToChatList;
-function backToChatList() {
-  window._inAIChat = false;
-  const input = document.getElementById('chatMsgInput');
-  if(input) {
-    input.placeholder = 'ພິມຂໍ້ຄວາມ...';
-    input.onkeydown = (e) => { if(e.key === 'Enter') sendChatMsg(); };
-  }
-  const topics = document.getElementById('chatQuickTopics');
-  if(topics) topics.style.display = 'flex';
-  document.getElementById('aiSendBtn')?.remove();
-  if(_origBackToChatList) _origBackToChatList();
-  else {
-    document.getElementById('chatRoomView').style.display = 'none';
-    document.getElementById('chatListView').style.display = 'flex';
-  }
-}
-
 function sendQuickTopic(topicText) {
   // ซ่อนปุ่มหัวข้อหลังกดแล้ว
   const topicsEl = document.getElementById('chatQuickTopics');
@@ -11332,43 +11138,26 @@ async function hashImage(dataUrl){
 // ══════════════════════════════════════════
 const SLIP_OWNER_NAME = 'SENGTAVANH BOUNXAISENG';
 
+// ══════════════════════════════════════════
+// 🛡️ SLIP VERIFICATION — 3 Layer System
+// เรียก Edge Function (Gemini 2.0 Flash)
+// ══════════════════════════════════════════
 async function verifySlipOwnerName(dataUrl, expectedAmount) {
   try {
     const base64Data = dataUrl.split(',')[1];
     const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
 
-    const now = new Date();
-    const nowStr = now.toLocaleString('en-GB', {
-      day:'2-digit', month:'2-digit', year:'numeric',
-      hour:'2-digit', minute:'2-digit', hour12: false
-    });
+    // สร้าง file hash เพื่อตรวจ duplicate
+    const hashBuffer = await crypto.subtle.digest('SHA-256', 
+      new TextEncoder().encode(base64Data.slice(0, 1000))
+    );
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 
-    // ── เรียก Claude API ตรวจสลิป ──
+    const userId = currentUser?.id || 'unknown';
+
     let response;
     try {
-      const promptText = `You are a bank transfer slip OCR expert. Read ONLY what is visible IN this slip image.
-
-IMPORTANT: Read data FROM THE IMAGE ONLY. Do NOT guess or invent data.
-
-Extract these fields from the slip image:
-1. recipientName — the merchant/recipient name printed in the slip
-2. amount — the transfer amount number (integer, LAK)
-3. date — transaction date as DD/MM/YYYY
-4. time — transaction time as HH:MM
-5. transactionRef — reference/transaction ID code in the slip
-6. isRealSlip — is this actually a bank transfer slip image? (true/false)
-7. editingSuspected — does the image show signs of tampering? (true/false)
-8. editingReason — reason if editing suspected, else null
-9. fontConsistent — are the fonts/numbers consistent throughout? (true/false)
-
-Return ONLY valid JSON, no markdown, no explanation:
-{"isRealSlip":true,"editingSuspected":false,"editingReason":null,"fontConsistent":true,"recipientName":"NAME FROM SLIP","amount":10000,"date":"DD/MM/YYYY","time":"HH:MM","transactionRef":"REF FROM SLIP"}
-
-Rules:
-- If a field is not visible in the image → use null
-- amount must be integer (remove commas/spaces)
-- Read from the IMAGE, not from context`;
-
       response = await Promise.race([
         fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
           method: 'POST',
@@ -11377,235 +11166,87 @@ Rules:
             'Authorization': 'Bearer ' + SUPA_KEY
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 500,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
-                { type: 'text', text: promptText }
-              ]
-            }]
+            image_base64: base64Data,
+            mime_type: mimeType,
+            user_id: userId,
+            expected_amount: expectedAmount || null,
+            file_hash: fileHash
           })
         }),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),30000))
+        new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 30000))
       ]);
-
     } catch(fetchErr) {
-      console.warn('Claude fetch error:', fetchErr.message);
+      console.warn('Fetch error:', fetchErr.message);
       return { verified: null, reason: 'network_error', networkFail: true };
     }
 
     if (!response.ok) {
-      const errText = await response.text().catch(()=>'');
-      console.warn('Claude HTTP error:', response.status, errText.slice(0,200));
+      console.warn('HTTP error:', response.status);
       return { verified: null, reason: 'api_error', networkFail: true };
     }
 
-    const data = await response.json();
-    // Claude response format: data.content[0].text
-    // Handle both Claude direct and via Edge Function
-    const text = data.content?.[0]?.text || '';
-    console.log('Claude slip response:', text.slice(0, 300));
+    const result = await response.json();
+    console.log('Slip verify result:', result.status);
 
-    if(!text){
-      console.warn('Claude empty response, full data:', JSON.stringify(data).slice(0,300));
-      return { verified: null, reason: 'empty_response' };
-    }
+    // แปลง response จาก Edge Function เป็น format เดิม
+    switch(result.status) {
 
-    let parsed;
-    try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-    } catch(e) {
-      console.warn('Claude JSON parse error:', text);
-      return { verified: null, reason: 'parse_error' };
-    }
-
-    const errors = [];
-    const details = {};
-
-    // 0. ตรวจว่าเป็น slip จริง ไม่ใช่รูปแต่ง (เข้มงวดขึ้น)
-    if(parsed.isRealSlip === false){
-      return {
-        verified: false,
-        errors: ['🚫 ຮູບພາບນີ້ບໍ່ແມ່ນສລິບໂອນເງິນຈາກທະນາຄານ\n\nກາລຸນາຖ່າຍ Screenshot ສລິບໂອນເງິນຈາກແອັບທະນາຄານຂອງທ່ານໂດຍກົງ ແລ້ວອັບໂຫລດໃໝ່'],
-        details: {}, isSuspicious: true, reason: 'not_real_slip', notSlip: true
-      };
-    }
-    // ตรวจ font ไม่สม่ำเสมอ (สัญญาณหลักของการแต่งตัวเลข)
-    if(parsed.fontConsistent === false){
-      return {
-        verified: false,
-        errors: ['🚨 ກວດພົບ Font ຕົວເລກຜິດປົກກະຕິ — ຕົວເລກຈຳນວນເງິນຖືກດັດແປງ!'],
-        details: {}, isSuspicious: true, reason: 'font_inconsistent'
-      };
-    }
-    // ตรวจ pixel anomaly
-    if(parsed.pixelAnomalyDetected === true){
-      return {
-        verified: false,
-        errors: ['🚨 ກວດພົບຮ່ອງຮອຍການແກ້ໄຂຮູບ (Pixel Anomaly) — ສລິບຖືກດັດແປງ!'],
-        details: {}, isSuspicious: true, reason: 'pixel_anomaly'
-      };
-    }
-    // ตรวจ editingSuspected ทั่วไป
-    if(parsed.editingSuspected === true){
-      const confidence = parsed.editingConfidence || 'medium';
-      // high/medium confidence → ปฏิเสธทันที
-      // low confidence → ส่ง Admin ตรวจ
-      if(confidence === 'high' || confidence === 'medium'){
+      case 'approved':
         return {
-          verified: false,
-          errors: ['🚨 ສລິບໜ້າສົງໄສ [' + confidence.toUpperCase() + '] — ' + (parsed.editingReason||'ຮູບຜິດປົກກະຕິ')],
-          details: {}, isSuspicious: true, reason: 'editing_suspected_' + confidence
+          verified: 'pending_admin',
+          reason: 'all_match',
+          recipientName: result.extracted?.receiver || '',
+          amount: result.extracted?.amount,
+          date: result.extracted?.date,
+          time: result.extracted?.time,
+          transactionRef: result.extracted?.ref || null,
+          newBalance: result.new_balance,
+          autoApproved: true
         };
-      } else {
-        // low confidence — warn แต่ให้ Admin ตัดสิน
+
+      case 'pending_admin':
+        return {
+          verified: 'pending_admin',
+          reason: 'pending_admin_confirm',
+          recipientName: result.extracted?.receiver || '',
+          amount: result.extracted?.amount,
+          date: result.extracted?.date,
+          transactionRef: result.extracted?.ref || null,
+          slip_id: result.slip_id
+        };
+
+      case 'manual_check':
         return {
           verified: null,
-          errors: ['⚠️ ສລິບໜ້າສົງໄສເລັກໜ້ອຍ — ສົ່ງ Admin ກວດສອບ: ' + (parsed.editingReason||'')],
-          details: {}, isSuspicious: false, reason: 'editing_low_confidence'
+          reason: 'manual_check',
+          networkFail: true,
+          slip_id: result.slip_id
         };
-      }
-    }
 
-    // 1. ตรวจชื่อผู้รับ
-    const recipientName = (parsed.recipientName || '').trim().toUpperCase();
-    const target = SLIP_OWNER_NAME.toUpperCase();
-    details.recipientName = parsed.recipientName || '(ບໍ່ພົບ)';
-    let nameWarning = null;
-    if (!parsed.recipientName || parsed.recipientName === 'null' || parsed.recipientName.trim() === '') {
-      // ไม่มีชื่อ → ส่ง Admin (ไม่บล็อก)
-      nameWarning = 'ສລິບຂອງທ່ານບໍ່ມີຊື່ຜູ້ຮັບປາຍທາງ — ຈະສົ່ງຕໍ່ໃຫ້ Admin ດຳເນີນການຕໍ່';
-    } else if (recipientName !== target) {
-      // ชื่อไม่ตรง → บล็อกทันที
-      errors.push('🚫 ຊື່ຜູ້ຮັບ "' + parsed.recipientName + '" ບໍ່ຖືກຕ້ອງ — ສລິບຖືກປະຕິເສດທັນທີ');
-    }
-
-    // 2. ตรวจจำนวนเงิน
-    const slipAmount = parsed.amount ? parseInt(String(parsed.amount).replace(/[^0-9]/g,'')) : null;
-    details.slipAmount = slipAmount;
-    if (slipAmount === null) {
-      errors.push('❌ ອ່ານຈຳນວນເງິນໃນສລິບບໍ່ໄດ້ — ກາລຸນາໃຊ້ສລິບທີ່ຖືກຕ້ອງ');
-    } else if (expectedAmount && slipAmount !== expectedAmount) {
-      errors.push('❌ ຈຳນວນເງິນທີ່ທ່ານກົດ ' + expectedAmount.toLocaleString() + ' ກີບ ≠ ຈຳນວນທີ່ໂອນ ' + slipAmount.toLocaleString() + ' ກີບ — ກາລຸນາໃສ່ຈຳນວນເງິນໃຫ້ຖືກຕ້ອງ');
-    }
-
-    // 3. ตรวจวันที่และเวลา
-    if (parsed.date && parsed.time) {
-      try {
-        const [day, month, year] = parsed.date.split('/').map(Number);
-        const [hour, minute] = parsed.time.split(':').map(Number);
-        const adYear = year > 2500 ? year - 543 : year;
-        const slipDate = new Date(adYear, month - 1, day, hour, minute, 0);
-        const diffMin = (now - slipDate) / 60000;
-        details.slipDateTime = parsed.date + ' ' + parsed.time;
-        details.diffMin = Math.round(diffMin);
-        const nowDay = now.getDate(), nowMonth = now.getMonth()+1, nowYear = now.getFullYear();
-        if (day !== nowDay || month !== nowMonth || adYear !== nowYear) {
-          errors.push('🚫 ວັນທີໃນສລິບ ' + parsed.date + ' ບໍ່ຕົງກັບວັນນີ້ — ກາລຸນາໃສ່ສລິບທີ່ໂອນວັນນີ້ເທົ່ານັ້ນ');
-        } else if (diffMin < -2) {
-          errors.push('🚫 ເວລາໂອນຢູ່ໃນອະນາຄົດ — ສລິບໜ້າສົງໄສ');
-        } else if (diffMin > 10) {
-          errors.push('🚫 ສລິບເກົ່າກວ່າ 10 ນາທີ (' + Math.round(diffMin) + ' ນາທີ) — ກາລຸນາໃສ່ສລິບທີ່ໂອນບໍ່ເກີນ 10 ນາທີ ບໍ່ງັ້ນລະບົບຈະບລັອກທັນທີ');
-        }
-      } catch(e) {
-        errors.push('❌ ອ່ານວັນທີ/ເວລາໃນສລິບບໍ່ໄດ້ — ກາລຸນາໃຊ້ສລິບທີ່ຊັດເຈນ');
-      }
-    } else {
-      errors.push('🚫 ບໍ່ພົບວັນທີ/ເວລາໃນສລິບ — ກາລຸນາໃສ່ສລິບທະນາຄານທີ່ຖືກຕ້ອງ');
-    }
-
-    // 4. ตรวจเลข Ref — ต้องมี ถ้าไม่มีบล็อกทันที
-    const extractedQR = parsed.qrData || null;
-    const extractedRef = (parsed.transactionRef || '').trim();
-    if (!extractedRef) {
-      errors.push('🚫 ບໍ່ພົບເລກອ້າງອີງ (Reference) ໃນສລິບ — ສລິບຖືກປະຕິເສດທັນທີ');
-    }
-
-    // ตรวจ Ref/QR ซ้ำใน localStorage
-    const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-    const nonRejected = localDeps.filter(d => d.status !== 'rejected');
-    if(extractedRef){
-      const refDupLocal = nonRejected.find(d =>
-        d.transactionRef && d.transactionRef.toUpperCase() === extractedRef.toUpperCase()
-      );
-      if(refDupLocal){
+      case 'rejected':
         return {
-          verified: false, isSuspicious: true,
-          errors: ['🚨 ເລກອ້າງອີງ (Ref) ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ! (' + (refDupLocal.date||'?') + ')'],
-          details: {}, reason: 'ref_duplicate'
+          verified: false,
+          reason: result.reason || 'rejected',
+          errors: [result.message || 'ສລິບຖືກປະຕິເສດ'],
+          isSuspicious: result.reason === 'duplicate_slip' || result.reason === 'duplicate_ref',
+          notSlip: result.reason === 'not_real_slip'
         };
-      }
-    }
-    if(extractedQR){
-      const qrDupLocal = nonRejected.find(d => d.qrData && d.qrData === extractedQR);
-      if(qrDupLocal){
-        return {
-          verified: false, isSuspicious: true,
-          errors: ['🚨 QR Code ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ! (' + (qrDupLocal.date||'?') + ')'],
-          details: {}, reason: 'qr_duplicate'
-        };
-      }
-    }
-    // ตรวจ Supabase (ข้ามเครื่อง)
-    if(extractedQR || extractedRef){
-      const dupCheck = await checkQRDuplicate(extractedQR, extractedRef, null);
-      if(dupCheck.isDuplicate){
-        return {
-          verified: false, isSuspicious: true,
-          errors: ['🚨 ສລິບຊ້ຳ — ກວດພົບໃນລະບົບ! ຖືກໃຊ້ໂດຍ: ' + (dupCheck.dupUser||'?') + ' (' + (dupCheck.dupDate||'?') + ')'],
-          details: {}, reason: 'supabase_duplicate'
-        };
-      }
-    }
 
-    // ══════════════════════════════════════════
-    // สรุปผล
-    // ══════════════════════════════════════════
-    if(errors.length >= 2){
-      // ผิดเกิน 2 ข้อ → บล็อกทันที น่าสงสัย
-      return {
-        verified: false, errors, details,
-        recipientName: parsed.recipientName || '',
-        transactionRef: extractedRef || null,
-        qrData: extractedQR, reason: 'multiple_errors',
-        isSuspicious: true
-      };
-    } else if(errors.length === 1){
-      // ผิด 1 ข้อ → บล็อก แต่ไม่น่าสงสัย
-      return {
-        verified: false, errors, details,
-        recipientName: parsed.recipientName || '',
-        transactionRef: extractedRef || null,
-        qrData: extractedQR, reason: 'mismatch',
-        isSuspicious: false
-      };
-    } else if(nameWarning){
-      // ไม่มีชื่อ → ส่ง Admin แต่ให้กด confirm ได้
-      return {
-        verified: null, nameWarning, details,
-        amount: parsed.amount, date: parsed.date, time: parsed.time,
-        recipientName: parsed.recipientName || '',
-        transactionRef: extractedRef || null,
-        qrData: extractedQR, reason: 'no_name'
-      };
-    } else {
-      // ✅ ผ่านครบ → ส่ง Admin ยืนยัน (ไม่ auto approve)
-      return {
-        verified: 'pending_admin', errors: [], details,
-        recipientName: parsed.recipientName || '',
-        transactionRef: extractedRef || null,
-        qrData: extractedQR,
-        amount: parsed.amount, date: parsed.date, time: parsed.time,
-        reason: 'pending_admin_confirm'
-      };
+      case 'blocked':
+        return {
+          verified: false,
+          reason: 'user_blocked',
+          errors: [result.message || 'ບັນຊີຖືກລະງັບ'],
+          isSuspicious: true,
+          isBlocked: true
+        };
+
+      default:
+        return { verified: null, reason: 'unknown_response', networkFail: true };
     }
 
   } catch(err) {
     console.warn('verifySlipOwnerName error:', err);
-    // network error หรือ timeout → อย่าบล็อก ให้ Admin ตรวจแทน
     return { verified: null, reason: 'network_error', networkFail: true };
   }
 }
@@ -11746,42 +11387,50 @@ function previewDepositSlip(){
       const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
 
       if(nameCheck.verified === 'pending_admin'){
-        // ✅ Claude ตรวจผ่าน — รอ Admin ยืนยัน
-        validEl.style.background='rgba(34,197,94,0.10)';
-        validEl.style.border='1px solid rgba(34,197,94,0.4)';
-        validEl.style.color='#4ade80';
-        validEl.innerHTML=`
-          <div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ Claude AI ກວດສລິບຜ່ານແລ້ວ</div>
-          <div style="font-size:11px;line-height:2;background:rgba(34,197,94,0.08);padding:10px;border-radius:8px;margin-bottom:10px">
-            ✅ ຊື່ຜູ້ຮັບ: <strong>${nameCheck.recipientName||'-'}</strong><br>
-            ✅ ຈຳນວນ: <strong>${nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?'} ກີບ</strong><br>
-            ✅ ວັນທີ/ເວລາ: <strong>${nameCheck.date||'-'} ${nameCheck.time||''}</strong><br>
-            ✅ ເລກ Ref: <strong>${nameCheck.transactionRef||'-'}</strong>
-          </div>
-          <div style="font-size:12px;color:#fbbf24;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:8px;text-align:center">
-            ⏳ ລໍຖ້າ Admin ກວດສອບ ແລ້ວອະນຸມັດ<br>
-            <span style="font-size:10px;opacity:0.8">ກະລຸນາກົດ "ຢືນຢັນສົ່ງສລິບ" ເພື່ອສົ່ງໃຫ້ Admin</span>
-          </div>`;
-        if(confirmBtn){
-          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='90';
-          confirmBtn.dataset.slipWarning='0'; confirmBtn.dataset.slipData=compressed;
-          confirmBtn.dataset.slipTime=fileModifiedTime;
-          confirmBtn.dataset.pendingAdmin='1';
-          if(nameCheck.qrData) confirmBtn.dataset.qrData=nameCheck.qrData;
-          if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
-          const _refInput = document.getElementById('depositRef');
-          if(_refInput && nameCheck.transactionRef){
-            _refInput.value=nameCheck.transactionRef;
-            _refInput.readOnly=true;
-            _refInput.style.borderColor='var(--gold)';
-            _refInput.style.background='rgba(201,168,76,0.08)';
-            _refInput.style.color='var(--gold)';
-            _refInput.style.cursor='not-allowed';
+        const isAutoApproved = nameCheck.autoApproved === true;
+
+        validEl.style.background = isAutoApproved ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.10)';
+        validEl.style.border = isAutoApproved ? '1px solid rgba(34,197,94,0.5)' : '1px solid rgba(234,179,8,0.4)';
+        validEl.style.color = isAutoApproved ? '#4ade80' : '#fbbf24';
+
+        if(isAutoApproved){
+          // ✅ Edge Function Approved + Wallet อัพเดตแล้ว
+          validEl.innerHTML = '<div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ ກວດສລິບຜ່ານ — ເຕີມເງິນສຳເລັດ!</div>' +
+            '<div style="font-size:11px;line-height:2;background:rgba(34,197,94,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
+            '✅ ຊື່ຜູ້ຮັບ: <strong>' + (nameCheck.recipientName||'-') + '</strong><br>' +
+            '✅ ຈຳນວນ: <strong>' + (nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?') + ' ກີບ</strong><br>' +
+            '✅ ວັນທີ: <strong>' + (nameCheck.date||'-') + '</strong><br>' +
+            '✅ Ref: <strong>' + (nameCheck.transactionRef||'-') + '</strong></div>' +
+            '<div style="font-size:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:8px;text-align:center;color:#4ade80">' +
+            '💰 ຍອດ Wallet ໃໝ່: <strong>' + (nameCheck.newBalance?nameCheck.newBalance.toLocaleString():'?') + ' ກີບ</strong></div>';
+          // อัพเดต Wallet UI ทันที
+          if(nameCheck.newBalance != null) updateBalanceUI(nameCheck.newBalance);
+          if(confirmBtn){ confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.autoApproved='1';
+            confirmBtn.dataset.slipData=compressed; confirmBtn.dataset.slipTime=fileModifiedTime;
+            if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
           }
+        } else {
+          // ⏳ Pending Admin
+          validEl.innerHTML = '<div style="font-size:14px;font-weight:700;margin-bottom:8px">⏳ ສລິບຖືກສົ່ງໃຫ້ Admin ກວດສອບ</div>' +
+            '<div style="font-size:11px;line-height:2;background:rgba(234,179,8,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
+            '✅ ຈຳນວນ: <strong>' + (nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?') + ' ກີບ</strong><br>' +
+            '✅ Ref: <strong>' + (nameCheck.transactionRef||'-') + '</strong></div>' +
+            '<div style="font-size:12px;color:#fbbf24;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:8px;text-align:center">' +
+            'ລໍຖ້າ Admin ກວດສອບ — ຈະໄດ້ຮັບເງິນໃນໄວໆນີ້ 🙏</div>';
+          if(confirmBtn){ confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.pendingAdmin='1';
+            confirmBtn.dataset.slipData=compressed; confirmBtn.dataset.slipTime=fileModifiedTime;
+            if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
+            const _refInput = document.getElementById('depositRef');
+            if(_refInput && nameCheck.transactionRef){
+              _refInput.value=nameCheck.transactionRef; _refInput.readOnly=true;
+              _refInput.style.borderColor='var(--gold)'; _refInput.style.background='rgba(201,168,76,0.08)';
+              _refInput.style.color='var(--gold)'; _refInput.style.cursor='not-allowed';
+            }
+          }
+          addAdminNotification('deposit_pending',{user:currentUser?.name||'?', amount:expectedAmt, ref:nameCheck.transactionRef||''});
         }
-        // แจ้ง Admin
-        addAdminNotification('deposit_pending',{user:currentUser?.name||'?', amount:expectedAmt, ref:nameCheck.transactionRef||''});
       } else if(nameCheck.reason === 'no_name'){
         // ⚠️ ไม่มีชื่อ — ส่ง Admin แต่ยังกด confirm ได้
         validEl.style.background='rgba(234,179,8,0.12)';
