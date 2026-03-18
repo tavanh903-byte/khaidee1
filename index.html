@@ -980,7 +980,10 @@ async function sbLoadOrders(){
     shippingStatus:r.shipping_status, trackingNumber:r.tracking_number,
     note:r.note, date:r.created_at,
     sellerImg:r.seller_img||null,
-    sellerVideo:r.seller_video||null
+    sellerVideo:r.seller_video||null,
+    sentAt:r.sent_at||null,
+    autoDelivering:r.auto_delivering||false,
+    autoDone:r.auto_done||false
   }));
 }
 async function sbSaveOrder(o){
@@ -992,9 +995,12 @@ async function sbSaveOrder(o){
     tracking_number:o.trackingNumber||null, note:o.note||null,
     seller_img:o.sellerImg||null,
     seller_video:o.sellerVideo||null,
+    sent_at:o.sentAt||null,
+    auto_delivering:o.autoDelivering||false,
+    auto_done:o.autoDone||false,
     updated_at: new Date().toISOString()
   }).catch(()=>{
-    // Fallback ถ้า column seller_img/seller_video ยังไม่มีใน Supabase
+    // Fallback ถ้า column ใหม่ยังไม่มีใน Supabase
     return supa.from('kd_orders').upsert({
       id:o.id, buyer_id:o.buyerId||o.userId||'', buyer_name:o.buyerName||o.userName||'',
       seller_id:o.sellerId||'', product_id:o.productId||o.id||'',
@@ -3931,6 +3937,8 @@ function initApp() {
   }).then(()=>{
     renderProducts(products);
     renderBillsPage();
+    // ── re-schedule auto-advance สำหรับ orders ที่ sentAt แล้ว ──
+    checkAllAutoAdvance();
   });
 }
 
@@ -4852,26 +4860,37 @@ function viewBillDetail(id){
   const o = orders.find(x=>x.id===id);
   if(!o) return;
 
+  // ── ใช้สถานะจาก auto-advance (real-time compute จาก sentAt) ──
+  const effectiveStatus = (typeof getAutoStatus === 'function') ? getAutoStatus(o) : (o.status||'pending');
+
+  // ── คำนวณเวลา auto สำหรับแสดงใน timeline ──
+  const sentMs = o.sentAt ? new Date(o.sentAt).getTime() : null;
+  const deliverEta = sentMs ? new Date(sentMs + 24*60*60*1000) : null;
+  const doneEta    = sentMs ? new Date(sentMs + 48*60*60*1000) : null;
+  const fmtEta = d => d ? `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` : '';
+
   const steps = [
     {key:'pending',   icon:'🛒', label:'ສັ່ງຊື້ສຳເລັດ',      sub:'ລໍຖ້າຜູ້ຂາຍຮັບອໍເດີ'},
     {key:'packed',    icon:'📦', label:'ຜູ້ຂາຍຫຸ້ມຫໍ່ສຳເລັດ', sub:'ກຳລັງກຽມສົ່ງຂົນສ່ງ'},
-    {key:'sent',      icon:'🚚', label:'ຝາກຂົນສ່ງແລ້ວ',       sub:'ຢູ່ທີ່ສາງຂົນສ່ງ'},
-    {key:'delivering',icon:'🏃', label:'ກຳລັງຈັດສົ່ງ',        sub:'ຄົນສ່ງຂຶ້ນສົ່ງ'},
-    {key:'done',      icon:'✅', label:'ຮັບສຳເລັດ',           sub:'ສຳເລັດ'},
+    {key:'sent',      icon:'🚚', label:'ຝາກຂົນສ່ງແລ້ວ',       sub:'ຜູ້ຂາຍມອບສິນຄ້າໃຫ້ຂົນສ່ງ'},
+    {key:'delivering',icon:'🏃', label:'ກຳລັງຈັດສົ່ງ',        sub: deliverEta ? `ຄົນສ່ງຂຶ້ນສົ່ງ${deliverEta ? ' • auto ' + fmtEta(deliverEta) : ''}` : 'ຄົນສ່ງຂຶ້ນສົ່ງ'},
+    {key:'done',      icon:'✅', label:'ຮັບສຳເລັດ',           sub: doneEta ? `ຮອດປາຍທາງ${doneEta ? ' • auto ' + fmtEta(doneEta) : ''}` : 'ສຳເລັດ'},
   ];
   const statusOrder = ['pending','packed','sent','delivering','done'];
-  const curIdx = statusOrder.indexOf(o.status||'pending');
+  const curIdx = statusOrder.indexOf(effectiveStatus);
 
   const stepsHtml = steps.map((s,i)=>{
     const isDone  = i < curIdx;
     const isActive= i === curIdx;
+    const isAuto  = (s.key==='delivering'||s.key==='done') && isActive && o.sentAt && (s.key==='delivering' ? o.autoDelivering : o.autoDone);
     const cls = isDone ? 'done-step' : isActive ? 'active' : '';
-    const subTxt = isDone && o.trackingLog ? (o.trackingLog[s.key]||s.sub) : s.sub;
+    const dateTxt = o.trackingDates && o.trackingDates[s.key] ? ' • ' + o.trackingDates[s.key] : '';
+    const autoTag = isAuto ? ' <span style="font-size:9px;background:rgba(74,222,128,.2);color:#4ade80;border-radius:4px;padding:1px 5px">auto</span>' : '';
     return `<div class="tracking-step ${cls}">
       <div class="tracking-icon">${s.icon}</div>
       <div class="tracking-body">
-        <div class="tracking-title">${s.label}</div>
-        <div class="tracking-sub">${subTxt}${isDone && o.trackingDates && o.trackingDates[s.key] ? ' • '+o.trackingDates[s.key] : ''}</div>
+        <div class="tracking-title">${s.label}${autoTag}</div>
+        <div class="tracking-sub">${s.sub}${dateTxt}</div>
       </div>
     </div>`;
   }).join('');
@@ -5070,10 +5089,98 @@ function sellerUpdateStatus(id, newStatus){
   if(!orders[idx].trackingDates) orders[idx].trackingDates = {};
   orders[idx].status = newStatus;
   orders[idx].trackingDates[newStatus] = new Date().toLocaleString('th-TH');
+  // ── ເມື່ອຜູ້ຂາຍກົດ "ສົ່ງຂົນສ່ງ" — ບັນທຶກ sentAt timestamp ສຳລັບ auto-advance ──
+  if(newStatus === 'sent'){
+    orders[idx].sentAt = new Date().toISOString();
+    orders[idx].autoDelivering = false;
+    orders[idx].autoDone = false;
+    showNotif('🚚 ສົ່ງຂົນສ່ງແລ້ວ! ລະບົບຈະ auto ອັບເດດພາຍໃນ 2 ວັນ');
+  } else {
+    showNotif('✅ ອັບເດດ: ' + getStatusLabel(newStatus));
+  }
   saveOrders();
-  showNotif('✅ ອັບເດດ: ' + getStatusLabel(newStatus));
+  sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder:',e));
+  scheduleAutoAdvance(orders[idx]);
   sellerViewBill(id);
   showSaleHistory();
+}
+
+
+// ══════════════════════════════════════════════════════
+// AUTO-ADVANCE TRACKING SYSTEM
+// ══════════════════════════════════════════════════════
+// Logic:
+//   sentAt + 0d  → status = 'sent'        (ผู้ขายกด)
+//   sentAt + 1d  → status = 'delivering'  (auto วันที่ 1)
+//   sentAt + 2d  → status = 'done'        (auto วันที่ 2)
+// ──────────────────────────────────────────────────────
+
+const AUTO_ADVANCE_MS_1 = 24 * 60 * 60 * 1000; // 1 วัน → delivering
+const AUTO_ADVANCE_MS_2 = 48 * 60 * 60 * 1000; // 2 วัน → done
+
+function scheduleAutoAdvance(order){
+  if(!order.sentAt) return;
+  const sentMs = new Date(order.sentAt).getTime();
+  const now = Date.now();
+
+  // ── delivering (1 วัน หลัง sentAt) ──
+  if(!order.autoDelivering && order.status === 'sent'){
+    const delay1 = sentMs + AUTO_ADVANCE_MS_1 - now;
+    if(delay1 <= 0){
+      doAutoAdvance(order.id, 'delivering');
+    } else {
+      setTimeout(()=> doAutoAdvance(order.id, 'delivering'), delay1);
+    }
+  }
+
+  // ── done (2 วัน หลัง sentAt) ──
+  if(!order.autoDone && (order.status === 'sent' || order.status === 'delivering')){
+    const delay2 = sentMs + AUTO_ADVANCE_MS_2 - now;
+    if(delay2 <= 0){
+      doAutoAdvance(order.id, 'done');
+    } else {
+      setTimeout(()=> doAutoAdvance(order.id, 'done'), delay2);
+    }
+  }
+}
+
+function doAutoAdvance(id, newStatus){
+  const idx = orders.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const o = orders[idx];
+  const statusOrder = ['pending','packed','sent','delivering','done'];
+  const curIdx = statusOrder.indexOf(o.status||'pending');
+  const newIdx  = statusOrder.indexOf(newStatus);
+  if(newIdx <= curIdx) return; // ผู้ขายกดไปแล้ว ไม่ต้อง auto
+  if(!orders[idx].trackingDates) orders[idx].trackingDates = {};
+  orders[idx].status = newStatus;
+  orders[idx].trackingDates[newStatus] = new Date().toLocaleString('th-TH');
+  if(newStatus === 'delivering') orders[idx].autoDelivering = true;
+  if(newStatus === 'done')       orders[idx].autoDone = true;
+  saveOrders();
+  sbSaveOrder(orders[idx]).catch(e=>console.warn('sbAutoAdvance:',e));
+  renderBillsPage();
+  // ถ้า done — schedule delivering ก่อนถ้ายังไม่ถึง
+  if(newStatus === 'delivering') scheduleAutoAdvance(orders[idx]);
+}
+
+// ── เรียกตอน app โหลด — re-schedule order ที่ sentAt แล้วแต่ยังไม่ครบ ──
+function checkAllAutoAdvance(){
+  orders.forEach(o=>{
+    if(o.sentAt && (o.status==='sent'||o.status==='delivering')){
+      scheduleAutoAdvance(o);
+    }
+  });
+}
+
+// ── คำนวณว่าตอนนี้ควรอยู่ step ไหนจาก sentAt ──
+function getAutoStatus(o){
+  if(!o.sentAt) return o.status||'pending';
+  const sentMs = new Date(o.sentAt).getTime();
+  const diffMs = Date.now() - sentMs;
+  if(diffMs >= AUTO_ADVANCE_MS_2) return 'done';
+  if(diffMs >= AUTO_ADVANCE_MS_1) return 'delivering';
+  return 'sent';
 }
 
 function saveTrackingNum(id){
