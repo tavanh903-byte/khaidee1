@@ -11289,24 +11289,33 @@ async function analyzeSlipImage(dataUrl){
       const darkPct=darkPx/total;
       const colorPct=colorPx/total;
 
-      // JDB/BCEL Slip: พื้นขาว/ฟ้าอ่อน + แถบสีด้านบน + มีตัวเลข
-      let score=0;
-      if(whitePct>0.30) score+=25;
-      else if(whitePct>0.20) score+=15;
-      if(darkPct>0.05) score+=20; // ตัวอักษร/เส้น
-      else if(darkPct>0.02) score+=10;
-      if(avgBright>140) score+=20;
-      else if(avgBright>110) score+=10;
-      if(topColorPct>0.15) score+=20; // มีแถบสีด้านบน เช่น JDB banner
-      if(colorPct<0.40) score+=15;
-      else if(colorPct<0.55) score+=5;
-
-      // ถ้า colorful มากเกิน = น่าจะเป็นรูปถ่ายธรรมชาติ ไม่ใช่ slip
-      const isNaturalPhoto = (colorPct > 0.60 && whitePct < 0.15);
-      if(isNaturalPhoto) score = Math.min(score, 20);
-
-      const likelySlip = score >= 45;
-      resolve({likelySlip, score, whitePct, darkPct, avgBright, colorPct, topColorPct});
+      // ── ปฏิเสธรูปที่ไม่เหมือนสลิปทันที ──
+      let rejectReason = null;
+      const isNaturalPhoto = (colorPct > 0.55 && whitePct < 0.20);
+      const isTooDark = (avgBright < 80 && whitePct < 0.10);
+      const isColorful = (colorPct > 0.70);
+      if(isNaturalPhoto) rejectReason = 'natural_photo';
+      else if(isTooDark) rejectReason = 'too_dark';
+      else if(isColorful) rejectReason = 'too_colorful';
+      if(rejectReason){
+        resolve({likelySlip:false, score:0, rejectReason, whitePct, darkPct, avgBright, colorPct, topColorPct});
+        return;
+      }
+      // คะแนนสลิป
+      let score = 0;
+      if(whitePct>0.35) score+=30;
+      else if(whitePct>0.22) score+=20;
+      else if(whitePct>0.12) score+=8;
+      if(darkPct>0.06) score+=20;
+      else if(darkPct>0.03) score+=12;
+      if(avgBright>150) score+=20;
+      else if(avgBright>120) score+=12;
+      else if(avgBright>90) score+=5;
+      if(topColorPct>0.20) score+=20;
+      else if(topColorPct>0.10) score+=10;
+      if(colorPct<0.30) score+=10;
+      const likelySlip = score >= 50;
+      resolve({likelySlip, score, rejectReason:null, whitePct, darkPct, avgBright, colorPct, topColorPct});
     };
     img.onerror=()=>resolve({likelySlip:false,score:0});
     img.src=dataUrl;
@@ -11317,6 +11326,17 @@ function extractSlipDateTime(dataUrl){
   // ดึงเวลาจาก metadata ของรูป (EXIF) ถ้ามี
   // หรือใช้เวลา file.lastModified แทน
   return null; // จะรับจาก file object โดยตรง
+}
+
+function resetSlipInput(){
+  const input = document.getElementById('depositSlipInput');
+  const prev = document.getElementById('depositSlipPreview');
+  const validEl = document.getElementById('slipValidResult');
+  const confirmBtn = document.getElementById('depConfirmBtn');
+  if(input) input.value='';
+  if(prev) prev.innerHTML='';
+  if(validEl) validEl.style.display='none';
+  if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
 }
 
 function previewDepositSlip(){
@@ -11367,20 +11387,37 @@ function previewDepositSlip(){
         validEl.style.border='1px solid rgba(220,38,38,0.4)';
         validEl.style.color='#f87171';
         validEl.innerHTML='❌ ສລິບນີ້ຖືກໃຊ້ແລ້ວ! ບໍ່ສາມາດໃຊ້ສລິບເດີມຊ້ຳ';
+        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; }
         return;
       }
 
-      // ── 2. ส่งให้ Gemini ตรวจ 4 ด่าน: ชื่อ + จำนวน + วันที่ + เลข Ref ──
-      // (ไม่ตรวจ metadata ไฟล์ เพราะ screenshot อาจถูก save ต่างวัน)
-      // Gemini จะอ่านวันที่จากในรูปสลิปโดยตรง
+      // ── 2. LOCAL CHECK ชั้นที่ 1 — ตรวจว่าเป็นสลิปไหม ก่อนส่ง AI ──
+      validEl.style.background='rgba(234,179,8,0.08)';
+      validEl.style.border='1px solid rgba(234,179,8,0.2)';
+      validEl.style.color='#fbbf24';
+      validEl.innerHTML='🔍 ກຳລັງກວດຮູບພາບ...';
+
+      const localCheck = await analyzeSlipImage(compressed);
+      if(!localCheck.likelySlip){
+        validEl.style.background='rgba(220,38,38,0.15)';
+        validEl.style.border='2px solid rgba(220,38,38,0.6)';
+        validEl.style.color='#f87171';
+        validEl.innerHTML = '<div style="font-size:15px;font-weight:700;margin-bottom:8px">🚫 ຮູບນີ້ບໍ່ແມ່ນສລິບໂອນເງິນ</div>' +
+          '<div style="font-size:12px;line-height:1.9;background:rgba(239,68,68,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
+          'ລະບົບກວດພົບວ່າຮູບຂອງທ່ານ <strong>ບໍ່ແມ່ນສລິບທະນາຄານ</strong><br>' +
+          'ກາລຸນາ: 📱 ເປີດແອັບທະນາຄານ → 🔍 ຊອກລາຍການໂອນ → 📸 ຖ່າຍ Screenshot → ⬆️ ອັບໂຫລດໃໝ່' +
+          '</div><button onclick="resetSlipInput()" style="width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">🔄 ເລືອກຮູບໃໝ່</button>';
+        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
+        return;
+      }
+
+      // ── 3. ผ่านชั้นที่ 1 → ส่ง AI ──
       const fileDate = new Date(fileModifiedTime);
       const isValidDate = fileModifiedTime > 1000000000000;
-
-      // ── 3. ส่งให้ Gemini ตรวจ 4 ด่าน: ชื่อ + จำนวน + วันที่ + เลข Ref ──
       validEl.style.background='rgba(234,179,8,0.08)';
       validEl.style.border='1px solid rgba(234,179,8,0.25)';
       validEl.style.color='#fbbf24';
-      validEl.innerHTML=`⏳ Gemini AI ກຳລັງກວດສລິບ 4 ລາຍການ...`;
+      validEl.innerHTML='⏳ Gemini AI ກຳລັງກວດສລິບ 4 ລາຍການ...';
 
       const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
       const nameCheck = await verifySlipOwnerName(compressed, expectedAmt||null);
