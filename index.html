@@ -446,6 +446,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .bill-status.sent{background:rgba(74,127,193,.2);color:var(--accent)}
 .bill-status.delivering{background:rgba(100,180,255,.2);color:#64b4ff}
 .bill-status.done{background:rgba(0,180,100,.2);color:#4c8}
+.bill-status.cancelled{background:rgba(248,113,113,.15);color:#f87171}
 /* TRACKING TIMELINE */
 .tracking-wrap{padding:8px 0 4px}
 .tracking-step{display:flex;gap:12px;position:relative;padding-bottom:18px}
@@ -977,7 +978,9 @@ async function sbLoadOrders(){
     sellerId:r.seller_id, productId:r.product_id, name:r.product_name,
     qty:r.qty, total:r.total, status:r.status,
     shippingStatus:r.shipping_status, trackingNumber:r.tracking_number,
-    note:r.note, date:r.created_at
+    note:r.note, date:r.created_at,
+    sellerImg:r.seller_img||null,
+    sellerVideo:r.seller_video||null
   }));
 }
 async function sbSaveOrder(o){
@@ -987,7 +990,19 @@ async function sbSaveOrder(o){
     product_name:o.name||o.productName||'', qty:o.qty||1, total:o.total||o.price||0,
     status:o.status||'pending', shipping_status:o.shippingStatus||null,
     tracking_number:o.trackingNumber||null, note:o.note||null,
+    seller_img:o.sellerImg||null,
+    seller_video:o.sellerVideo||null,
     updated_at: new Date().toISOString()
+  }).catch(()=>{
+    // Fallback ถ้า column seller_img/seller_video ยังไม่มีใน Supabase
+    return supa.from('kd_orders').upsert({
+      id:o.id, buyer_id:o.buyerId||o.userId||'', buyer_name:o.buyerName||o.userName||'',
+      seller_id:o.sellerId||'', product_id:o.productId||o.id||'',
+      product_name:o.name||o.productName||'', qty:o.qty||1, total:o.total||o.price||0,
+      status:o.status||'pending', shipping_status:o.shippingStatus||null,
+      tracking_number:o.trackingNumber||null, note:o.note||null,
+      updated_at: new Date().toISOString()
+    });
   });
 }
 
@@ -4762,10 +4777,10 @@ function renderBillsPage(){
 }
 
 function getStatusLabel(s){
-  return {pending:'⏳ ລໍຖ້າຜູ້ຂາຍ', packed:'📦 ຫຸ້ມຫໍ່ສຳເລັດ', sent:'🚚 ສົ່ງຂົນສ່ງແລ້ວ', delivering:'🏃 ກຳລັງສົ່ງ', done:'✅ ຮັບສຳເລັດ'}[s]||'⏳ ລໍຖ້າ';
+  return {pending:'⏳ ລໍຖ້າຜູ້ຂາຍ', packed:'📦 ຫຸ້ມຫໍ່ສຳເລັດ', sent:'🚚 ສົ່ງຂົນສ່ງແລ້ວ', delivering:'🏃 ກຳລັງສົ່ງ', done:'✅ ຮັບສຳເລັດ', cancelled:'❌ ຍົກເລີກ'}[s]||'⏳ ລໍຖ້າ';
 }
 function getStatusClass(s){
-  return {pending:'pending',packed:'packed',sent:'sent',delivering:'delivering',done:'done'}[s]||'pending';
+  return {pending:'pending',packed:'packed',sent:'sent',delivering:'delivering',done:'done',cancelled:'cancelled'}[s]||'pending';
 }
 
 function fallbackCopy(text){
@@ -4896,10 +4911,19 @@ function viewBillDetail(id){
       </div>
     </div>` : '';
 
-  const proofHtml = o.sellerImg ? `
-    <div style="margin:10px 0">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:6px">📸 ຫຼັກຖານການສົ່ງ</div>
-      <img src="${o.sellerImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover">
+  const proofHtml = (o.sellerImg || o.sellerVideo) ? `
+    <div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:12px;padding:12px;margin:10px 0">
+      <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:10px">📦 ຫຼັກຖານການສົ່ງຈາກຜູ້ຂາຍ</div>
+      ${o.sellerImg ? `
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">📸 ຮູບຫຼັກຖານ</div>
+        <img src="${o.sellerImg}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;cursor:pointer" onclick="adminViewImg('${o.sellerImg}')">
+      </div>` : ''}
+      ${o.sellerVideo ? `
+      <div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">🎥 ວິດີໂອຫຼັກຖານ</div>
+        <video src="${o.sellerVideo}" style="width:100%;border-radius:8px;max-height:220px" controls playsinline></video>
+      </div>` : ''}
     </div>` : '';
 
   const html = `
@@ -4987,11 +5011,25 @@ function sellerViewBill(id){
 
   const proofSection = `
     <div class="form-group">
-      <label class="form-label">📷 ຮູບໃບບິນຂົນສ່ງ / ຫຼັກຖານ</label>
+      <label class="form-label">📷 ຮູບຫຼັກຖານການສົ່ງ</label>
       <div class="upload-box" onclick="document.getElementById('sellerBillImg_${o.id}').click()">${o.sellerImg?'✅ ມີຮູບແລ້ວ — ກົດເພື່ອປ່ຽນ':'📸 ອັດໂຫລດຮູບ'}</div>
       <input type="file" id="sellerBillImg_${o.id}" accept="image/*" style="display:none" onchange="previewSellerImg(this,'sellerImgPrev_${o.id}')">
       <div id="sellerImgPrev_${o.id}" style="margin-top:8px">${o.sellerImg?`<img src="${o.sellerImg}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`:''}</div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label class="form-label">🎥 ວິດີໂອຫຼັກຖານການສົ່ງ</label>
+      <div class="upload-box" onclick="document.getElementById('sellerBillVideo_${o.id}').click()">${o.sellerVideo?'✅ ມີວິດີໂອແລ້ວ — ກົດເພື່ອປ່ຽນ':'🎥 ອັດໂຫລດວິດີໂອ'}</div>
+      <input type="file" id="sellerBillVideo_${o.id}" accept="video/*" style="display:none" onchange="previewSellerVideo(this,'sellerVideoPrev_${o.id}','${o.id}')">
+      <div id="sellerVideoPrev_${o.id}" style="margin-top:8px">${o.sellerVideo?`<video src="${o.sellerVideo}" style="width:100%;border-radius:8px;max-height:200px" controls playsinline></video>`:''}</div>
     </div>`;
+
+  const rejectBtn = (o.status === 'pending' || o.status === 'packed') ? `
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">⚠️ ຖ້າສິນຄ້າໝົດ ຫຼື ມີບັນຫາ:</div>
+      <button class="btn" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:#f87171;font-size:13px" onclick="sellerRejectOrder('${o.id}')">
+        ❌ ປະຕິເສດ / ຍົກເລີກ Order ນີ້
+      </button>
+    </div>` : '';
 
   const html = `
     <div class="modal-title">🚚 ຈັດການການຈັດສົ່ງ</div>
@@ -5014,7 +5052,8 @@ function sellerViewBill(id){
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${statusBtns}</div>
     ${trackSection}
     ${proofSection}
-    <button class="btn btn-outline" onclick="closeModal('sellerBillModal')" style="margin-top:4px">ປິດ</button>
+    ${rejectBtn}
+    <button class="btn btn-outline" onclick="closeModal('sellerBillModal')" style="margin-top:10px">ປິດ</button>
   `;
   document.getElementById('sellerBillContent').innerHTML = html;
   closeModal('saleHistoryModal');
@@ -5055,16 +5094,69 @@ function previewSellerImg(input, targetId){
   const reader = new FileReader();
   reader.onload = e => {
     const url = e.target.result;
-    // Save to order
     const ordId = targetId.replace('sellerImgPrev_','');
     const idx = orders.findIndex(x=>x.id===ordId);
-    if(idx>=0){ orders[idx].sellerImg=url; saveOrders(); }
+    if(idx>=0){
+      orders[idx].sellerImg = url;
+      saveOrders();
+      sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(img):',e));
+    }
     const el = document.getElementById(targetId);
     if(el) el.innerHTML = `<img src="${url}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`;
     showNotif('✅ ບັນທຶກຮູບຫຼັກຖານແລ້ວ');
     renderBillsPage();
   };
   reader.readAsDataURL(file);
+}
+
+function previewSellerVideo(input, targetId, ordId){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 50 * 1024 * 1024){ showNotif('❌ ວິດີໂອໃຫຍ່ເກີນໄປ (ສູງສຸດ 50MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    const idx = orders.findIndex(x=>x.id===ordId);
+    if(idx>=0){
+      orders[idx].sellerVideo = url;
+      saveOrders();
+      sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(video):',e));
+    }
+    const el = document.getElementById(targetId);
+    if(el) el.innerHTML = `<video src="${url}" style="width:100%;border-radius:8px;max-height:200px" controls playsinline></video>`;
+    showNotif('✅ ບັນທຶກວິດີໂອຫຼັກຖານແລ້ວ');
+    renderBillsPage();
+  };
+  reader.readAsDataURL(file);
+}
+
+function sellerRejectOrder(id){
+  if(!confirm('❌ ປະຕິເສດ Order ນີ້?\n\nເງິນຈະຄືນກັບລູກຄ້າໃນ Wallet ອັດຕະໂນມັດ')) return;
+  const idx = orders.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const o = orders[idx];
+  // Refund wallet to buyer
+  const db = getUsersDB();
+  const buyerId = o.userId || o.buyerId;
+  if(buyerId && db[buyerId]){
+    db[buyerId].wallet = (db[buyerId].wallet||0) + (o.total||0);
+    saveUsersDB(db);
+    // Update currentUser wallet if buyer is logged in
+    if(currentUser && currentUser.id === buyerId){
+      currentUser.wallet = db[buyerId].wallet;
+      saveUser();
+      updateWalletDisplay();
+    }
+  }
+  orders[idx].status = 'cancelled';
+  orders[idx].cancelledBy = 'seller';
+  orders[idx].cancelledAt = new Date().toISOString();
+  saveOrders();
+  sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(reject):',e));
+  showNotif('❌ ປະຕິເສດ Order + Refund ສຳເລັດ');
+  closeModal('sellerBillModal');
+  showSaleHistory();
+  renderBillsPage();
 }
 
 // ============ WALLET ============
