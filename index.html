@@ -13166,7 +13166,7 @@ async function sbLoadPhoneParts(){
     if(error || !data || !data.length) return null;
     return data.map(r=>({
       id:r.id, brand:r.brand, model:r.model, part:r.part,
-      price:r.price, stock:r.stock, img:r.img||'', desc:r.desc||'', cat:r.cat||'screen',
+      price:r.price, stock:r.stock, img:r.img||'', desc:r.part_desc||'', cat:r.cat||'screen',
       updatedAt:r.updated_at
     }));
   } catch(e){ return null; }
@@ -13176,7 +13176,7 @@ async function sbSavePhonePart(p){
   try {
     await supa.from('kd_phone_parts').upsert({
       id:p.id, brand:p.brand, model:p.model, part:p.part,
-      price:p.price, stock:p.stock||0, img:p.img||'', desc:p.desc||'', cat:p.cat||'screen',
+      price:p.price, stock:p.stock||0, img:p.img||'', part_desc:p.desc||'', cat:p.cat||'screen',
       updated_at:new Date().toISOString()
     });
   } catch(e){ console.warn('sbSavePhonePart:',e); }
