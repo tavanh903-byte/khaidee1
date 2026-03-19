@@ -975,7 +975,10 @@ async function sbLoadOrders(){
   const {data} = await supa.from('kd_orders').select('*').order('created_at',{ascending:false});
   return (data||[]).map(r=>({
     id:r.id, buyerId:r.buyer_id, buyerName:r.buyer_name,
+    userId:r.buyer_id,           // ✅ map userId = buyer_id ໃຫ້ renderBillsPage ຫາເຈີ
+    userName:r.buyer_name,
     sellerId:r.seller_id, productId:r.product_id, name:r.product_name,
+    productName:r.product_name,
     qty:r.qty, total:r.total, status:r.status,
     shippingStatus:r.shipping_status, trackingNumber:r.tracking_number,
     note:r.note, date:r.created_at,
@@ -1140,9 +1143,10 @@ async function sbSetSetting(key, value){
 async function clearDemoProductsFromSupabase(){
   const demoIds = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010','PRD-011','PRD-012'];
   try{
-    // ✅ ລຶບສະເພາະ demo IDs ເທົ່ານັ້ນ — ບໍ່ລຶບສິນຄ້າທີ່ seller_id ວ່າງ
-    // (seller_id ວ່າງ = ສິນຄ້າ Admin ທີ່ save ຈາກ localStorage ເກົ່າ)
     await supa.from('kd_products').delete().in('id', demoIds);
+    // Also delete products with no seller_id
+    await supa.from('kd_products').delete().is('seller_id','').not('is_game','eq',true);
+    ;
   }catch(e){ console.warn('clearDemo:',e); }
 }
 
@@ -1180,7 +1184,19 @@ async function syncFromSupabase(){
       localStorage.setItem('kd_products', JSON.stringify(products));
     }
     if(ords.length > 0){
-      orders = ords;
+      // ✅ Merge: Supabase เป็น source of truth แต่เก็บ field พิเศษจาก local ไว้
+      const localOrds = JSON.parse(localStorage.getItem('kd_orders')||'[]');
+      orders = ords.map(so => {
+        const local = localOrds.find(lo => lo.id === so.id);
+        // เก็บ fields ที่ Supabase ไม่มี เช่น productEmoji, ban, muang, khwaeng
+        return local ? { ...local, ...so, userId: so.userId||local.userId||so.buyerId||'',
+          productEmoji: local.productEmoji||so.productEmoji||'📦',
+          productName: so.productName||so.name||local.productName||local.name||'',
+          ban: local.ban||so.ban||'', muang: local.muang||so.muang||'', khwaeng: local.khwaeng||so.khwaeng||''
+        } : so;
+      });
+      // เพิ่ม local orders ที่ยังไม่มีใน Supabase
+      localOrds.forEach(lo => { if(!orders.find(o=>o.id===lo.id)) orders.push(lo); });
       localStorage.setItem('kd_orders', JSON.stringify(orders));
     }
     // ✅ โหลด deposits + withdrawals จาก Supabase (ข้ามเครื่อง)
@@ -3824,9 +3840,9 @@ if(products.some(p=>_demoIds.includes(p.id))){
   products = products.filter(p=>!_demoIds.includes(p.id));
   localStorage.setItem('kd_products', JSON.stringify(products));
 }
-// ลบสินค้าที่ไม่มี sellerId (สินค้าจำลองเก่า) — ยกเว้น "" จาก Supabase
-if(products.some(p=>p.sellerId === null || p.sellerId === undefined)){
-  products = products.filter(p=>p.sellerId !== null && p.sellerId !== undefined || p.isGame);
+// ลบสินค้าที่ไม่มี sellerId (สินค้าจำลองเก่า)
+if(products.some(p=>!p.sellerId && !p.isGame)){
+  products = products.filter(p=>p.sellerId || p.isGame);
   localStorage.setItem('kd_products', JSON.stringify(products));
 }
 let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
@@ -4017,8 +4033,7 @@ function initApp() {
   }
   // Clear demo products permanently
   const _demoIds2 = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010'];
-  // ✅ ແກ້: seller_id ຈາກ Supabase ອາດເປັນ "" (string ວ່າງ) → ໃຫ້ຜ່ານໄດ້
-  products = products.filter(p=>!_demoIds2.includes(p.id) && (p.sellerId !== undefined || p.isGame));
+  products = products.filter(p=>!_demoIds2.includes(p.id) && (p.sellerId||p.isGame));
   saveProducts();
   renderProducts(products);
 
@@ -4718,6 +4733,9 @@ function submitGeneralOrder(){
     status: 'pending', date: new Date().toLocaleDateString('lo-LA'), isGame: false,
     sellerId: p.sellerId||'admin',
     variant: getVariantSummary() || null,
+    userId: currentUser?.id||'',
+    buyerId: currentUser?.id||'',
+    userName: currentUser?.name||name,
   };
   orders.push(order); saveOrders();
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
@@ -4896,10 +4914,20 @@ function showGameBillPopup(order, p){
 
 // ============ BILLS PAGE ============
 function renderBillsPage(){
-  const myOrders = orders.filter(o=>currentUser && o.name===currentUser.name || currentUser && o.phone===currentUser.phone || (currentUser && currentUser.orders && currentUser.orders.includes(o.id)));
+  if(!currentUser){
+    const container = document.getElementById('billsContainer');
+    container.innerHTML='<div style="text-align:center;color:var(--text2);padding:40px">ເຂົ້າລະບົບກ່ອນ</div>';
+    return;
+  }
   const container = document.getElementById('billsContainer');
-  if(!currentUser){container.innerHTML='<div style="text-align:center;color:var(--text2);padding:40px">ເຂົ້າລະບົບກ່ອນ</div>';return;}
-  const myO = orders.filter(o=>o.userId===currentUser.id);
+  // ✅ ເຊັກທຸກ field ທີ່ໃຊ້ identify buyer
+  const myO = orders.filter(o =>
+    o.userId   === currentUser.id ||
+    o.buyerId  === currentUser.id ||
+    o.name     === currentUser.name ||
+    o.phone    === currentUser.phone ||
+    (currentUser.orders && currentUser.orders.includes(o.id))
+  );
   if(!myO.length){container.innerHTML='<div style="text-align:center;color:var(--text2);padding:40px">ຍັງບໍ່ມີບິນ</div>';return;}
   container.innerHTML = myO.map(o=>`
     <div class="bill-card" onclick="viewBillDetail('${o.id}')">
@@ -4910,7 +4938,7 @@ function renderBillsPage(){
       <div class="bill-product">
         <div class="bill-product-img">${o.productEmoji||'📦'}</div>
         <div class="bill-product-info">
-          <div class="bill-product-name">${o.productName}</div>
+          <div class="bill-product-name">${o.productName||o.name}</div>
           <div class="bill-product-price">${fmtPrice(o.total)}</div>
           <div style="font-size:11px;color:var(--text2)">${o.date} • #${o.productId}</div>
           ${o.trackingNum?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📮 ${o.trackingNum}</div>`:''}
