@@ -4024,6 +4024,7 @@ function initApp() {
 
   // Load credentials + sync data from Supabase
   loadAdminCredentials().then(()=>{
+    updatePhonePartsAdminIcon(); // ✅ เรียกหลัง isAdmin ถูกตั้งค่าแล้ว
     return syncFromSupabase();
   }).then(()=>{
     renderProducts(products);
@@ -4031,7 +4032,7 @@ function initApp() {
     // ── re-schedule auto-advance สำหรับ orders ที่ sentAt แล้ว ──
     checkAllAutoAdvance();
   });
-  updatePhonePartsAdminIcon();
+  _loadPhonePartsToHome();
 }
 
 
@@ -4178,6 +4179,14 @@ function saveChat(){localStorage.setItem('kd_chat',JSON.stringify(chatMsgs));}
 
 // ============ PRODUCTS RENDER ============
 let currentCat = 'all';
+let _allPhoneParts = [];
+async function _loadPhonePartsToHome(){
+  try{
+    const sbData = await sbLoadPhoneParts().catch(()=>null);
+    _allPhoneParts = sbData || getPhoneParts();
+    if(currentCat==='all' || currentCat==='phoneparts') filterProducts();
+  } catch(e){}
+}
 function renderProducts(list){
   if(!list) list = products;
   updateAdminShopBanner();
@@ -4198,7 +4207,7 @@ function renderProducts(list){
     const stars = p.reviews?.length ? (p.reviews.reduce((s,r)=>s+(r.stars||5),0)/p.reviews.length).toFixed(1) : null;
     const isAdminProd = isAdminUser(p.sellerId);
     return `
-    <div class="product-card" onclick="showProductDetail('${p.id}')" style="${isAdminProd?'border-color:rgba(201,168,76,.35)':''}">
+    <div class="product-card" onclick="${p._isPart?`ppOpenDetail('${p.id}')`:`showProductDetail('${p.id}')`}" style="${isAdminProd?'border-color:rgba(201,168,76,.35)':''}">
       ${imgHtml}
       ${isAdminProd?'<div class="product-badge" style="background:linear-gradient(135deg,var(--gold),#f0d080);color:#000">👑 Admin</div>':p.isGame?'<div class="product-badge">ID ເກມ</div>':''}
       <div class="product-id-badge">#${p.id}</div>
@@ -4250,13 +4259,36 @@ function filterCatIcon(cat, el){
   filterProducts();
 }
 
+function _fuzzyMatch(text, q){
+  if(!q) return true;
+  text = text.toLowerCase(); q = q.toLowerCase().trim();
+  if(text.includes(q)) return true;
+  const words = q.split(/\s+/).filter(Boolean);
+  if(words.length>1 && words.every(w=>text.includes(w))) return true;
+  let ti=0,qi=0;
+  while(ti<text.length && qi<q.length){ if(text[ti]===q[qi]) qi++; ti++; }
+  if(qi===q.length && q.length>=2) return true;
+  if(q.length>=3){
+    const tgT=[]; for(let i=0;i<text.length-1;i++) tgT.push(text.slice(i,i+2));
+    const tgQ=[]; for(let i=0;i<q.length-1;i++) tgQ.push(q.slice(i,i+2));
+    if(tgQ.filter(g=>tgT.includes(g)).length/tgQ.length>=0.4) return true;
+  }
+  return false;
+}
 function filterProducts(){
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const subCats = {shoes:'shoes', bags:'bags', food:'food', cosmetics:'bags', other:'other'};
-  let list = products.filter(p=>{
-    const matchSearch = p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q);
+  const q = (document.getElementById('searchInput').value||'').trim();
+  const partPool = _allPhoneParts.map(p=>({
+    id:p.id, name:p.brand+' '+p.model+' '+p.part, desc:p.desc||'',
+    price:p.price, cat:'phoneparts', subcat:p.cat,
+    images:p.img?[p.img]:[], emoji:'🔧',
+    sold:0, views:0, sellerId:'admin', qty:p.stock,
+    _isPart:true, _partData:p
+  }));
+  const allPool = [...products, ...partPool];
+  let list = allPool.filter(p=>{
+    const txt = (p.name||'')+' '+(p.desc||'')+(p._isPart?' '+(p._partData.brand||'')+' '+(p._partData.model||''):'');
+    const matchSearch = !q || _fuzzyMatch(txt, q);
     if(currentCat==='all') return matchSearch;
-    // match by cat OR subcat
     const matchCat = p.cat===currentCat || p.subcat===currentCat ||
       (currentCat==='clothes' && (p.cat==='clothes'||p.subcat==='clothes'||p.subcat==='shoes'||p.subcat==='bags')) ||
       (currentCat==='shoes' && p.subcat==='shoes') ||
@@ -13421,30 +13453,26 @@ function previewPPImg(url){
   el.innerHTML = `<img src="${url}" onerror="this.style.display='none'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)">`;
 }
 
-async async function uploadPPImg(input){
+async function uploadPPImg(input){
   const file = input.files[0];
   if(!file) return;
-  showNotif('⏳ ກຳລັງອັດໂຫລດຮູບ...');
+  showNotif('⏳ ஁னலஅணஞ்ஞனலவ௎ல்...');
   const imgInput = document.getElementById('ppEditImg');
   const preview  = document.getElementById('ppImgPreview');
-  if(preview) preview.innerHTML = '<div style="font-size:11px;color:var(--text2);padding:6px">⏳ ກຳລັງອັດໂຫລດ...</div>';
-
-  // Try upload to Supabase Storage first
+  if(preview) preview.innerHTML = '<div style="font-size:11px;color:var(--text2);padding:6px">⏳ ஁னலஅணஞ்ஞனலவ௎ல்...</div>';
   const publicUrl = await uploadImageToStorage(file, 'phone_parts');
   if(publicUrl){
     if(imgInput) imgInput.value = publicUrl;
     previewPPImg(publicUrl);
-    showNotif('✅ ອັດໂຫລດຮູບໄປ Supabase ສຳເລັດ!');
+    showNotif('✅ அண்டொலண஡ஹப்ஞைப் Supabase ண஡ஞ்ஞலவம்!');
     return;
   }
-
-  // Fallback: base64 (if storage fails)
   const reader = new FileReader();
   reader.onload = e => {
     const url = e.target.result;
     if(imgInput) imgInput.value = url;
     previewPPImg(url);
-    showNotif('⚠️ ໃຊ້ base64 ແທນ (Storage ບໍ່ສຳເລັດ)');
+    showNotif('⚠️ ஞைப் base64 அதன் (Storage ஞைப்ணைதம்)');
   };
   reader.readAsDataURL(file);
 }
@@ -13462,16 +13490,14 @@ async function savePPItem(){
 
   if(!brand||!model||!part||!price){ showNotif('⚠️ ກາລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ'); return; }
 
-  // ถ้า img เป็น base64 ให้อัปโหลดไป Supabase Storage ก่อน
   if(img && img.startsWith('data:')){
-    showNotif('⏳ ກຳລັງອັດໂຫລດຮູບໄປ Supabase...');
     try{
       const blob = await (await fetch(img)).blob();
       const ext  = blob.type.split('/')[1] || 'jpg';
       const file = new File([blob], 'part_'+Date.now()+'.'+ext, {type: blob.type});
       const uploaded = await uploadImageToStorage(file, 'phone_parts');
       if(uploaded){ img = uploaded; }
-    } catch(e){ console.warn('img upload err:',e); }
+    } catch(e){}
   }
 
   const parts = window._ppAdminParts || [];
@@ -13486,6 +13512,7 @@ async function savePPItem(){
   await sbSavePhonePart(item);
   showNotif('✅ ບັນທຶກ '+part+' ສຳເລັດ!');
   renderPhonePartsAdminPanel();
+  _loadPhonePartsToHome();
   // clear form
   ['ppEditId','ppEditBrand','ppEditModel','ppEditPart','ppEditDesc','ppEditPrice','ppEditStock','ppEditImg']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
