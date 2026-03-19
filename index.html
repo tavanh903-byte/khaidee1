@@ -13421,16 +13421,30 @@ function previewPPImg(url){
   el.innerHTML = `<img src="${url}" onerror="this.style.display='none'" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)">`;
 }
 
-function uploadPPImg(input){
+async async function uploadPPImg(input){
   const file = input.files[0];
   if(!file) return;
+  showNotif('⏳ ກຳລັງອັດໂຫລດຮູບ...');
+  const imgInput = document.getElementById('ppEditImg');
+  const preview  = document.getElementById('ppImgPreview');
+  if(preview) preview.innerHTML = '<div style="font-size:11px;color:var(--text2);padding:6px">⏳ ກຳລັງອັດໂຫລດ...</div>';
+
+  // Try upload to Supabase Storage first
+  const publicUrl = await uploadImageToStorage(file, 'phone_parts');
+  if(publicUrl){
+    if(imgInput) imgInput.value = publicUrl;
+    previewPPImg(publicUrl);
+    showNotif('✅ ອັດໂຫລດຮູບໄປ Supabase ສຳເລັດ!');
+    return;
+  }
+
+  // Fallback: base64 (if storage fails)
   const reader = new FileReader();
   reader.onload = e => {
     const url = e.target.result;
-    const imgInput = document.getElementById('ppEditImg');
     if(imgInput) imgInput.value = url;
     previewPPImg(url);
-    showNotif('✅ ໂຫລດຮູບສຳເລັດ');
+    showNotif('⚠️ ໃຊ້ base64 ແທນ (Storage ບໍ່ສຳເລັດ)');
   };
   reader.readAsDataURL(file);
 }
@@ -13444,9 +13458,21 @@ async function savePPItem(){
   const price = parseInt(document.getElementById('ppEditPrice')?.value)||0;
   const stock = parseInt(document.getElementById('ppEditStock')?.value)||0;
   const cat   = document.getElementById('ppEditCat')?.value||'screen';
-  const img   = document.getElementById('ppEditImg')?.value?.trim()||'';
+  let   img   = document.getElementById('ppEditImg')?.value?.trim()||'';
 
   if(!brand||!model||!part||!price){ showNotif('⚠️ ກາລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ'); return; }
+
+  // ถ้า img เป็น base64 ให้อัปโหลดไป Supabase Storage ก่อน
+  if(img && img.startsWith('data:')){
+    showNotif('⏳ ກຳລັງອັດໂຫລດຮູບໄປ Supabase...');
+    try{
+      const blob = await (await fetch(img)).blob();
+      const ext  = blob.type.split('/')[1] || 'jpg';
+      const file = new File([blob], 'part_'+Date.now()+'.'+ext, {type: blob.type});
+      const uploaded = await uploadImageToStorage(file, 'phone_parts');
+      if(uploaded){ img = uploaded; }
+    } catch(e){ console.warn('img upload err:',e); }
+  }
 
   const parts = window._ppAdminParts || [];
   const existing = parts.findIndex(p=>p.id===id);
