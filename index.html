@@ -13765,7 +13765,8 @@ function ppRenderPage(){
 
 // ── เปิดหน้า detail ของอะไหล่ — switchPage ไป product page จริง ──
 function ppOpenDetail(partId){
-  const p = _ppgParts.find(x=>x.id===partId);
+  // ถ้าเปิดจากหน้าแรก _ppgParts อาจยังว่าง → fallback ไปใช้ _allPhoneParts แทน
+  const p = _ppgParts.find(x=>x.id===partId) || _allPhoneParts.find(x=>x.id===partId);
   if(!p) return;
 
   const catIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️',port:'🔌',camera:'📷'};
