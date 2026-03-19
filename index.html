@@ -1140,10 +1140,9 @@ async function sbSetSetting(key, value){
 async function clearDemoProductsFromSupabase(){
   const demoIds = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010','PRD-011','PRD-012'];
   try{
+    // ✅ ລຶບສະເພາະ demo IDs ເທົ່ານັ້ນ — ບໍ່ລຶບສິນຄ້າທີ່ seller_id ວ່າງ
+    // (seller_id ວ່າງ = ສິນຄ້າ Admin ທີ່ save ຈາກ localStorage ເກົ່າ)
     await supa.from('kd_products').delete().in('id', demoIds);
-    // Also delete products with no seller_id
-    await supa.from('kd_products').delete().is('seller_id','').not('is_game','eq',true);
-    ;
   }catch(e){ console.warn('clearDemo:',e); }
 }
 
@@ -3825,9 +3824,9 @@ if(products.some(p=>_demoIds.includes(p.id))){
   products = products.filter(p=>!_demoIds.includes(p.id));
   localStorage.setItem('kd_products', JSON.stringify(products));
 }
-// ลบสินค้าที่ไม่มี sellerId (สินค้าจำลองเก่า)
-if(products.some(p=>!p.sellerId && !p.isGame)){
-  products = products.filter(p=>p.sellerId || p.isGame);
+// ลบสินค้าที่ไม่มี sellerId (สินค้าจำลองเก่า) — ยกเว้น "" จาก Supabase
+if(products.some(p=>p.sellerId === null || p.sellerId === undefined)){
+  products = products.filter(p=>p.sellerId !== null && p.sellerId !== undefined || p.isGame);
   localStorage.setItem('kd_products', JSON.stringify(products));
 }
 let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
@@ -4018,7 +4017,8 @@ function initApp() {
   }
   // Clear demo products permanently
   const _demoIds2 = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010'];
-  products = products.filter(p=>!_demoIds2.includes(p.id) && (p.sellerId||p.isGame));
+  // ✅ ແກ້: seller_id ຈາກ Supabase ອາດເປັນ "" (string ວ່າງ) → ໃຫ້ຜ່ານໄດ້
+  products = products.filter(p=>!_demoIds2.includes(p.id) && (p.sellerId !== undefined || p.isGame));
   saveProducts();
   renderProducts(products);
 
