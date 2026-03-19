@@ -990,29 +990,38 @@ async function sbLoadOrders(){
   }));
 }
 async function sbSaveOrder(o){
-  await supa.from('kd_orders').upsert({
-    id:o.id, buyer_id:o.buyerId||o.userId||'', buyer_name:o.buyerName||o.userName||'',
-    seller_id:o.sellerId||'', product_id:o.productId||o.id||'',
-    product_name:o.name||o.productName||'', qty:o.qty||1, total:o.total||o.price||0,
-    status:o.status||'pending', shipping_status:o.shippingStatus||null,
-    tracking_number:o.trackingNumber||null, note:o.note||null,
+  const now = new Date().toISOString();
+  const payload = {
+    id:o.id,
+    buyer_id:o.buyerId||o.userId||'',
+    buyer_name:o.buyerName||o.userName||o.name||'',
+    seller_id:o.sellerId||'',
+    product_id:o.productId||o.id||'',
+    product_name:o.productName||o.name||'',
+    qty:o.qty||1, total:o.total||o.price||0,
+    status:o.status||'pending',
+    shipping_status:o.shippingStatus||null,
+    tracking_number:o.trackingNumber||null,
+    note:o.note||null,
     seller_img:o.sellerImg||null,
     seller_video:o.sellerVideo||null,
     sent_at:o.sentAt||null,
     auto_delivering:o.autoDelivering||false,
     auto_done:o.autoDone||false,
-    updated_at: new Date().toISOString()
-  }).catch(()=>{
-    // Fallback ถ้า column ใหม่ยังไม่มีใน Supabase
-    return supa.from('kd_orders').upsert({
-      id:o.id, buyer_id:o.buyerId||o.userId||'', buyer_name:o.buyerName||o.userName||'',
-      seller_id:o.sellerId||'', product_id:o.productId||o.id||'',
-      product_name:o.name||o.productName||'', qty:o.qty||1, total:o.total||o.price||0,
-      status:o.status||'pending', shipping_status:o.shippingStatus||null,
-      tracking_number:o.trackingNumber||null, note:o.note||null,
-      updated_at: new Date().toISOString()
-    });
-  });
+    created_at:o.createdAt||now,
+    updated_at:now
+  };
+  const {error} = await supa.from('kd_orders').upsert(payload);
+  if(error){
+    console.warn('sbSaveOrder error:', error.message);
+    // Fallback — ໃຊ້ fields ພື້ນຖານ
+    const base = {id:payload.id,buyer_id:payload.buyer_id,buyer_name:payload.buyer_name,
+      seller_id:payload.seller_id,product_id:payload.product_id,product_name:payload.product_name,
+      qty:payload.qty,total:payload.total,status:payload.status,
+      shipping_status:payload.shipping_status,tracking_number:payload.tracking_number,
+      note:payload.note,created_at:payload.created_at,updated_at:payload.updated_at};
+    await supa.from('kd_orders').upsert(base).catch(e=>console.warn('sbSaveOrder fallback:',e.message));
+  }
 }
 
 // ── Deposits ──
@@ -4186,7 +4195,13 @@ async function resyncAllProductImages(){
 }
 function saveOrders(){
   localStorage.setItem('kd_orders',JSON.stringify(orders));
-  orders.forEach(o=>sbSaveOrder(o).catch(e=>console.warn('sbSaveOrder:',e)));
+  // ✅ ສົ່ງທຸກ order ໄປ Supabase (upsert = insert or update)
+  orders.forEach(o => sbSaveOrder(o).catch(e => console.warn('sbSaveOrder:', e.message)));
+}
+// ✅ ຟັງຊັ່ນໃໝ່: save ສະເພາະ 1 order ທີ່ປ່ຽນໄປ (ໄວກວ່າ)
+function saveOneOrder(orderId){
+  const o = orders.find(x => x.id === orderId);
+  if(o) sbSaveOrder(o).catch(e => console.warn('saveOneOrder:', e.message));
 }
 // saveUser is defined above in USER DATABASE SYSTEM
 function _saveUserCompat(){ saveUser(); } // alias for any legacy calls
