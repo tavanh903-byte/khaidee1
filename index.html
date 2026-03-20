@@ -2121,8 +2121,9 @@ async function syncFromSupabase(){
 
   <!-- BILLS PAGE -->
   <div class="page" id="page-bills">
-    <div class="page-header">
+    <div class="page-header" style="justify-content:space-between">
       <div style="font-size:16px;font-weight:700;color:var(--gold)">🧾 ບິນສິນຄ້າ</div>
+      <button id="diaBillIconBtn" onclick="showMyDiamondOrders()" style="display:none;background:linear-gradient(135deg,rgba(100,68,255,.2),rgba(68,0,255,.1));border:1.5px solid rgba(100,68,255,.5);color:#a090ff;border-radius:10px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">💎 ການເຕີມ</button>
     </div>
     <div style="padding:16px" id="billsContainer">
       <div style="text-align:center;color:var(--text2);padding:40px 20px;font-size:14px">ຍັງບໍ່ມີບິນ<br>ກົດສັ່ງຊື້ສິນຄ້າກ່ອນ</div>
@@ -5001,6 +5002,10 @@ function renderBillsPage(){
     return;
   }
   const container = document.getElementById('billsContainer');
+  // ✅ ສະແດງໄອຄອນ 💎 ຖ້າລູກຄ້າມີ diamond orders
+  const myDiaOrders = getDiamondOrders().filter(o=>o.userId===currentUser.id);
+  const diaBtn = document.getElementById('diaBillIconBtn');
+  if(diaBtn) diaBtn.style.display = myDiaOrders.length ? 'flex' : 'none';
   // ✅ ເຊັກທຸກ field ທີ່ໃຊ້ identify buyer
   const myO = orders.filter(o =>
     o.userId   === currentUser.id ||
@@ -6093,6 +6098,109 @@ function deleteProductFromManage(id){
 function deleteProduct(id){ deleteProductFromManage(id); }
 
 // ============ ADMIN DIAMOND TAB ============
+
+// ══════════════════════════════════════════════════════
+// ✅ ຫນ້າ Diamond Orders ລູກຄ້າ
+// ══════════════════════════════════════════════════════
+function showMyDiamondOrders(){
+  if(!currentUser) return;
+  const myOrders = getDiamondOrders()
+    .filter(o=>o.userId===currentUser.id)
+    .sort((a,b)=>(b.createdMs||0)-(a.createdMs||0));
+
+  const html = `
+    <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:16px">💎 ລາຍການເຕີມ Diamond</div>
+    ${myOrders.length ? myOrders.map(o=>{
+      const isDone = o.status==='done';
+      const isCancelled = o.status==='cancelled';
+      const accent = o.game==='mlbb' ? '#6644ff' : '#ff4400';
+      const statusHtml = isDone
+        ? '<span style="color:#4eff88;font-weight:700;font-size:12px">✅ ສຳເລັດແລ້ວ</span>'
+        : isCancelled
+        ? '<span style="color:#f87171;font-size:12px">❌ ຍົກເລີກ</span>'
+        : '<span style="color:#ffa500;font-size:12px">⏳ ກຳລັງດຳເນີນການ...</span>';
+      return `
+      <div style="background:var(--dark2);border:1.5px solid ${isDone?'rgba(78,255,136,.3)':isCancelled?'rgba(248,113,113,.3)':`rgba(${o.game==='mlbb'?'100,68,255':'255,68,0'},.2)`};border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="font-size:28px">${o.productEmoji||'💎'}</div>
+            <div>
+              <div style="font-size:13px;font-weight:700">${o.productName}</div>
+              <div style="font-size:10px;color:var(--text2)">#${o.id}</div>
+            </div>
+          </div>
+          ${statusHtml}
+        </div>
+        <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.1);border-radius:10px;padding:10px">
+          <div class="bill-detail-row"><span>Game ID</span><span style="color:${accent};font-weight:700">${o.gameId}</span></div>
+          ${o.server?`<div class="bill-detail-row"><span>Server</span><span>${o.server}</span></div>`:''}
+          <div class="bill-detail-row"><span>Diamond</span><span style="color:${accent};font-weight:700">${o.productEmoji} ${o.amount?.toLocaleString()||''}</span></div>
+          ${o.bonus?`<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88">+${o.bonus} 💎</span></div>`:''}
+          <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold);font-weight:700">${fmtPrice(o.price||o.total)}</span></div>
+          <div class="bill-detail-row"><span>ຮ້ານ</span><span>${o.sellerName||'Admin'}</span></div>
+          <div class="bill-detail-row"><span>ວັນທີ</span><span>${fmtBillDate(o.date||o.createdAt)}</span></div>
+        </div>
+        ${isDone ? `
+        <div style="background:rgba(78,255,136,.08);border:1px solid rgba(78,255,136,.25);border-radius:10px;padding:10px;margin-top:10px;text-align:center">
+          <div style="font-size:16px;font-weight:800;color:#4eff88">✅ ເຕີມ Diamond ສຳເລັດແລ້ວ!</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Diamond ໄດ້ຮັບຢູ່ Game ID: ${o.gameId}</div>
+        </div>` : !isCancelled ? `
+        <div style="background:rgba(255,165,0,.06);border:1px solid rgba(255,165,0,.2);border-radius:10px;padding:10px;margin-top:10px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:#ffa500">⏳ ລໍຖ້າການເຕີມ...</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:3px">ຮ້ານຈະເຕີມໃຫ້ທ່ານພາຍໃນ 15-30 ນາທີ</div>
+          <div style="height:3px;background:rgba(255,165,0,.15);border-radius:2px;margin-top:8px;overflow:hidden">
+            <div style="height:100%;width:60%;background:linear-gradient(90deg,#ffa500,#ffcc44);border-radius:2px;animation:shimmer 2s infinite"></div>
+          </div>
+        </div>` : ''}
+      </div>`;
+    }).join('') : '<div style="text-align:center;color:var(--text2);padding:30px">ຍັງບໍ່ມີລາຍການເຕີມ</div>'}
+  `;
+
+  document.getElementById('billDetailContent').innerHTML = html;
+  openModal('billDetailModal');
+}
+
+// ══════════════════════════════════════════════════════
+// ✅ Admin ຢືນຢັນ Diamond ສຳເລັດ
+// ══════════════════════════════════════════════════════
+function adminConfirmDiamond(orderId){
+  const dorders = getDiamondOrders();
+  const idx = dorders.findIndex(o=>o.id===orderId);
+  if(idx<0){ showNotif('ບໍ່ພົບ Order'); return; }
+  dorders[idx].status = 'done';
+  dorders[idx].confirmedAt = new Date().toISOString();
+  dorders[idx].confirmedBy = currentUser?.name||'Admin';
+  saveDiamondOrders(dorders);
+  // ✅ อัปเดต orders array ด้วย
+  const oidx = orders.findIndex(o=>o.id===orderId);
+  if(oidx>=0){ orders[oidx].status='done'; saveOrders(); }
+  showNotif('✅ ຢືນຢັນ Diamond ສຳເລັດ!');
+  renderBillsPage();
+  // Refresh admin view
+  if(typeof switchAdminTab === 'function') switchAdminTab('diamond');
+}
+
+function adminCancelDiamond(orderId){
+  if(!confirm('❌ ຍົກເລີກ Order ນີ້ + Refund ເງິນໃຫ້ລູກຄ້າ?')) return;
+  const dorders = getDiamondOrders();
+  const idx = dorders.findIndex(o=>o.id===orderId);
+  if(idx<0) return;
+  const o = dorders[idx];
+  // Refund wallet
+  const db = getUsersDB();
+  if(o.userId && db[o.userId]){
+    db[o.userId].wallet = (db[o.userId].wallet||0) + (o.price||o.total||0);
+    saveUsersDB(db);
+    if(currentUser && currentUser.id===o.userId){ currentUser.wallet=db[o.userId].wallet; saveUser(); updateWalletDisplay(); }
+  }
+  dorders[idx].status = 'cancelled';
+  saveDiamondOrders(dorders);
+  const oidx = orders.findIndex(x=>x.id===orderId);
+  if(oidx>=0){ orders[oidx].status='cancelled'; saveOrders(); }
+  showNotif('❌ ຍົກເລີກ + Refund ສຳເລັດ');
+  if(typeof switchAdminTab === 'function') switchAdminTab('diamond');
+}
+
 function renderAdminDiamond(){
   const ds = getDiamondSellers();
   const map = getAllUsersMap();
@@ -6136,29 +6244,50 @@ function renderAdminDiamond(){
       </div>
     </div>
 
-    <!-- Diamond orders summary -->
+    <!-- Diamond orders summary + pending confirm -->
     <div class="dia-admin-section">
-      <div class="dia-admin-title">📊 ສະຫຼຸບ Diamond Orders</div>
+      <div class="dia-admin-title">📊 ສະຫຼຸບ & ລາຍການລໍຖ້າຢືນຢັນ</div>
       ${(()=>{
         const dorders = getDiamondOrders();
         const mlbbO = dorders.filter(o=>o.game==='mlbb');
         const ffO = dorders.filter(o=>o.game==='ff');
         const mlbbRev = mlbbO.reduce((s,o)=>s+o.price,0);
         const ffRev = ffO.reduce((s,o)=>s+o.price,0);
-        return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div style="background:rgba(100,68,255,.08);border:1px solid rgba(100,68,255,.2);border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:24px">💎</div>
-            <div style="font-size:18px;font-weight:800;color:#6644ff">${mlbbO.length}</div>
+        const pending = dorders.filter(o=>o.status==='pending'||!o.status).reverse();
+        const statsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="background:rgba(100,68,255,.08);border:1px solid rgba(100,68,255,.2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:20px">💎</div>
+            <div style="font-size:16px;font-weight:800;color:#6644ff">${mlbbO.length}</div>
             <div style="font-size:10px;color:var(--text2)">MLBB Orders</div>
-            <div style="font-size:12px;color:var(--gold);font-weight:700">${Number(mlbbRev).toLocaleString()} ກ</div>
+            <div style="font-size:11px;color:var(--gold)">${Number(mlbbRev).toLocaleString()} ກ</div>
           </div>
-          <div style="background:rgba(255,68,0,.08);border:1px solid rgba(255,68,0,.2);border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:24px">💠</div>
-            <div style="font-size:18px;font-weight:800;color:#ff4400">${ffO.length}</div>
+          <div style="background:rgba(255,68,0,.08);border:1px solid rgba(255,68,0,.2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:20px">💠</div>
+            <div style="font-size:16px;font-weight:800;color:#ff4400">${ffO.length}</div>
             <div style="font-size:10px;color:var(--text2)">FF Orders</div>
-            <div style="font-size:12px;color:var(--gold);font-weight:700">${Number(ffRev).toLocaleString()} ກ</div>
+            <div style="font-size:11px;color:var(--gold)">${Number(ffRev).toLocaleString()} ກ</div>
           </div>
         </div>`;
+        const pendingHtml = pending.length
+          ? `<div style="font-size:12px;font-weight:700;color:#ffa500;margin-bottom:10px">⏳ ລໍຖ້າຢືນຢັນ (${pending.length})</div>
+          ${pending.map(o=>{
+            const accent = o.game==='mlbb'?'#6644ff':'#ff4400';
+            const icon = o.game==='mlbb'?'💎':'💠';
+            return '<div style="background:var(--dark3);border:1.5px solid rgba(255,165,0,.35);border-radius:12px;padding:12px;margin-bottom:10px">'
+              +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+              +'<div style="font-size:24px">'+icon+'</div>'
+              +'<div style="flex:1"><div style="font-size:13px;font-weight:700">'+o.productName+'</div>'
+              +'<div style="font-size:10px;color:var(--text2)">#'+o.id+' • '+(o.userName||'-')+'</div></div>'
+              +'<span style="background:rgba(255,165,0,.15);color:#ffa500;border-radius:6px;padding:2px 8px;font-size:10px">⏳ ລໍຖ້າ</span></div>'
+              +'<div style="background:rgba(0,0,0,.25);border-radius:8px;padding:8px;margin-bottom:8px;font-size:11px;color:var(--text2);line-height:1.8">'
+              +'<span style="color:'+accent+';font-weight:700">🎮 '+o.gameId+'</span>'+(o.server?' · '+o.server:'')+' &nbsp;|&nbsp; 📱 '+o.phone+' &nbsp;|&nbsp; 💰 '+fmtPrice(o.price||o.total)+'</div>'
+              +'<div style="display:flex;gap:6px">'
+              +'<button onclick="adminConfirmDiamond(\''+o.id+'\')" style="flex:2;background:linear-gradient(135deg,rgba(78,255,136,.2),rgba(34,197,94,.1));border:1.5px solid rgba(78,255,136,.5);color:#4eff88;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif">✅ ຢືນຢັນ — ເຕີມສຳເລັດ</button>'
+              +'<button onclick="adminCancelDiamond(\''+o.id+'\')" style="flex:1;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;border-radius:8px;padding:8px;font-size:11px;cursor:pointer;font-family:\'Sarabun\',sans-serif">❌ ຍົກ</button>'
+              +'</div></div>';
+          }).join('')}`
+          : '<div style="text-align:center;padding:16px;color:#4eff88;font-size:12px">✅ ບໍ່ມີລາຍການລໍຖ້າ</div>';
+        return statsHtml + pendingHtml;
       })()}
     </div>
   </div>`;
