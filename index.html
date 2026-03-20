@@ -8880,7 +8880,6 @@ function submitSellerApply(){
     }
   })();
   // async submit handled above
-  });
 }
 
 // ============ SELL PRODUCT ============
@@ -14264,6 +14263,10 @@ async function doDeposit(){
       // ส่ง pending ปกติ
       showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+Number(amt).toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ', 'success');
     }
+  } catch(innerErr){
+    console.warn('doDeposit inner:', innerErr);
+    showNotif('⚠️ ບັນທຶກ offline — sync ໃໝ່ທີຫຼັງ', 'warning');
+  }
   } catch(err){
     if(err.name==='QuotaExceededError'){
       showNotif('❌ ຫນ່ວຍຄວາມຈຳເຕັມ ກາລຸນາລຶບຂໍ້ມູນເກົ່າ');
@@ -14410,6 +14413,13 @@ async function doWithdraw(){
     if(wdBtn){ wdBtn.disabled=false; wdBtn.textContent='✅ ຢືນຢັນຖອນເງິນ'; }
   };
   reader.readAsDataURL(qr.files[0]);
+  } catch(e) {
+    console.error('doWithdraw error:', e);
+    showNotif('❌ ເກີດຂໍ້ຜິດພາດ: ' + (e.message||e), 'error');
+  } finally {
+    window._withdrawLock = false;
+    if(wdBtn){ wdBtn.disabled=false; wdBtn.textContent='✅ ຢືນຢັນຖອນເງິນ'; }
+  }
 }
 
 // Init cart badge and admin notif on load
