@@ -4876,6 +4876,8 @@ function submitGeneralOrder(){
   };
   orders.push(order); saveOrders();
   sbSaveOrder(order).catch(e=>console.warn('sbSaveOrder(submit):',e));
+  // ── ຕັ້ງ auto-cancel timer 3 ຊົ່ວໂມງ ──
+  scheduleAutoCancel(order);
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
   // ✅ ລຸດ stock + ເພີ່ມ sold
   const idx = products.findIndex(x=>x.id===p.id);
@@ -5150,11 +5152,11 @@ function renderBillsPage(){
       ? `showMyDiamondOrderDetail('${o.id}')`
       : `viewBillDetail('${o.id}')`;
     return `
-    <div class="bill-card" style="border-color:${type==='diamond'?'rgba(100,68,255,.3)':type==='game'?'rgba(105,100,255,.2)':type==='phonepart'?'rgba(100,200,255,.2)':'rgba(201,168,76,.15)'};position:relative">
-      ${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?`<button onclick="event.stopPropagation();deleteBillItem('${o.id}','${isDia?'diamond':'order'}')" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:'Sarabun',sans-serif;z-index:2" title="ລຶບບິນນີ້">🗑</button>`:''}
+    <div class="bill-card" style="border-color:${type==='diamond'?'rgba(100,68,255,.3)':type==='game'?'rgba(105,100,255,.2)':type==='phonepart'?'rgba(100,200,255,.2)':o.status==='cancelled'?'rgba(239,68,68,.3)':'rgba(201,168,76,.15)'};position:relative">
+      ${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?`<button onclick="event.stopPropagation();deleteBillItem('${o.id}','${isDia?'diamond':'order'}')" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:'Sarabun',sans-serif;z-index:2">🗑 ລຶບ</button>`:(o.status==='pending'||o.status==='packed')&&o.date?(()=>{const _cr=o.createdAt?new Date(o.createdAt).getTime():new Date(o.date).getTime();const _left=Math.max(0,_cr+(24*60*60*1000)-Date.now());const _h=Math.floor(_left/3600000);const _m=Math.floor((_left%3600000)/60000);return _left>0?`<div style="position:absolute;top:8px;right:8px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.4);color:#fbbf24;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">⏰ ${_h}h ${_m}m</div>`:`<div style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px">⏰ ໝົດເວລາ</div>`;})():''}
       <div class="bill-header" onclick="${clickFn}" style="cursor:pointer">
         <span class="bill-id">#${o.id}</span>
-        <div style="display:flex;align-items:center;gap:6px;padding-right:${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?'36px':'0'}">
+        <div style="display:flex;align-items:center;gap:6px;padding-right:${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?'40px':'48px'}">
           ${_billTypeTag(type)}
           <span class="bill-status ${getStatusClass(o.status)}" style="font-size:10px">${getStatusLabel(o.status)}</span>
         </div>
@@ -5782,6 +5784,7 @@ function sellerUpdateStatus(id, newStatus){
 
 const AUTO_ADVANCE_MS_1 = 24 * 60 * 60 * 1000; // 1 วัน → delivering
 const AUTO_ADVANCE_MS_2 = 48 * 60 * 60 * 1000; // 2 วัน → done
+const AUTO_CANCEL_MS    = 24 * 60 * 60 * 1000; // 24 ຊົ່ວໂມງ → auto cancel ຖ້າ seller ບໍ່ຝາກຂົນສ່ງ
 
 function scheduleAutoAdvance(order){
   if(!order.sentAt) return;
@@ -5836,6 +5839,79 @@ function checkAllAutoAdvance(){
       scheduleAutoAdvance(o);
     }
   });
+  // ── ກວດ auto-cancel ທຸກ order ທີ່ pending/packed ເກີນ 3 ຊົ່ວໂມງ ──
+  checkAllAutoCancel();
+}
+
+// ── Auto Cancel: ຖ້າ seller ບໍ່ຢືນຢັນພາຍໃນ 3 ຊົ່ວໂມງ → ຍົກເລີກ + ຄືນເງິນ ──
+function checkAllAutoCancel(){
+  orders.forEach(o=>{
+    // cancel ຖ້າ: ຍັງ pending/packed ແລະ ຍັງບໍ່ໄດ້ຝາກຂົນສ່ງ (sentAt ຫວ່າງ) ແລະ ຍັງບໍ່ autoCancel
+    if((o.status==='pending'||o.status==='packed') && !o.sentAt && !o.autoCancel && o.date){
+      scheduleAutoCancel(o);
+    }
+  });
+}
+
+function scheduleAutoCancel(order){
+  if(!order.date) return;
+  if(order.sentAt) return; // ຝາກຂົນສ່ງໄປແລ້ວ — ບໍ່ cancel
+  if(order.autoCancel) return;
+  if(order.status === 'cancelled' || order.status === 'done') return;
+  const createdMs = order.createdAt ? new Date(order.createdAt).getTime()
+                  : new Date(order.date).getTime();
+  if(isNaN(createdMs)) return;
+  const deadline = createdMs + AUTO_CANCEL_MS;
+  const delay = deadline - Date.now();
+  if(delay <= 0){
+    doAutoCancel(order.id);
+  } else {
+    setTimeout(()=> doAutoCancel(order.id), Math.min(delay, 2147483647));
+  }
+}
+
+async function doAutoCancel(id){
+  const idx = orders.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const o = orders[idx];
+  // ກວດອີກຄັ້ງ — ຖ້າ seller ຝາກຂົນສ່ງໄປແລ້ວ ຫຼື done/cancelled ແລ້ວ → ບໍ່ cancel
+  if(o.sentAt) return;
+  if(o.status !== 'pending' && o.status !== 'packed') return;
+  if(o.autoCancel) return;
+
+  // ── ຍົກເລີກ order ──
+  orders[idx].status = 'cancelled';
+  orders[idx].autoCancel = true;
+  orders[idx].cancelledAt = new Date().toISOString();
+  orders[idx].cancelReason = 'auto_timeout_3h';
+
+  // ── ຄືນເງິນໃຫ້ລູກຄ້າ ──
+  const buyerId = o.userId || o.buyerId;
+  const refundAmt = o.total || 0;
+  if(buyerId && refundAmt > 0){
+    // update Supabase
+    try {
+      const { data: sbBuyer } = await supa.from('kd_users').select('wallet').eq('id', buyerId).single();
+      const curWallet = Number(sbBuyer?.wallet) || 0;
+      const newWallet = curWallet + refundAmt;
+      await supa.from('kd_users').update({ wallet: newWallet, updated_at: new Date().toISOString() }).eq('id', buyerId);
+      // update localStorage
+      const db = getUsersDB();
+      if(db[buyerId]){ db[buyerId].wallet = newWallet; saveUsersDB(db); }
+      // ຖ້າ buyer = currentUser → update UI
+      if(currentUser && currentUser.id === buyerId){
+        currentUser.wallet = newWallet; saveUser(); updateBalanceUI(newWallet);
+        showNotif(`⏰ Order #${id} ຍົກເລີກ — ຜູ້ຂາຍບໍ່ຝາກຂົນສ່ງພາຍໃນ 24 ຊົ່ວໂມງ
+ຄືນເງິນ ${Number(refundAmt).toLocaleString()} ₭ ໃຫ້ທ່ານແລ້ວ`, 'warning');
+      }
+    } catch(e){ console.warn('doAutoCancel refund error:', e); }
+  }
+
+  saveOrders();
+  sbSaveOrder(orders[idx]).catch(()=>{});
+  renderBillsPage();
+  renderSaleHistoryPage();
+  console.log('⏰ Auto cancelled order:', id);
 }
 
 // ── คำนวณว่าตอนนี้ควรอยู่ step ไหนจาก sentAt ──
