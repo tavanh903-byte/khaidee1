@@ -14984,37 +14984,57 @@ async function acsmConfirmRelease(orderId){
   const isGameProd = o.isGame || o.cat==='game' || o.gameType;
   const commission  = isGameProd ? 0.05 : 0;
   const sellerAmt   = Math.round((o.total||0)*(1-commission));
-  const db = getUsersDB();
-  const seller = db[o.sellerId];
-  const sellerName = seller?.name || o.sellerId;
+
+  // ── ດຶງ wallet ປັດຈຸບັນຈາກ Supabase ກ່ອນ (ບໍ່ໃຊ້ localStorage ເພາະອາດ stale) ──
+  let currentSellerWallet = 0;
+  let sellerName = o.sellerName || o.sellerId;
+  try {
+    const { data: sbUser } = await supa.from('kd_users').select('wallet,name').eq('id', o.sellerId).single();
+    if(sbUser){
+      currentSellerWallet = Number(sbUser.wallet) || 0;
+      sellerName = sbUser.name || sellerName;
+    }
+  } catch(e){
+    // fallback ไปใช้ localStorage
+    const db = getUsersDB();
+    const seller = db[o.sellerId];
+    if(seller){ currentSellerWallet = seller.wallet||0; sellerName = seller.name||sellerName; }
+  }
+
+  const newWallet = currentSellerWallet + sellerAmt;
 
   if(!confirm(`✅ ຢືນຢັນໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ "${sellerName}"?
 
-ເງິນຈະເຂົ້າ Wallet ຜູ້ຂາຍທັນທີ`)) return;
+ຍອດປັດຈຸບັນ: ${Number(currentSellerWallet).toLocaleString()} ₭
+ຍອດໃໝ່: ${Number(newWallet).toLocaleString()} ₭`)) return;
 
-  // ── ໂອນເງິນ → seller wallet ──
-  if(seller){
-    const prev = seller.wallet || 0;
-    seller.wallet = prev + sellerAmt;
-    db[o.sellerId] = seller;
+  showNotif('⏳ ກຳລັງໂອນເງິນ...', 'info');
+
+  // ── ອັບເດດ wallet ໃນ Supabase ໂດຍກົງ (ວິທີທີ່ reliable ທີ່ສຸດ) ──
+  try {
+    const { error } = await supa.from('kd_users')
+      .update({ wallet: newWallet, updated_at: new Date().toISOString() })
+      .eq('id', o.sellerId);
+    if(error) throw error;
+    console.log('✅ Supabase wallet updated:', o.sellerId, newWallet);
+  } catch(e){
+    console.warn('Supabase direct update failed:', e);
+    showNotif('❌ ໂອນເງິນລົ້ມເຫຼວ: ' + (e.message||e), 'error');
+    return;
+  }
+
+  // ── sync localStorage ──
+  const db = getUsersDB();
+  if(db[o.sellerId]){
+    db[o.sellerId].wallet = newWallet;
     saveUsersDB(db);
-    // sync Supabase ຜ່ານ sbSaveUser (upsert ທຸກ field ລວມ wallet)
-    sbSaveUser(seller)
-      .then(()=>console.log('✅ seller wallet updated via sbSaveUser'))
-      .catch(e=>{
-        console.warn('sbSaveUser failed, try direct wallet update:', e);
-        // fallback: ອັບເດດ wallet column ໂດຍກົງ
-        supa.from('kd_users').update({wallet: seller.wallet, updated_at: new Date().toISOString()})
-          .eq('id', o.sellerId)
-          .then(()=>console.log('✅ direct wallet update ok'))
-          .catch(e2=>console.warn('direct wallet update failed:', e2));
-      });
-    // ຖ້າ seller login ຢູ່ຕອນນີ້ — update UI ທັນທີ
-    if(currentUser && currentUser.id === o.sellerId){
-      currentUser.wallet = seller.wallet;
-      saveUser();
-      updateBalanceUI(seller.wallet);
-    }
+  }
+
+  // ── ຖ້າ seller = currentUser (login ຢູ່) → update UI ທັນທີ ──
+  if(currentUser && currentUser.id === o.sellerId){
+    currentUser.wallet = newWallet;
+    saveUser();
+    updateBalanceUI(newWallet);
   }
 
   // ── mark order adminReleased ──
@@ -15028,7 +15048,19 @@ async function acsmConfirmRelease(orderId){
   sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(release):', e));
 
   // ── Notification ──
-  showNotif(`✅ ໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ "${sellerName}" ສຳເລັດ!`, 'success');
+  showNotif(`✅ ໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ "${sellerName}" ສຳເລັດ! ຍອດໃໝ່: ${Number(newWallet).toLocaleString()} ₭`, 'success');
+
+  // ── ຖ້າ seller = currentUser → ກະຕຸ້ນ Realtime refresh wallet ──
+  if(currentUser && currentUser.id === o.sellerId){
+    // Realtime จะ trigger เองผ่าน startWalletRealtime
+    // แต่ force pull อีกครั้งเผื่อ realtime delay
+    setTimeout(async ()=>{
+      try {
+        const { data } = await supa.from('kd_users').select('wallet').eq('id', currentUser.id).single();
+        if(data && data.wallet != null) updateBalanceUI(data.wallet);
+      } catch(e){}
+    }, 800);
+  }
 
   // ── refresh UI ──
   closeModal('adminConfirmSaleDetailModal');
