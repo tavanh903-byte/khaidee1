@@ -11600,7 +11600,9 @@ function renderAdminTab(tab){
     sbLoadProducts().then(p=>{ if(p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); } c.innerHTML = renderAdminProducts(); }).catch(()=>{ c.innerHTML = renderAdminProducts(); });
   }
   else if(tab==='orders'){
-    sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('kd_orders',JSON.stringify(o)); } c.innerHTML = renderAdminOrders(); }).catch(()=>{ c.innerHTML = renderAdminOrders(); });
+    // Render local data immediately (fast), then sync Supabase in background
+    c.innerHTML = renderAdminOrders();
+    sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('kd_orders',JSON.stringify(o)); c.innerHTML = renderAdminOrders(); } }).catch(()=>{});
   }
   else if(tab==='finance'){
     syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminFinance(); }).catch(()=>{ c.innerHTML = renderAdminFinance(); });
@@ -12445,15 +12447,20 @@ function adminDeleteOrder(id){
   renderAdminTab('orders');
 }
 
-function adminUpdateOrderStatus(id, status){
+async function adminUpdateOrderStatus(id, status){
   const idx = orders.findIndex(o=>o.id===id);
-  if(idx>=0){
-    orders[idx].status=status;
-    localStorage.setItem('kd_orders',JSON.stringify(orders));
-    sbSaveOrder(orders[idx]).catch(e=>console.warn('sbUpdateOrder:',e));
-    renderAdminTab('orders');
-    showNotif('✅ ອັບເດດສະຖານະ');
+  if(idx<0) return;
+  orders[idx].status = status;
+  localStorage.setItem('kd_orders', JSON.stringify(orders));
+  showNotif('⏳ ກຳລັງອັບເດດ...', 'info');
+  try {
+    await sbSaveOrder(orders[idx]);
+    showNotif('✅ ອັບເດດສະຖານະສຳເລັດ');
+  } catch(e) {
+    console.warn('sbUpdateOrder:', e);
+    showNotif('⚠️ ບັນທຶກ offline, ຈະ sync ໃໝ່ທີຫຼັງ', 'warning');
   }
+  renderAdminTab('orders');
 }
 
 async function syncFinanceFromSupabase(){
