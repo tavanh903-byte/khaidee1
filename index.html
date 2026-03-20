@@ -2205,7 +2205,7 @@ async function syncFromSupabase(){
       </div>
       <!-- Profile Icons -->
       <div class="profile-icons">
-        <div class="profile-icon-btn" onclick="showSellerApply()">
+        <div class="profile-icon-btn" id="sellerApplyBtn" onclick="showSellerApply()" style="display:none">
           <div class="icon">🏪</div>
           <div id="sellerApplyText">ສະໝັກຜູ້ຂາຍ</div>
         </div>
@@ -2659,7 +2659,7 @@ async function syncFromSupabase(){
         </div>
         <div style="display:flex;gap:6px">
           <button onclick="showSaleHistory()" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:10px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">📊 ປ.</button>
-          <button onclick="switchPage('profile');showSellProduct()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">➕ ລົງຂາຍ</button>
+          ${currentUser?.isAdmin?`<button onclick="switchPage('profile');showSellProduct()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">➕ ລົງຂາຍ</button>`:''}
         </div>
       </div>
       <!-- Stat row -->
@@ -6164,7 +6164,7 @@ function showWallet(){
   openModal('walletModal');
   document.getElementById('walletBalance').textContent=Number(currentUser?.wallet||0).toLocaleString();
   // ── ສະແດງຍອດທີ່ຖອນໄດ້ ──
-  if(currentUser?.isSeller){
+  if(currentUser?.isAdmin){
     const {withdrawable, locked} = calcWithdrawableAmt();
     const summaryEl = document.getElementById('withdrawableSummary');
     const amtEl = document.getElementById('withdrawableAmt');
@@ -6177,7 +6177,7 @@ function showWallet(){
   }
   // Show withdraw only for sellers
   const wb = document.getElementById('withdrawBtn');
-  if(wb) wb.style.display = (currentUser?.isSeller) ? 'block' : 'none';
+  if(wb) wb.style.display = (currentUser?.isAdmin) ? 'block' : 'none';
 }
 function updateWalletDisplay(){
   document.getElementById('walletDisplay').textContent = Number(currentUser?.wallet||0).toLocaleString()+' ກີບ';
@@ -6196,7 +6196,7 @@ function showDeposit(){
 
 function showWithdraw(){
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
-  if(!currentUser.isSeller){showNotif('ພຽງຜູ້ຂາຍເທົ່ານັ້ນທີ່ສາມາດຖອນໄດ້');return;}
+  if(!currentUser.isAdmin){showNotif('ສະເພາະ Admin ເທົ່ານັ້ນທີ່ຖອນເງິນໄດ້');return;}
   closeModal('walletModal');
   openModal('withdrawModal');
 }
@@ -6216,7 +6216,7 @@ let currentMpTab = 'game';
 let mpFilter = 'all';
 
 function showManageProducts(){
-  if(!currentUser?.isSeller){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
+  if(!currentUser?.isAdmin){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
   mpFilter = 'all';
   switchPage('manage');
   renderManagePage();
@@ -8022,19 +8022,21 @@ function updateProfileUI(){
         navIcon.textContent = crown||'👤';
       }
     }
-    if(currentUser.isSeller){
+    // ── ສະແດງ seller section ສະເພາະ Admin ──
+    if(currentUser.isAdmin){
       document.getElementById('sellerBadge').style.display='inline';
       document.getElementById('sellerBadge').style.background='linear-gradient(135deg,var(--gold-dark),var(--gold))';
-      document.getElementById('sellerBadge').textContent='⭐ ຜູ້ຂາຍ';
+      document.getElementById('sellerBadge').textContent='👑 Admin';
       document.getElementById('sellerIcons').style.display='block';
-      document.getElementById('sellerApplyText').textContent='✅ ຜູ້ຂາຍ';
-    } else if(currentUser.sellerPending){
-      document.getElementById('sellerBadge').style.display='inline';
-      document.getElementById('sellerBadge').style.background='linear-gradient(135deg,#555,#888)';
-      document.getElementById('sellerBadge').textContent='⏳ ລໍຖ້າ';
-      document.getElementById('sellerApplyText').textContent='⏳ ລໍຖ້າອະນຸມັດ';
-    } else if(currentUser.sellerRejected){
-      document.getElementById('sellerApplyText').textContent='❌ ຖືກປະຕິເສດ';
+      document.getElementById('sellerApplyText').textContent='👑 Admin';
+      const applyBtn = document.getElementById('sellerApplyBtn');
+      if(applyBtn) applyBtn.style.display='flex';
+    } else {
+      // ຜູ້ໃຊ້ທົ່ວໄປ — ຊ່ອນທຸກ seller feature
+      document.getElementById('sellerBadge').style.display='none';
+      document.getElementById('sellerIcons').style.display='none';
+      const applyBtn = document.getElementById('sellerApplyBtn');
+      if(applyBtn) applyBtn.style.display='none';
     }
     // Show admin chat button only for admin users
     const adminBtn = document.getElementById('adminChatBtn');
@@ -8218,7 +8220,8 @@ function submitSellerApply(){
   if(!idCardFile) { showNotif('ກະລຸນາອັດໂຫລດຮູບບັດປະຈຳຕົວ'); return; }
   if(!selfieFile) { showNotif('ກະລຸນາອັດໂຫລດຮູບຖ່າຍຄູ່ກັບບັດ'); return; }
   if(!currentUser){ showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ'); return; }
-  if(currentUser.sellerPending){ showNotif('ທ່ານໄດ້ສ່ງຄຳຂໍແລ້ວ ລໍຖ້າ Admin ອະນຸມັດ'); return; }
+  if(!currentUser.isAdmin){ showNotif('ສະເພາະ Admin ເທົ່ານັ້ນທີ່ສາມາດຂາຍໄດ້'); closeModal('sellerApplyModal'); return; }
+  if(currentUser.sellerPending){ showNotif('ທ່ານໄດ້ສ່ງຄຳຂໍແລ້ວ'); return; }
   if(currentUser.isSeller)     { showNotif('ທ່ານເປັນຜູ້ຂາຍແລ້ວ'); return; }
 
   const btn = document.querySelector('#sellerApplyModal .btn-gold');
@@ -8278,7 +8281,7 @@ function submitSellerApply(){
 
 // ============ SELL PRODUCT ============
 function showSellProduct(){
-  if(!currentUser?.isSeller){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
+  if(!currentUser?.isAdmin){showNotif('ສະເພາະ Admin ເທົ່ານັ້ນທີ່ລົງຂາຍໄດ້');return;}
   // Reset all fields
   ['sellName','sellDesc','sellPrice','sellQty','sellVideoUrl'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const catEl=document.getElementById('sellCat');if(catEl)catEl.value='';
@@ -8792,7 +8795,7 @@ function submitSellProduct(){
 
 // ============ SELL GAME ID ============
 function showSellGameId(){
-  if(!currentUser?.isSeller){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
+  if(!currentUser?.isAdmin){showNotif('ກະລຸນາສະໝັກຜູ້ຂາຍກ່ອນ');return;}
   openModal('sellGameModal');
 }
 
