@@ -1037,6 +1037,8 @@ async function sbLoadOrders(){
     note:r.note, date:r.created_at,
     sellerImg:r.seller_img||null,
     sellerVideo:r.seller_video||null,
+    evidence_url:r.evidence_url||r.seller_img||null,
+    video_url:r.video_url||r.seller_video||null,
     sentAt:r.sent_at||null,
     autoDelivering:r.auto_delivering||false,
     autoDone:r.auto_done||false,
@@ -1060,8 +1062,10 @@ async function sbSaveOrder(o){
     shipping_status:o.shippingStatus||null,
     tracking_number:o.trackingNumber||null,
     note:o.note||null,
-    seller_img:o.sellerImg||null,
-    seller_video:o.sellerVideo||null,
+    seller_img:o.sellerImg||o.evidence_url||null,
+    seller_video:o.sellerVideo||o.video_url||null,
+    evidence_url:o.evidence_url||o.sellerImg||null,
+    video_url:o.video_url||o.sellerVideo||null,
     sent_at:o.sentAt||null,
     auto_delivering:o.autoDelivering||false,
     auto_done:o.autoDone||false,
@@ -4549,6 +4553,8 @@ function _sbRowToOrder(r){
     shippingStatus:r.shipping_status, trackingNumber:r.tracking_number,
     note:r.note, date:r.created_at,
     sellerImg:r.seller_img||null, sellerVideo:r.seller_video||null,
+    evidence_url:r.evidence_url||r.seller_img||null,
+    video_url:r.video_url||r.seller_video||null,
     sentAt:r.sent_at||null,
     autoDelivering:r.auto_delivering||false,
     autoDone:r.auto_done||false,
@@ -5895,18 +5901,56 @@ function viewBillDetail(id){
       </div>
     </div>` : '';
 
-  const proofHtml = (o.sellerImg || o.sellerVideo) ? `
-    <div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:12px;padding:12px;margin:10px 0">
-      <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:10px">📦 ຫຼັກຖານການສົ່ງຈາກຜູ້ຂາຍ</div>
-      ${o.sellerImg ? `
-      <div style="margin-bottom:8px">
-        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">📸 ຮູບຫຼັກຖານ</div>
-        <img src="${o.sellerImg}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;cursor:pointer" onclick="adminViewImg('${o.sellerImg}')">
+  // ✅ Buyer proof view — fallback evidence_url / video_url (ใหม่) หรือ sellerImg / sellerVideo (เดิม)
+  const proofImg   = o.evidence_url || o.sellerImg || null;
+  const proofVideo = o.video_url    || o.sellerVideo || null;
+
+  const proofHtml = (proofImg || proofVideo) ? `
+    <div style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.04));
+      border:1.5px solid rgba(74,222,128,.35);border-radius:16px;padding:16px;margin:12px 0">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#14532d,#166534);
+          display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:#4ade80">ຫຼັກຖານການສົ່ງສິນຄ້າ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px">ຈາກຜູ້ຂາຍ — ກວດສອບໄດ້ທັນທີ</div>
+        </div>
+        <span style="background:rgba(74,222,128,.2);border:1px solid rgba(74,222,128,.4);
+          color:#4ade80;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">✅ ຢືນຢັນແລ້ວ</span>
+      </div>
+
+      ${proofImg ? `
+      <!-- Image Proof -->
+      <div style="margin-bottom:${proofVideo?'12px':'0'}">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:4px">
+          <span>📸</span><span>ຮູບຫຼັກຖານການສົ່ງ</span>
+        </div>
+        <div style="position:relative;border-radius:12px;overflow:hidden;background:var(--dark3)">
+          <img src="${proofImg}"
+            style="width:100%;max-height:220px;object-fit:cover;display:block;cursor:pointer"
+            onclick="adminViewImg('${proofImg}')"
+            onerror="this.parentElement.innerHTML='<div style=padding:20px;text-align:center;color:var(--text2);font-size:12px>ບໍ່ສາມາດໂຫລດຮູບໄດ້</div>'">
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));
+            padding:8px 10px;font-size:10px;color:rgba(255,255,255,.7)">
+            🔍 ກົດຮູບເພື່ອຂະຫຍາຍ
+          </div>
+        </div>
       </div>` : ''}
-      ${o.sellerVideo ? `
+
+      ${proofVideo ? `
+      <!-- Video Proof -->
       <div>
-        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">🎥 ວິດີໂອຫຼັກຖານ</div>
-        <video src="${o.sellerVideo}" style="width:100%;border-radius:8px;max-height:220px" controls playsinline></video>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:4px">
+          <span>🎥</span><span>ວິດີໂອຫຼັກຖານການສົ່ງ</span>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;background:var(--dark3);border:1px solid rgba(100,160,255,.25)">
+          <video src="${proofVideo}"
+            style="width:100%;max-height:240px;display:block"
+            controls playsinline preload="metadata"
+            onerror="this.parentElement.innerHTML='<div style=padding:20px;text-align:center;color:var(--text2);font-size:12px>ບໍ່ສາມາດໂຫລດວິດີໂອໄດ້</div>'">
+          </video>
+        </div>
       </div>` : ''}
     </div>` : '';
 
@@ -6122,23 +6166,99 @@ function sellerViewBill(id){
 
   const proofSection = `
     ${countdownHtml}
-    <div class="form-group">
-      <label class="form-label">📷 ຮູບຫຼັກຖານການສົ່ງ</label>
-      <div class="upload-box" onclick="document.getElementById('sellerBillImg_${o.id}').click()">${o.sellerImg?'✅ ມີຮູບແລ້ວ — ກົດເພື່ອປ່ຽນ':'📸 ອັດໂຫລດຮູບ'}</div>
-      <input type="file" id="sellerBillImg_${o.id}" accept="image/*" style="display:none" onchange="previewSellerImg(this,'sellerImgPrev_${o.id}')">
-      <div id="sellerImgPrev_${o.id}" style="margin-top:8px">${o.sellerImg?`<img src="${o.sellerImg}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`:''}</div>
+
+    <!-- ══ 📎 ສ່ງຫຼັກຖານການສົ່ງ ══ -->
+    <div style="background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1.5px solid rgba(201,168,76,.3);border-radius:16px;padding:16px;margin:12px 0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📎</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">ສ່ງຫຼັກຖານການສົ່ງ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px">ອັດໂຫລດຮູບ/ວິດີໂອ ແລ້ວກົດຢືນຢັນ</div>
+        </div>
+        ${(o.sellerImg||o.evidence_url) ? `<span style="margin-left:auto;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">✅ ມີຮູບແລ້ວ</span>` : ''}
+      </div>
+
+      <!-- Upload Buttons Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+
+        <!-- 📸 Image Upload -->
+        <div>
+          <input type="file" id="sellerBillImg_${o.id}" accept="image/*" style="display:none"
+            onchange="previewSellerImg(this,'sellerImgPrev_${o.id}')">
+          <button onclick="document.getElementById('sellerBillImg_${o.id}').click()"
+            style="width:100%;background:${(o.sellerImg||o.evidence_url)?'rgba(74,222,128,.1)':'rgba(201,168,76,.1)'};
+              border:1.5px ${(o.sellerImg||o.evidence_url)?'solid rgba(74,222,128,.5)':'dashed rgba(201,168,76,.5)'};
+              color:${(o.sellerImg||o.evidence_url)?'#4ade80':'var(--gold)'};border-radius:12px;padding:14px 8px;
+              cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;
+              font-family:'Sarabun',sans-serif;transition:.2s"
+            onmouseover="this.style.background='rgba(201,168,76,.2)'"
+            onmouseout="this.style.background='${(o.sellerImg||o.evidence_url)?'rgba(74,222,128,.1)':'rgba(201,168,76,.1)'}'">
+            <span style="font-size:26px">${(o.sellerImg||o.evidence_url)?'🖼️':'📸'}</span>
+            <span style="font-size:11px;font-weight:700">${(o.sellerImg||o.evidence_url)?'ເປີດ/ປ່ຽນຮູບ':'ອັດໂຫລດຮູບ'}</span>
+            <span style="font-size:9px;color:var(--text2)">JPG / PNG / HEIC</span>
+          </button>
+        </div>
+
+        <!-- 🎥 Video Upload -->
+        <div>
+          <input type="file" id="sellerBillVideo_${o.id}" accept="video/*" style="display:none"
+            onchange="previewSellerVideo(this,'sellerVideoPrev_${o.id}','${o.id}')">
+          <button onclick="document.getElementById('sellerBillVideo_${o.id}').click()"
+            style="width:100%;background:${(o.sellerVideo||o.video_url)?'rgba(100,160,255,.1)':'rgba(255,255,255,.04)'};
+              border:1.5px ${(o.sellerVideo||o.video_url)?'solid rgba(100,160,255,.5)':'dashed rgba(255,255,255,.2)'};
+              color:${(o.sellerVideo||o.video_url)?'#64a0ff':'var(--text2)'};border-radius:12px;padding:14px 8px;
+              cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;
+              font-family:'Sarabun',sans-serif;transition:.2s"
+            onmouseover="this.style.background='rgba(100,160,255,.15)'"
+            onmouseout="this.style.background='${(o.sellerVideo||o.video_url)?'rgba(100,160,255,.1)':'rgba(255,255,255,.04)'}'">
+            <span style="font-size:26px">${(o.sellerVideo||o.video_url)?'▶️':'🎥'}</span>
+            <span style="font-size:11px;font-weight:700">${(o.sellerVideo||o.video_url)?'ເປີດ/ປ່ຽນວິດີໂອ':'ອັດໂຫລດວິດີໂອ'}</span>
+            <span style="font-size:9px;color:var(--text2)">MP4 / MOV (ສູງສຸດ 50MB)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress indicator -->
+      <div id="sellerProofProgress_${o.id}" style="display:none;background:rgba(0,0,0,.3);border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
+        <div style="font-size:12px;color:var(--gold)">⏳ ກຳລັງອັດໂຫລດ... ກະລຸນາລໍຖ້າ</div>
+        <div style="height:4px;background:rgba(201,168,76,.15);border-radius:2px;margin-top:8px;overflow:hidden">
+          <div id="sellerProofBar_${o.id}" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:2px;transition:width .4s"></div>
+        </div>
+      </div>
+
+      <!-- Previews -->
+      <div id="sellerImgPrev_${o.id}" style="margin-bottom:${(o.sellerImg||o.evidence_url)?'10px':'0'}">
+        ${(o.sellerImg||o.evidence_url) ? `
+        <div style="position:relative">
+          <img src="${o.evidence_url||o.sellerImg}" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;border:1.5px solid rgba(74,222,128,.3);cursor:pointer"
+            onclick="adminViewImg('${o.evidence_url||o.sellerImg}')"
+            onerror="this.style.display='none'">
+          <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 8px;font-size:10px;color:#4ade80">✅ ຮູບຫຼັກຖານ</div>
+        </div>` : ''}
+      </div>
+      <div id="sellerVideoPrev_${o.id}" style="margin-bottom:${(o.sellerVideo||o.video_url)?'10px':'0'}">
+        ${(o.sellerVideo||o.video_url) ? `
+        <div style="position:relative">
+          <video src="${o.video_url||o.sellerVideo}" style="width:100%;border-radius:10px;max-height:200px;border:1.5px solid rgba(100,160,255,.3)" controls playsinline></video>
+          <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 8px;font-size:10px;color:#64a0ff">✅ ວິດີໂອຫຼັກຖານ</div>
+        </div>` : ''}
+      </div>
+
+      ${!hasSent && (o.status==='packed'||o.status==='pending') ? `
+      <button id="sellerConfirmBtn_${o.id}" class="btn btn-gold" onclick="sellerConfirmShipment('${o.id}')"
+        style="width:100%;margin-top:4px;padding:13px;font-size:13px;font-weight:700;
+          background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));
+          box-shadow:0 4px 16px rgba(201,168,76,.3)">
+        ✅ ຢືນຢັນ ແລະ ສົ່ງບິນໃຫ້ລູກຄ້າ (ເລີ່ມ 48ຊມ.)
+      </button>
+      <div style="font-size:10px;color:var(--text2);text-align:center;margin-top:6px;line-height:1.6">
+        💡 ລູກຄ້າຈະໄດ້ຮັບ QR + ຮູບ/ວິດີໂອຫຼັກຖານທັນທີ
+      </div>` : hasSent ? `
+      <div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px;text-align:center;margin-top:4px">
+        <div style="font-size:12px;color:#4ade80;font-weight:700">✅ ສົ່ງບິນໃຫ້ລູກຄ້າແລ້ວ</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">${new Date(o.sentAt).toLocaleString('lo-LA')}</div>
+      </div>` : ''}
     </div>
-    <div class="form-group" style="margin-top:10px">
-      <label class="form-label">🎥 ວິດີໂອຫຼັກຖານການສົ່ງ</label>
-      <div class="upload-box" onclick="document.getElementById('sellerBillVideo_${o.id}').click()">${o.sellerVideo?'✅ ມີວິດີໂອແລ້ວ — ກົດເພື່ອປ່ຽນ':'🎥 ອັດໂຫລດວິດີໂອ'}</div>
-      <input type="file" id="sellerBillVideo_${o.id}" accept="video/*" style="display:none" onchange="previewSellerVideo(this,'sellerVideoPrev_${o.id}','${o.id}')">
-      <div id="sellerVideoPrev_${o.id}" style="margin-top:8px">${o.sellerVideo?`<video src="${o.sellerVideo}" style="width:100%;border-radius:8px;max-height:200px" controls playsinline></video>`:''}</div>
-    </div>
-    ${!hasSent && (o.status==='packed'||o.status==='pending') ? `
-    <button class="btn btn-gold" onclick="sellerConfirmShipment('${o.id}')" style="margin-top:10px;margin-bottom:4px">
-      ✅ ຢືນຢັນ ແລະ ສົ່ງບິນໃຫ້ລູກຄ້າ (ເລີ່ມ 48ຊມ.)
-    </button>
-    <div style="font-size:11px;color:var(--text2);text-align:center">ລະຫຼັງກົດ — ລູກຄ້າຈະໄດ້ຮັບ QR + ຮູບ/ວິດີໂອ</div>` : ''}
   `;
 
   const rejectBtn = (o.status === 'pending' || o.status === 'packed') ? `
@@ -6506,45 +6626,148 @@ async function previewSellerImg(input, targetId){
   if(!file) return;
   const ordId = targetId.replace('sellerImgPrev_','');
   const el = document.getElementById(targetId);
-  if(el) el.innerHTML = '<div style="color:var(--text2);font-size:12px">⏳ ກຳລັງອັດໂຫລດ...</div>';
-  showNotif('⏳ ກຳລັງອັດໂຫລດຮູບ...');
-  // Try Supabase Storage first, fallback to base64
-  let url = await uploadImageToStorage(file, 'order_proofs');
-  if(!url){
-    // fallback: read as dataURL
-    url = await new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>res(null); r.readAsDataURL(file); });
-  }
-  if(!url){ showNotif('❌ ອັດໂຫລດຮູບລົ້ມເຫຼວ', 'error'); return; }
-  const idx = orders.findIndex(x=>x.id===ordId);
-  if(idx>=0){
-    orders[idx].sellerImg = url;
-    saveOrders();
-    sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(img):',e));
-  }
-  if(el) el.innerHTML = '<img src="'+url+'" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">';
-  showNotif('✅ ບັນທຶກຮູບຫຼັກຖານແລ້ວ');
-  renderBillsPage();
-}
+  const progress = document.getElementById('sellerProofProgress_'+ordId);
+  const bar = document.getElementById('sellerProofBar_'+ordId);
 
-function previewSellerVideo(input, targetId, ordId){
-  const file = input.files[0];
-  if(!file) return;
-  if(file.size > 50 * 1024 * 1024){ showNotif('❌ ວິດີໂອໃຫຍ່ເກີນໄປ (ສູງສຸດ 50MB)'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const url = e.target.result;
+  // Show progress
+  if(progress){ progress.style.display='block'; }
+  if(bar){ bar.style.width='20%'; }
+  showNotif('⏳ ກຳລັງອັດໂຫລດຮູບຫຼັກຖານ...', 'info');
+
+  try {
+    // ✅ อัพโหลดไป bucket 'delivery-proofs' ก่อน, fallback 'order_proofs'
+    if(bar) bar.style.width = '50%';
+    let url = null;
+    try {
+      url = await uploadImageToStorage(file, 'delivery-proofs');
+    } catch(e1){
+      try { url = await uploadImageToStorage(file, 'order_proofs'); } catch(e2){}
+    }
+    if(bar) bar.style.width = '80%';
+
+    if(!url){
+      // fallback base64
+      url = await new Promise(res=>{
+        const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>res(null); r.readAsDataURL(file);
+      });
+    }
+    if(!url){ showNotif('❌ ອັດໂຫລດຮູບລົ້ມເຫຼວ', 'error'); return; }
+
+    // ✅ บันทึกทั้ง sellerImg (legacy) และ evidence_url (ใหม่)
     const idx = orders.findIndex(x=>x.id===ordId);
     if(idx>=0){
-      orders[idx].sellerVideo = url;
+      orders[idx].sellerImg   = url;
+      orders[idx].evidence_url = url;
       saveOrders();
-      sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(video):',e));
+      // sync Supabase — อัพเดทคอลัมน์ seller_img + evidence_url
+      supa.from('kd_orders')
+        .update({ seller_img: url, evidence_url: url, updated_at: new Date().toISOString() })
+        .eq('id', ordId)
+        .catch(e=>console.warn('evidence_url update:', e));
     }
-    const el = document.getElementById(targetId);
-    if(el) el.innerHTML = `<video src="${url}" style="width:100%;border-radius:8px;max-height:200px" controls playsinline></video>`;
-    showNotif('✅ ບັນທຶກວິດີໂອຫຼັກຖານແລ້ວ');
+
+    if(bar) bar.style.width = '100%';
+
+    // Update preview
+    if(el) el.innerHTML = `
+      <div style="position:relative;margin-bottom:4px">
+        <img src="${url}" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;border:1.5px solid rgba(74,222,128,.4);cursor:pointer"
+          onclick="adminViewImg('${url}')"
+          onerror="this.style.display='none'">
+        <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 8px;font-size:10px;color:#4ade80">✅ ຮູບຫຼັກຖານ</div>
+      </div>`;
+
+    showNotif('✅ ບັນທຶກຮູບຫຼັກຖານໃນ Cloud ສຳເລັດ! 🎉', 'success');
     renderBillsPage();
-  };
-  reader.readAsDataURL(file);
+  } catch(e){
+    console.error('previewSellerImg:', e);
+    showNotif('❌ ເກີດຂໍ້ຜິດພາດ: ' + (e.message||e), 'error');
+  } finally {
+    setTimeout(()=>{ if(progress) progress.style.display='none'; }, 1000);
+  }
+}
+
+async function previewSellerVideo(input, targetId, ordId){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 50 * 1024 * 1024){ showNotif('❌ ວິດີໂອໃຫຍ່ເກີນໄປ (ສູງສຸດ 50MB)', 'error'); return; }
+
+  const el = document.getElementById(targetId);
+  const progress = document.getElementById('sellerProofProgress_'+ordId);
+  const bar = document.getElementById('sellerProofBar_'+ordId);
+
+  if(progress){ progress.style.display='block'; }
+  if(bar){ bar.style.width='15%'; }
+  showNotif('⏳ ກຳລັງອັດໂຫລດວິດີໂອ... (ອາດໃຊ້ເວລາ 30-60 ວິ)', 'info');
+
+  try {
+    const ext = (file.name.split('.').pop()||'mp4').toLowerCase();
+    const uid = Date.now() + '_' + Math.random().toString(36).slice(2,8);
+    const fileName = 'delivery-proofs/vid_' + uid + '.' + ext;
+
+    if(bar) bar.style.width = '40%';
+
+    // ✅ Upload ไป Supabase Storage bucket 'delivery-proofs'
+    let videoUrl = null;
+    const { error } = await supa.storage
+      .from('delivery-proofs')
+      .upload(fileName, file, { cacheControl: '31536000', upsert: true, contentType: file.type||'video/mp4' });
+
+    if(bar) bar.style.width = '80%';
+
+    if(!error){
+      const { data: urlData } = supa.storage.from('delivery-proofs').getPublicUrl(fileName);
+      videoUrl = urlData?.publicUrl || null;
+    }
+
+    // Fallback: try product-images bucket
+    if(!videoUrl && !error){
+      const { data: urlData2 } = supa.storage.from('product-images').getPublicUrl('delivery-proofs/vid_'+uid+'.'+ext);
+      videoUrl = urlData2?.publicUrl || null;
+    }
+
+    // Last fallback: base64 (เฉพาะไฟล์เล็ก)
+    if(!videoUrl){
+      if(file.size <= 10 * 1024 * 1024){
+        videoUrl = await new Promise(res=>{
+          const r = new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>res(null); r.readAsDataURL(file);
+        });
+      } else {
+        showNotif('⚠️ ວິດີໂອໃຫຍ່ເກີນ — ກະລຸນາສ້າງ bucket "delivery-proofs" ໃນ Supabase ກ່ອນ', 'warning');
+        return;
+      }
+    }
+
+    if(!videoUrl){ showNotif('❌ ອັດໂຫລດວິດີໂອລົ້ມເຫຼວ', 'error'); return; }
+
+    if(bar) bar.style.width = '100%';
+
+    // ✅ บันทึกทั้ง sellerVideo (legacy) และ video_url (ใหม่)
+    const idx = orders.findIndex(x=>x.id===ordId);
+    if(idx>=0){
+      orders[idx].sellerVideo = videoUrl;
+      orders[idx].video_url   = videoUrl;
+      saveOrders();
+      supa.from('kd_orders')
+        .update({ seller_video: videoUrl, video_url: videoUrl, updated_at: new Date().toISOString() })
+        .eq('id', ordId)
+        .catch(e=>console.warn('video_url update:', e));
+    }
+
+    if(el) el.innerHTML = `
+      <div style="position:relative">
+        <video src="${videoUrl}" style="width:100%;border-radius:10px;max-height:200px;border:1.5px solid rgba(100,160,255,.4)" controls playsinline></video>
+        <div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 8px;font-size:10px;color:#64a0ff">✅ ວິດີໂອຫຼັກຖານ</div>
+      </div>`;
+
+    showNotif('✅ ບັນທຶກວິດີໂອຫຼັກຖານໃນ Cloud ສຳເລັດ! 🎉', 'success');
+    renderBillsPage();
+  } catch(e){
+    console.error('previewSellerVideo:', e);
+    showNotif('❌ ເກີດຂໍ້ຜິດພາດ: ' + (e.message||e), 'error');
+  } finally {
+    setTimeout(()=>{ if(progress) progress.style.display='none'; }, 1500);
+  }
 }
 
 function sellerRejectOrder(id){
