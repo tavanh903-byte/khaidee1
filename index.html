@@ -4719,7 +4719,13 @@ async function _loadPhonePartsToHome(){
   } catch(e){}
 }
 function renderProducts(list){
-  if(!list) list = products;
+  // ✅ Fix: ถ้าไม่ส่ง list หรือส่ง products ล้วน (ไม่มี phone parts) ให้รวม partPool เข้าไปด้วย
+  if(!list || list === products){
+    // ใช้ filterProducts() แทน เพื่อ merge products + phone parts ตาม category/search ปัจจุบัน
+    const grid = document.getElementById('productsGrid');
+    if(grid) filterProducts();
+    return;
+  }
   // ── ກັ່ນ hidden ອອກ (ສິນຄ້າທີ່ຖືກລຶບ/ຊ່ອນ) ──
   list = list.filter(p => !p.hidden);
   updateAdminShopBanner();
@@ -12568,7 +12574,14 @@ function renderAdminTab(tab){
     sbLoadUsers().then(()=>{ c.innerHTML = renderAdminUsers(); }).catch(()=>{ c.innerHTML = renderAdminUsers(); });
   }
   else if(tab==='products'){
-    sbLoadProducts().then(p=>{ if(p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); } c.innerHTML = renderAdminProducts(); }).catch(()=>{ c.innerHTML = renderAdminProducts(); });
+    // ✅ Fix: โหลด products + phone parts พร้อมกันก่อน render
+    Promise.all([
+      sbLoadProducts().then(p=>{ if(p&&p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); }}).catch(()=>{}),
+      sbLoadPhoneParts().then(pts=>{ if(pts&&pts.length){ _allPhoneParts=pts; _ppgParts=[...pts]; savePhoneParts(pts); }}).catch(()=>{
+        if(!_allPhoneParts.length) _allPhoneParts = getPhoneParts();
+        if(!_ppgParts.length) _ppgParts = [..._allPhoneParts];
+      })
+    ]).finally(()=>{ c.innerHTML = renderAdminProducts(); });
   }
   else if(tab==='orders'){
     // Render local data immediately (fast), then sync Supabase in background
@@ -13349,6 +13362,8 @@ function adminDeleteUser(uid){
 function renderAdminProducts(){
   const gameProds = products.filter(p=>p.isGame||p.cat==='game');
   const genProds = products.filter(p=>!p.isGame&&p.cat!=='game');
+  // ✅ Fix: ดึง phone parts มาแสดงใน admin ด้วย
+  const allParts = _allPhoneParts.length ? _allPhoneParts : getPhoneParts();
   const pCard = (p,isGame) => {
     const imgs = p.images||[];
     const imgHtml = imgs.length?`<div style="display:flex;gap:5px;overflow-x:auto;margin:6px 0 4px">${imgs.map(s=>`<img src="${s}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0" onclick="adminViewImg('${s}')">`).join('')}</div>`:'';
@@ -13372,12 +13387,30 @@ function renderAdminProducts(){
         <button class="btn btn-danger" style="font-size:11px;padding:5px" onclick="adminDeleteProduct('${p.id}')">🗑 ລຶບ</button>
       </div>
     </div>`;};
+  // card สำหรับ phone parts
+  const partCard = (p) => `<div class="admin-card" style="padding:10px;border-left:3px solid rgba(100,160,255,.5)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      ${p.img?`<img src="${p.img}" style="width:38px;height:38px;object-fit:cover;border-radius:6px">`:'<span style="font-size:22px">🔧</span>'}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.brand} ${p.model} — ${p.part}</div>
+        <div style="font-size:10px;color:#64a0ff">#${p.id} | 🔧 ອາໄຫຼ່ · ${p.cat||'-'}</div>
+      </div>
+      <span style="color:var(--gold);font-size:12px;font-weight:700;white-space:nowrap">${Number(p.price).toLocaleString()}</span>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin:4px 0">📦 ສ໊ອກ: <span style="color:${p.stock>0?'#4ade80':'#f87171'};font-weight:700">${p.stock||0} ຊິ້ນ</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+      <button class="btn btn-outline" style="font-size:11px;padding:5px" onclick="openPhonePartsAdmin('edit_${p.id}')">✏️ ແກ້ໄຂ</button>
+      <button class="btn btn-danger" style="font-size:11px;padding:5px" onclick="adminDeletePhonePart('${p.id}')">🗑 ລຶບ</button>
+    </div>
+  </div>`;
   return `
   <div style="margin-bottom:16px">
     <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">🎮 ID ເກມ (${gameProds.length})</div>
     ${gameProds.length?gameProds.map(p=>pCard(p,true)).join(''):'<div style="color:var(--text2);font-size:13px;text-align:center;padding:12px">ຍັງບໍ່ມີ</div>'}
     <div style="font-size:13px;font-weight:700;color:var(--gold);margin:16px 0 10px">📦 ສິນຄ້າທົ່ວໄປ (${genProds.length})</div>
     ${genProds.length?genProds.map(p=>pCard(p,false)).join(''):'<div style="color:var(--text2);font-size:13px;text-align:center;padding:12px">ຍັງບໍ່ມີ</div>'}
+    <div style="font-size:13px;font-weight:700;color:#64a0ff;margin:16px 0 10px">🔧 ອາໄຫຼ່ໂທລະສັບ (${allParts.length})</div>
+    ${allParts.length?allParts.map(p=>partCard(p)).join(''):'<div style="color:var(--text2);font-size:13px;text-align:center;padding:12px">ຍັງບໍ່ມີ</div>'}
   </div>`;
 }
 
@@ -13397,6 +13430,23 @@ async function adminDeleteProduct(id){
   const card = document.getElementById('aprd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>{card.remove();},400);}
   else renderAdminTab('products');
+}
+
+// ✅ Fix: ลบ phone part จาก admin
+async function adminDeletePhonePart(id){
+  if(!confirm('ລຶບອາໄຫຼ່ນີ້?')) return;
+  _allPhoneParts = _allPhoneParts.filter(p=>p.id!==id);
+  _ppgParts = _ppgParts.filter(p=>p.id!==id);
+  savePhoneParts(_allPhoneParts);
+  showNotif('⏳ ກຳລັງລຶບ...', 'info');
+  try{
+    await sbDeletePhonePart(id);
+    showNotif('🗑 ລຶບອາໄຫຼ່ສຳເລັດ');
+  } catch(e){
+    console.warn('sbDeletePhonePart:', e);
+    showNotif('⚠️ ລຶບ offline — sync ໃໝ່ທີຫຼັງ', 'warning');
+  }
+  renderAdminTab('products');
 }
 async function adminDeleteProductSearch(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
