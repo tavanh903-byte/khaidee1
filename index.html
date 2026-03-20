@@ -3604,8 +3604,8 @@ async function syncFromSupabase(){
       </div>
     </div>
 
-    <!-- Admin Panel Access -->
-    <div style="border-top:1px solid var(--gray2);margin:16px 0 12px;padding-top:16px">
+    <!-- Admin Panel Access — ສະແດງສະເພາະ Admin ID ເທົ່ານັ້ນ -->
+    <div id="adminPanelBtnWrap" style="border-top:1px solid var(--gray2);margin:16px 0 12px;padding-top:16px;display:none">
       <button class="btn btn-outline" onclick="showAdminLogin()" style="width:100%;font-size:13px;border-color:rgba(201,168,76,.3);color:var(--text2)">
         🔐 ຜູ້ດູແລລະບົບ / Admin Panel
       </button>
@@ -3627,13 +3627,19 @@ async function syncFromSupabase(){
 <div class="popup-overlay" id="adminLoginModal" style="display:none">
   <div class="popup-box">
     <div class="modal-title">🔐 Admin Login</div>
+
+    <!-- ຂໍ້ຄວາມ error ––– ສະແດງເມື່ອໃສ່ຜິດ -->
+    <div id="adminLoginError" style="display:none;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.4);border-radius:10px;padding:10px 14px;font-size:13px;color:#f87171;margin-bottom:12px"></div>
+    <!-- ຂໍ້ຄວາມ lockout -->
+    <div id="adminLoginLockMsg" style="display:none;background:rgba(255,120,0,.1);border:1px solid rgba(255,120,0,.4);border-radius:10px;padding:10px 14px;font-size:13px;color:#fb923c;margin-bottom:12px;text-align:center"></div>
+
     <div class="form-group">
       <label class="form-label">Username</label>
-      <input class="form-input" id="adminUser" placeholder="Username" autocomplete="off">
+      <input class="form-input" id="adminUser" placeholder="Username" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('adminPass').focus()">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>
-      <input class="form-input" type="password" id="adminPass" placeholder="Password">
+      <input class="form-input" type="password" id="adminPass" placeholder="Password" onkeydown="if(event.key==='Enter')doAdminLogin()">
     </div>
     <button class="btn btn-gold" onclick="doAdminLogin()" style="margin-bottom:8px;width:100%">🔓 ເຂົ້າລະບົບ Admin</button>
     <button class="btn btn-outline" onclick="closeModal('adminLoginModal')" style="width:100%">ຍົກເລີກ</button>
@@ -8189,6 +8195,12 @@ function updateProfileUI(){
     // Show admin chat button only for admin users
     const adminBtn = document.getElementById('adminChatBtn');
     if(adminBtn) adminBtn.style.display = currentUser.isAdmin ? 'flex' : 'none';
+    // ── ສະແດງປຸ່ມ Admin Panel ສະເພາະ Admin ID ຈິງ ──
+    const adminPanelBtn = document.getElementById('adminPanelBtnWrap');
+    if(adminPanelBtn){
+      const isRealAdmin = OWNER_ACCOUNTS.some(o=>o.id===currentUser.id) && currentUser.isAdmin;
+      adminPanelBtn.style.display = isRealAdmin ? 'block' : 'none';
+    }
     updateAdminDiamondUI();
     updateAdminShopBannerProfile();
     updateWalletDisplay();
@@ -11587,10 +11599,22 @@ let currentAdminTab = 'overview';
 let depositRequests = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
 let withdrawRequests = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
 
+// ── Admin Login Security ──
+let _adminLoginAttempts = 0;
+let _adminLockUntil = 0;
+
 function showAdminLogin(){
+  // ✅ ກວດ ID: ສະເພາະ Admin ທີ່ login ຢູ່ເທົ່ານັ້ນ
+  const allowedIds = OWNER_ACCOUNTS.map(o=>o.id);
+  if(!currentUser || !allowedIds.includes(currentUser.id)){
+    showNotif('⛔ ທ່ານບໍ່ມີສິດເຂົ້າ Admin Panel');
+    return;
+  }
   closeModal('settingsModal');
   document.getElementById('adminUser').value='';
   document.getElementById('adminPass').value='';
+  document.getElementById('adminLoginError').style.display='none';
+  document.getElementById('adminLoginLockMsg').style.display='none';
   openModal('adminLoginModal');
 }
 
@@ -11630,17 +11654,61 @@ function closeAdminPanel(){
 }
 
 async function doAdminLogin(){
+  // ── ກວດ lockout ──
+  const now = Date.now();
+  if(now < _adminLockUntil){
+    const secsLeft = Math.ceil((_adminLockUntil - now)/1000);
+    const minsLeft = Math.ceil(secsLeft/60);
+    document.getElementById('adminLoginLockMsg').textContent =
+      '🔒 ລະບົບຖືກລ໋ອກ — ລໍຖ້າ '+minsLeft+' ນາທີ ('+secsLeft+'s)';
+    document.getElementById('adminLoginLockMsg').style.display='block';
+    document.getElementById('adminLoginError').style.display='none';
+    return;
+  }
+
+  // ── ກວດ ID ອີກຮອບ (double-check) ──
+  const allowedIds = OWNER_ACCOUNTS.map(o=>o.id);
+  if(!currentUser || !allowedIds.includes(currentUser.id)){
+    showNotif('⛔ ບໍ່ໄດ້ຮັບອະນຸຍາດ');
+    closeModal('adminLoginModal');
+    return;
+  }
+
   const u = document.getElementById('adminUser').value.trim();
   const p = document.getElementById('adminPass').value.trim();
-  // Make sure credentials are loaded from Supabase first
+  if(!u || !p){ showNotif('ກະລຸນາໃສ່ Username ແລະ Password'); return; }
+
   if(!_credsLoaded) {
     showNotif('⏳ ກຳລັງໂຫຼດ... ລອງໃໝ່ອີກຄັ້ງ');
     await loadAdminCredentials();
   }
-  // Check against password loaded from Supabase
+
   const match = ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase()) && p===ADMIN_BACK_PASS;
-  if(!match){showNotif('❌ Username ຫຼື Password ບໍ່ຖືກ');return;}
-  const _fakeMatch = true; // skip original check below
+
+  if(!match){
+    _adminLoginAttempts++;
+    const remaining = 3 - _adminLoginAttempts;
+    if(_adminLoginAttempts >= 3){
+      _adminLockUntil = Date.now() + 5*60*1000; // ລ໋ອກ 5 ນາທີ
+      _adminLoginAttempts = 0;
+      document.getElementById('adminLoginLockMsg').textContent =
+        '🔒 ໃສ່ຜິດຫຼາຍເກີນໄປ — ລ໋ອກ 5 ນາທີ';
+      document.getElementById('adminLoginLockMsg').style.display='block';
+      document.getElementById('adminLoginError').style.display='none';
+      document.getElementById('adminUser').value='';
+      document.getElementById('adminPass').value='';
+    } else {
+      document.getElementById('adminLoginError').textContent =
+        '❌ Username ຫຼື Password ບໍ່ຖືກ — ເຫຼືອ '+remaining+' ຄັ້ງ';
+      document.getElementById('adminLoginError').style.display='block';
+      document.getElementById('adminLoginLockMsg').style.display='none';
+    }
+    return;
+  }
+
+  // ── Login ສຳເລັດ ──
+  _adminLoginAttempts = 0;
+  _adminLockUntil = 0;
   adminLoggedIn = true;
   adminUsername = u;
   closeModal('adminLoginModal');
@@ -12401,17 +12469,8 @@ function adminOpenEditUser(uid){
         <input class="form-input" id="adminEditPhone" value="${u.phone||''}" placeholder="ເບີໂທ">
       </div>
       <div class="form-group">
-        <label class="form-label">🔓 ລະຫັດຜ່ານປັດຈຸບັນ <span style="font-size:10px;color:var(--text2)">(ລະຫັດຂອງລູກຄ້າຕອນນີ້)</span></label>
-        <div style="position:relative">
-          <input class="form-input" id="adminViewPass" value="${u.pass||''}" readonly
-            style="background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.25);color:var(--gold);font-family:monospace;letter-spacing:1px;padding-right:48px" type="password">
-          <button type="button" onclick="toggleAdminViewPass()" id="adminViewPassToggleBtn"
-            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:0">👁️</button>
-        </div>
-      </div>
-      <div class="form-group">
         <label class="form-label">🔑 ລະຫັດຜ່ານໃໝ່ <span style="font-size:10px;color:var(--text2)">(ຫວ່າງໄວ້ = ບໍ່ປ່ຽນ)</span></label>
-        <input class="form-input" id="adminEditPass" type="text" placeholder="ພິມລະຫັດຜ່ານໃໝ່ທີ່ຕ້ອງການ">
+        <input class="form-input" id="adminEditPass" type="password" placeholder="ລະຫັດຜ່ານໃໝ່">
       </div>
       <div class="form-group">
         <label class="form-label">💰 Wallet (ກີບ) — ບໍ່ຈຳກັດ</label>
@@ -12473,23 +12532,17 @@ function adminSaveEditUser(uid){
       }
     }
   }
-  // Sync to Supabase — ລວມ password ດ້ວຍ ເພື່ອໃຫ້ login ດ້ວຍລະຫັດໃໝ່ໄດ້
+  // Sync to Supabase (name, email, phone, wallet only — not password)
   const _allU = getAllUsers();
   const _savedU = _allU.find(x=>x.id===uid);
   if(_savedU){
-    sbSaveUser(_savedU).catch(e=>console.warn('sbSaveEditUser:',e));
+    const _syncU = {..._savedU};
+    delete _syncU.pass; // never sync password change from admin
+    sbSaveUser(_syncU).catch(e=>console.warn('sbSaveEditUser:',e));
   }
   closeModal('adminEditUserModal');
   renderAdminTab('users');
   showNotif('✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!');
-}
-
-function toggleAdminViewPass(){
-  const inp = document.getElementById('adminViewPass');
-  const btn = document.getElementById('adminViewPassToggleBtn');
-  if(!inp) return;
-  if(inp.type === 'password'){ inp.type='text'; if(btn) btn.textContent='🙈'; }
-  else { inp.type='password'; if(btn) btn.textContent='👁️'; }
 }
 
 function adminDeleteUser(uid){
