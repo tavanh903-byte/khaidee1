@@ -12401,6 +12401,13 @@ function adminDeleteProductSearch(id){
   showNotif('🗑 ລຶບສຳເລັດ');
 }
 
+function _adminOrderDeleteBtn(o){
+  if(o.status==='completed'||o.status==='cancelled'||o.status==='done'||o.adminReleased){
+    return '<button onclick="adminDeleteOrder(\''+o.id+'\')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:\'Sarabun\',sans-serif;margin-top:6px;width:100%">🗑 ລຶບ Order ນີ້</button>';
+  }
+  return '';
+}
+
 function renderAdminOrders(){
   if(!orders.length) return '<div style="text-align:center;padding:30px;color:var(--text2)">ຍັງບໍ່ມີອໍເດີ</div>';
   const statusColors = {pending:'badge-blue',processing:'badge-gold',shipped:'badge-green',completed:'badge-green',cancelled:'badge-red'};
@@ -12415,7 +12422,7 @@ function renderAdminOrders(){
       <div style="font-weight:700;font-size:14px;margin-bottom:6px">${o.productName||'?'}</div>
       <div class="admin-row"><span style="color:var(--text2)">👤 ລູກຄ້າ</span><span>${o.name||'?'}</span></div>
       <div class="admin-row"><span style="color:var(--text2)">📱 ໂທ</span><span>${o.phone||'-'}</span></div>
-      <div class="admin-row"><span style="color:var(--text2)">💰 ລວມ</span><span style="color:var(--gold)">${Number(o.total||0).toLocaleString()} ກີບ</span></div>
+      <div class="admin-row"><span style="color:var(--gold)">${Number(o.total||0).toLocaleString()} ກີບ</span></div>
       <div class="admin-row"><span style="color:var(--text2)">📅 ວັນທີ</span><span style="font-size:12px">${o.date||'-'}</span></div>
       <div style="margin-top:10px">
         <select class="form-input" style="font-size:12px;padding:7px" onchange="adminUpdateOrderStatus('${o.id}',this.value)">
@@ -12425,11 +12432,9 @@ function renderAdminOrders(){
           <option value="completed" ${o.status==='completed'?'selected':''}>✅ Completed</option>
           <option value="cancelled" ${o.status==='cancelled'?'selected':''}>❌ Cancelled</option>
         </select>
-        \${(o.status==='completed'||o.status==='cancelled'||o.status==='done'||o.adminReleased)?`
-        <button onclick="adminDeleteOrder('\${o.id}')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;margin-top:6px;width:100%">🗑 ລຶບ Order ນີ້</button>
-        `:''}
+        ${_adminOrderDeleteBtn(o)}
       </div>
-    </div>`).join('')}\`;
+    </div>`).join('')}`;
 }
 
 function adminDeleteOrder(id){
