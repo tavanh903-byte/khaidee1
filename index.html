@@ -1204,6 +1204,65 @@ async function sbSaveGameOrder(o){
   });
 }
 
+// ── Transactions (ປະຫວັດໂອນເງິນ) ──
+async function sbSaveTransaction(tx){
+  try {
+    await supa.from('kd_transactions').upsert({
+      id: tx.id || ('TX-'+Date.now()+'-'+Math.random().toString(36).slice(2,6)),
+      type: tx.type||'transfer',
+      amount: tx.amount||0,
+      from_user_id: tx.fromUserId||null,
+      from_user_name: tx.fromUserName||null,
+      to_user_id: tx.toUserId||null,
+      to_user_name: tx.toUserName||null,
+      order_id: tx.orderId||null,
+      note: tx.note||null,
+      balance_before: tx.balanceBefore||0,
+      balance_after: tx.balanceAfter||0,
+      created_at: new Date().toISOString()
+    });
+  } catch(e){ console.warn('sbSaveTransaction:', e); }
+}
+
+// ── Phone Parts Stock Deduct ──
+async function deductPhonePartStock(partId, qty){
+  try {
+    // ดึง stock ปัจจุบันจาก Supabase
+    const { data: part, error } = await supa.from('kd_phone_parts')
+      .select('stock').eq('id', partId).single();
+    if(error || !part) throw error || new Error('part not found');
+    const newStock = Math.max(0, (part.stock||0) - qty);
+    await supa.from('kd_phone_parts')
+      .update({ stock: newStock, updated_at: new Date().toISOString() })
+      .eq('id', partId);
+    // ✅ update local cache
+    const cached = _allPhoneParts.find(p=>p.id===partId);
+    if(cached) cached.stock = newStock;
+    const local = getPhoneParts();
+    const li = local.findIndex(p=>p.id===partId);
+    if(li>=0){ local[li].stock=newStock; savePhoneParts(local); }
+    console.log('✅ Part stock deducted:', partId, '->', newStock);
+    return newStock;
+  } catch(e){
+    console.warn('deductPhonePartStock:', e);
+    return null;
+  }
+}
+
+// ── Image Storage cleanup ──
+async function sbDeleteStorageFile(url){
+  // ดึง path จาก URL
+  try {
+    const BUCKET = 'product-images';
+    const marker = '/storage/v1/object/public/' + BUCKET + '/';
+    const idx = url.indexOf(marker);
+    if(idx < 0) return; // ไม่ใช่ Supabase Storage URL
+    const path = url.slice(idx + marker.length);
+    await supa.storage.from(BUCKET).remove([path]);
+    console.log('🗑 Storage deleted:', path);
+  } catch(e){ console.warn('sbDeleteStorageFile:', e); }
+}
+
 // ── App Settings ──
 async function sbGetSetting(key){
   const {data} = await supa.from('kd_app_settings').select('value').eq('key',key).single();
@@ -1297,6 +1356,34 @@ async function syncFromSupabase(){
 
     const updateInfo = await sbGetSetting('update_info');
     if(updateInfo) localStorage.setItem('kd_update_info', updateInfo);
+    // ✅ Cache transactions count for UI badge
+    try {
+      const { count } = await supa.from('kd_transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('to_user_id', currentUser?.id||'__none__');
+      if(count) window._txCount = count;
+    } catch(e){}
+
+    // ✅ โหລດ shop info ຈາກ Supabase
+    loadAdmShopInfoFromCloud().catch(()=>{});
+    // ✅ โหລດ admin finance ຈາກ Supabase
+    try {
+      const sysW = await sbGetSetting('admin_sys_wallet');
+      if(sysW !== null){ adminSysWallet = parseInt(sysW)||0; localStorage.setItem('kd_admin_sys_wallet', sysW); updateAdminSysWalletDisplay(); }
+      const fin = await sbGetSetting('admin_finance');
+      if(fin){ const f=JSON.parse(fin); adminIncome=f.income||0; adminExpense=f.expense||0; adminProfit=f.profit||0; localStorage.setItem('kd_admin_income',String(adminIncome)); localStorage.setItem('kd_admin_expense',String(adminExpense)); localStorage.setItem('kd_admin_profit',String(adminProfit)); }
+    } catch(e2){ console.warn('admin finance sync:', e2); }
+
+    // ✅ โหລດ seller apps ຈາກ Supabase
+    try {
+      const sbApps = await sbLoadSellerApps();
+      if(sbApps.length > 0){
+        const localApps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+        const merged = sbApps.map(sa => { const local = localApps.find(la=>la.userId===sa.userId); return local ? {...sa, idCardImg:local.idCardImg||sa.idCardImg, selfieImg:local.selfieImg||sa.selfieImg} : sa; });
+        localApps.forEach(la => { if(!merged.find(m=>m.userId===la.userId)) merged.push(la); });
+        try { localStorage.setItem('kd_seller_apps', JSON.stringify(merged)); } catch(e){}
+      }
+    } catch(e2){ console.warn('seller apps sync:', e2); }
   } catch(e){
     console.warn('⚠️ Supabase sync failed, using localStorage:', e);
   }
@@ -3971,6 +4058,15 @@ function getUsersDB(){
 }
 function saveUsersDB(db){
   localStorage.setItem('kd_users_db', JSON.stringify(db));
+  // ✅ sync users ທີ່ມີການປ່ຽນແປງໄປ Supabase (throttled per user)
+  Object.values(db).forEach(u => {
+    if(!u || !u.id) return;
+    const key = '_sbUserSync_'+u.id;
+    clearTimeout(window[key]);
+    window[key] = setTimeout(()=>{
+      sbSaveUser(u).catch(e=>console.warn('saveUsersDB sync:', e));
+    }, 300);
+  });
 }
 function getUserById(id){
   if(!id) return null;
@@ -4547,7 +4643,9 @@ function saveProducts(){
       }
     }
   }
-  // Sync each product to Supabase (batch — only sync changed/new ones to avoid overload)
+  // ✅ Sync products Supabase (throttled 500ms batch)
+  clearTimeout(window._saveProductsTimer);
+  window._saveProductsTimer = setTimeout(() => {
   products.forEach(p => {
     supa.from('kd_products').upsert({
       id:p.id, name:p.name, price:p.price, category:p.cat,
@@ -4561,6 +4659,7 @@ function saveProducts(){
       updated_at:new Date().toISOString()
     }).catch(e=>console.warn('saveProducts upsert:',e));
   });
+  }, 500); // end throttle
 }
 
 // ✅ Re-sync all products with images to Supabase (run once after images_json column created)
@@ -4580,8 +4679,11 @@ async function resyncAllProductImages(){
 }
 function saveOrders(){
   localStorage.setItem('kd_orders',JSON.stringify(orders));
-  // ✅ ສົ່ງທຸກ order ໄປ Supabase (upsert = insert or update)
-  orders.forEach(o => sbSaveOrder(o).catch(e => console.warn('sbSaveOrder:', e.message)));
+  // ✅ throttled sync ໄປ Supabase
+  clearTimeout(window._saveOrdersTimer);
+  window._saveOrdersTimer = setTimeout(()=>{
+    orders.forEach(o => sbSaveOrder(o).catch(e => console.warn('sbSaveOrder:', e.message)));
+  }, 400);
 }
 // ✅ ຟັງຊັ່ນໃໝ່: save ສະເພາະ 1 order ທີ່ປ່ຽນໄປ (ໄວກວ່າ)
 function saveOneOrder(orderId){
@@ -5117,7 +5219,7 @@ function showGeneralOrder(p){
       </select>
     </div>
     <div class="bill-warning">⚠️ ກະລຸນາແຄັບຮູບພາບສິນຄ້າທີ່ມີ ID #${p.id} ໄວ້ ຖ້າສິນຄ້າມີບັນຫາ ໃຫ້ຕິດຕໍ່ Admin ແລ້ວແຈ້ງ ID</div>
-    <button class="btn btn-gold" onclick="submitGeneralOrder()" style="margin-top:12px;margin-bottom:8px">✅ ຢືນຢັນສັ່ງຊື້</button>
+    <button class="btn btn-gold" id="submitOrderBtn" onclick="submitGeneralOrder()" style="margin-top:12px;margin-bottom:8px">✅ ຢືນຢັນສັ່ງຊື້</button>
     <button class="btn btn-outline" onclick="closeModal('orderModal')">ຍົກເລີກ</button>
   `;
   document.getElementById('orderModalContent').innerHTML = html;
@@ -5133,7 +5235,13 @@ function selectOrderVariant(type, idx, val, el, lblId){
   el.classList.add('selected');
 }
 
-function submitGeneralOrder(){
+async function submitGeneralOrder(){
+  // ✅ Double-submit guard
+  if(window._orderLock) return;
+  window._orderLock = true;
+  const submitBtn = document.getElementById('submitOrderBtn');
+  if(submitBtn){ submitBtn.disabled=true; submitBtn.textContent='⏳ ກຳລັງດຳເນີນການ...'; }
+  try {
   const p = currentProduct;
   const qty = parseInt(document.getElementById('orderQty').value)||1;
   const name = document.getElementById('orderName').value;
@@ -5203,12 +5311,41 @@ function submitGeneralOrder(){
       if(currentUser&&currentUser.id===p.sellerId){ currentUser.wallet=db[p.sellerId].wallet; updateWalletDisplay(); }
     }
   }
+  // ✅ ຕັດ wallet ໃນ Supabase ທັນທີ
+  const walletBefore = currentUser.wallet + total; // (ຍັງບໍ່ທັນຫັກ)
+  supa.from('kd_users').update({ wallet: currentUser.wallet, updated_at: new Date().toISOString() })
+    .eq('id', currentUser.id).catch(e=>console.warn('wallet deduct sync:', e));
+  // ✅ ຖ້າເປັນ phoneparts ໃຫ້ຕັດ stock ໃນ Supabase
+  if(p.cat === 'phoneparts' || p._isPart) {
+    deductPhonePartStock(p.id, qty).catch(e=>console.warn('deductStock:', e));
+  }
+
+  // ✅ ບັນທຶກ Transaction Log
+  sbSaveTransaction({
+    id: 'TX-BUY-'+orderId,
+    type: 'purchase',
+    amount: total,
+    fromUserId: currentUser.id,
+    fromUserName: currentUser.name||'',
+    toUserId: p.sellerId||'admin',
+    toUserName: p.seller||'Admin',
+    orderId: orderId,
+    note: 'ຊື້ສິນຄ້າ: '+p.name+' x'+qty,
+    balanceBefore: walletBefore,
+    balanceAfter: currentUser.wallet
+  });
+
   waNewOrder(currentUser, order);
   waNotifySeller(order);
   closeModal('orderModal');
   showBillPopup(order);
-  // refresh ປະຫວັດການຂາຍທັນທີ
   renderSaleHistoryPage();
+  } catch(e){
+    showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+(e.message||e), 'error');
+  } finally {
+    window._orderLock = false;
+    if(submitBtn){ submitBtn.disabled=false; submitBtn.textContent='✅ ຢືນຢັນສັ່ງຊື້'; }
+  }
 }
 
 function showBillPopup(order){
@@ -5282,7 +5419,13 @@ function proceedGameOrder(){
   openModal('gameOrderModal');
 }
 
-function submitGameOrder(){
+async function submitGameOrder(){
+  // ✅ Double-submit guard
+  if(window._gameOrderLock) return;
+  window._gameOrderLock = true;
+  const gBtn = document.getElementById('submitGameOrderBtn');
+  if(gBtn){ gBtn.disabled=true; gBtn.textContent='⏳ ກຳລັງດຳເນີນການ...'; }
+  try {
   const p = currentProduct;
   const qty = parseInt(document.getElementById('gorderQty').value)||1;
   const phone = document.getElementById('gorderPhone').value;
@@ -5316,10 +5459,33 @@ function submitGameOrder(){
     if(products[gIdx].qty !== undefined) products[gIdx].qty = Math.max(0,(products[gIdx].qty||0)-qty);
     saveProducts();
   }
+  // ✅ wallet sync Supabase
+  const wBefore = currentUser.wallet + total;
+  supa.from('kd_users').update({ wallet: currentUser.wallet, updated_at: new Date().toISOString() })
+    .eq('id', currentUser.id).catch(e=>console.warn('game wallet sync:', e));
+  // ✅ Transaction log
+  sbSaveTransaction({
+    id: 'TX-GAME-'+orderId,
+    type: 'game_purchase',
+    amount: total,
+    fromUserId: currentUser.id,
+    fromUserName: currentUser.name||'',
+    toUserId: p.sellerId||'admin',
+    orderId: orderId,
+    note: 'ຊື້ ID ເກມ: '+p.name,
+    balanceBefore: wBefore,
+    balanceAfter: currentUser.wallet
+  });
   waNewGameOrder(currentUser, order);
   waNotifySeller(order);
   closeModal('gameOrderModal');
   showGameBillPopup(order, p);
+  } catch(e){
+    showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+(e.message||e), 'error');
+  } finally {
+    window._gameOrderLock = false;
+    if(gBtn){ gBtn.disabled=false; gBtn.textContent='✅ ຢືນຢັນສັ່ງຊື້'; }
+  }
 }
 
 function showGameBillPopup(order, p){
@@ -6788,9 +6954,14 @@ function deleteProductFromManage(id){
   renderManagePage();
   renderProducts(products);
   showNotif('🗑 ລຶບ "'+p.name+'" ແລ້ວ — ກຳລັງ sync...');
-  // ── ລຶບຈາກ Supabase ──
+  // ── ລຶບຈາກ Supabase + ລຶບຮູບຈາກ Storage ──
   sbDeleteProduct(id)
-    .then(()=>showNotif('🗑 ລຶບ "'+p.name+'" ສຳເລັດ'))
+    .then(()=>{
+      showNotif('🗑 ລຶບ "'+p.name+'" ສຳເລັດ');
+      // ✅ ລຶບຮູບຈາກ Supabase Storage
+      const imgs = p.images || (p.img ? [p.img] : []);
+      imgs.forEach(url=>{ if(url && url.includes('supabase')) sbDeleteStorageFile(url); });
+    })
     .catch(e=>{ console.warn('sbDeleteProduct:', e); showNotif('⚠️ ລຶບ offline — sync ໃໝ່ທີຫຼັງ', 'warning'); });
 }
 
@@ -7496,7 +7667,22 @@ const ADM_SHOP_KEY = 'kd_admin_shop_info';
 function loadAdmShopInfo(){
   try{ return JSON.parse(localStorage.getItem(ADM_SHOP_KEY)||'{}'); }catch(e){ return {}; }
 }
-function saveAdmShopInfoData(d){ localStorage.setItem(ADM_SHOP_KEY, JSON.stringify(d)); }
+// ✅ async version: ໂຫລດຈາກ Supabase ແລ້ວ update local
+async function loadAdmShopInfoFromCloud(){
+  try {
+    const val = await sbGetSetting('shop_info');
+    if(val){
+      const info = JSON.parse(val);
+      localStorage.setItem(ADM_SHOP_KEY, JSON.stringify(info));
+      updateAdminShopBannerProfile();
+    }
+  } catch(e){ console.warn('loadAdmShopInfoFromCloud:', e); }
+}
+function saveAdmShopInfoData(d){
+  localStorage.setItem(ADM_SHOP_KEY, JSON.stringify(d));
+  // ✅ sync ໄປ Supabase
+  sbSetSetting('shop_info', JSON.stringify(d)).catch(e=>console.warn('saveAdmShopInfoData:',e));
+}
 
 function updateAdminShopBannerProfile(){
   const sec = document.getElementById('adminOfficialShopSection');
@@ -8556,15 +8742,18 @@ function submitSellerApply(){
 
   const resetBtn = ()=>{ if(btn){btn.textContent='✅ ສ້ັງສະໝັກ';btn.disabled=false;} };
 
-  // Compress HARD: 400x400 max, JPEG 0.4 quality (~30-50KB per image)
-  compressImage(idCardFile, 400, 400, 0.4, idCardImg => {
-    if(!idCardImg){ showNotif('❌ ອ່ານຮູບບັດບໍ່ສຳເລັດ ລອງໃໝ່'); resetBtn(); return; }
-    compressImage(selfieFile, 400, 400, 0.4, selfieImg => {
+  // ✅ ອັບໂຫລດຮູບໄປ Supabase Storage ແທນ base64
+  showNotif('⏳ ກຳລັງອັບໂຫລດຮູບ...');
+  (async () => {
+    try {
+      let idCardImg = await uploadImageToStorage(idCardFile, 'seller-apps').catch(()=>null);
+      let selfieImg = await uploadImageToStorage(selfieFile, 'seller-apps').catch(()=>null);
+      // Fallback to base64 if storage fails
+      if(!idCardImg) idCardImg = await new Promise(res=>compressImage(idCardFile,400,400,0.4,res));
+      if(!selfieImg) selfieImg = await new Promise(res=>compressImage(selfieFile,400,400,0.4,res));
+      if(!idCardImg){ showNotif('❌ ອ່ານຮູບບັດບໍ່ສຳເລັດ ລອງໃໝ່'); resetBtn(); return; }
       if(!selfieImg){ showNotif('❌ ອ່ານຮູບຄູ່ບັດບໍ່ສຳເລັດ ລອງໃໝ່'); resetBtn(); return; }
-      const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
-      // Keep only last 5 pending apps to save space
-      const trimmed = apps.filter(a=>a.status==='pending').slice(-5);
-      trimmed.push({
+      const newApp = {
         id: 'SA-'+Date.now(),
         userId: currentUser.id,
         name: fn+' '+ln,
@@ -8572,29 +8761,20 @@ function submitSellerApply(){
         idCardImg, selfieImg,
         date: new Date().toLocaleString(),
         status: 'pending'
-      });
-      const newApp = trimmed[trimmed.length-1];
-      const ok = safeSave('kd_seller_apps', trimmed);
-      if(!ok){
-        trimmed[trimmed.length-1].idCardImg = '[ສ່ງຮູບທາງ Line/WhatsApp]';
-        trimmed[trimmed.length-1].selfieImg = '[ສ່ງຮູບທາງ Line/WhatsApp]';
-        try { localStorage.setItem('kd_seller_apps', JSON.stringify(trimmed)); } catch(e){
-          freeStorageSpace();
-          try { localStorage.setItem('kd_seller_apps', JSON.stringify(trimmed)); } catch(e2){}
-        }
-        currentUser.sellerPending = true;
-        currentUser.sellerName = fn+' '+ln;
-        saveUser();
-        sbSaveSellerApp(trimmed[trimmed.length-1]).catch(()=>{});
-        addAdminNotification('seller', {user:currentUser.name, id:currentUser.id});
-        closeModal('sellerApplyModal');
-        updateProfileUI();
-        resetBtn();
-        showQuotaContactModal(fn+' '+ln);
-        return;
+      };
+      // ✅ Save to Supabase FIRST (cloud-first)
+      try {
+        await sbSaveSellerApp(newApp);
+        showNotif('✅ ສ່ງໃບສະໝັກສຳເລັດ!', 'success');
+      } catch(e) {
+        console.warn('sbSaveSellerApp:', e);
+        showNotif('⚠️ ສ່ງ offline — ຈະ sync ໃໝ່ທີຫຼັງ', 'warning');
       }
-      // Save to Supabase so admin sees it from any device
-      sbSaveSellerApp(newApp).catch(()=>{});
+      // Also save to local for offline
+      const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+      const trimmed = apps.filter(a=>a.status==='pending').slice(-4);
+      trimmed.push(newApp);
+      try { localStorage.setItem('kd_seller_apps', JSON.stringify(trimmed)); } catch(e){}
       currentUser.sellerPending = true;
       currentUser.sellerName = fn+' '+ln;
       saveUser();
@@ -8602,7 +8782,14 @@ function submitSellerApply(){
       waNewSellerApply({name:fn+' '+ln, phone, email, ban, idNum, userId:currentUser.id});
       closeModal('sellerApplyModal');
       updateProfileUI();
-    });
+      resetBtn();
+    } catch(e) {
+      console.warn('submitSellerApply error:', e);
+      showNotif('❌ ເກີດຂໍ້ຜິດພາດ ລອງໃໝ່', 'error');
+      resetBtn();
+    }
+  })();
+  // async submit handled above
   });
 }
 
@@ -11337,7 +11524,10 @@ function updateNavDiamondBadge(count){
 function addAdminNotification(type, data){
   const notifs = JSON.parse(localStorage.getItem('kd_admin_notifs')||'[]');
   notifs.unshift({type, data, date:new Date().toLocaleString(), read:false});
-  localStorage.setItem('kd_admin_notifs', JSON.stringify(notifs.slice(0,100)));
+  const _notifs2 = notifs.slice(0,100);
+  localStorage.setItem('kd_admin_notifs', JSON.stringify(_notifs2));
+  // ✅ sync ໄປ Supabase
+  sbSetSetting('admin_notifs', JSON.stringify(_notifs2)).catch(()=>{});
   updateAdminNotifBadge();
 }
 //  WHATSAPP NOTIFICATION SYSTEM — ຂາຍດີ-Shop
@@ -11824,11 +12014,17 @@ let adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');   // 
 
 function saveAdminSysWallet(){
   localStorage.setItem('kd_admin_sys_wallet', String(adminSysWallet));
+  // ✅ sync ໄປ Supabase
+  sbSetSetting('admin_sys_wallet', String(adminSysWallet)).catch(e=>console.warn('saveAdminSysWallet:',e));
 }
 function saveAdminFinance(){
   localStorage.setItem('kd_admin_income',  String(adminIncome));
   localStorage.setItem('kd_admin_expense', String(adminExpense));
   localStorage.setItem('kd_admin_profit',  String(adminProfit));
+  // ✅ sync ໄປ Supabase
+  sbSetSetting('admin_finance', JSON.stringify({
+    income: adminIncome, expense: adminExpense, profit: adminProfit
+  })).catch(e=>console.warn('saveAdminFinance:',e));
 }
 
 function updateAdminSysWalletDisplay(){
@@ -13856,7 +14052,12 @@ function resetSlipSession() {
   }
 }
 
-function doDeposit(){
+async function doDeposit(){
+  if(window._depositLock) return;
+  window._depositLock = true;
+  const depBtn = document.getElementById('depConfirmBtn');
+  if(depBtn){ depBtn.disabled=true; depBtn.textContent='⏳ ກຳລັງດຳເນີນການ...'; }
+  try {
   const amt = parseInt(document.getElementById('depositAmt').value)||0;
   if(!amt||amt<1000){showNotif('ໃສ່ຈຳນວນທີ່ຖືກຕ້ອງ (ຢ່າງໜ້ອຍ 1,000 ກີບ)');return;}
   if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
@@ -13977,6 +14178,9 @@ function doDeposit(){
     } else {
       showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+err.message);
     }
+  } finally {
+    window._depositLock = false;
+    if(depBtn){ depBtn.disabled=false; depBtn.textContent='✅ ຢືນຢັນການຝາກ'; }
   }
 }
 
@@ -14055,7 +14259,12 @@ function calcWithdrawFee(){
     ✅ ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ₭`;
 }
 
-function doWithdraw(){
+async function doWithdraw(){
+  if(window._withdrawLock) return;
+  window._withdrawLock = true;
+  const wdBtn = document.querySelector('#withdrawModal .btn-gold');
+  if(wdBtn){ wdBtn.disabled=true; wdBtn.textContent='⏳ ກຳລັງດຳເນີນການ...'; }
+  try {
   const amt = parseInt(document.getElementById('withdrawAmt').value)||0;
   if(!amt||amt<50000){showNotif('ຂັ້ນຕ່ຳ 50,000 ກີບ');return;}
   const qr = document.getElementById('withdrawQRInput');
@@ -14082,6 +14291,20 @@ function doWithdraw(){
     withs.push({id:'WDR-'+Date.now(),userId:currentUser.id,userName:currentUser.name,amount:amt,fee,net,feeRate,qrImg,date:new Date().toLocaleString(),status:'pending',type:'withdraw'});
     localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
     sbSaveWithdrawal(withs[withs.length-1]).catch(e=>console.warn('sbSaveWithdrawal:',e));
+    // ✅ sync wallet ໄປ Supabase ທັນທີ
+    supa.from('kd_users').update({ wallet: currentUser.wallet, updated_at: new Date().toISOString() })
+      .eq('id', currentUser.id).catch(e=>console.warn('withdraw wallet sync:', e));
+    // ✅ Transaction log
+    sbSaveTransaction({
+      id: 'TX-WD-'+Date.now(),
+      type: 'withdraw',
+      amount: amt,
+      fromUserId: currentUser.id,
+      fromUserName: currentUser.name||'',
+      note: 'ຖອນເງິນ net='+net+' fee='+fee,
+      balanceBefore: (currentUser.wallet||0)+amt,
+      balanceAfter: currentUser.wallet
+    });
     addAdminNotification('withdraw',{user:currentUser.name,amount:amt});
     waWithdraw(currentUser, amt, fee, net, feeRate);
     closeModal('withdrawModal');
@@ -14091,6 +14314,8 @@ function doWithdraw(){
     const prev = document.getElementById('withdrawFeePreview');
     if(prev) prev.style.display='none';
     showNotif('✅ ສົ່ງຄຳຂໍຖອນ '+net.toLocaleString()+' ກີບ (ຫຼັງຫັກ '+feeRate*100+'%) ລໍຖ້າ 30 ນາທີ - 1 ຊົ່ວໂມງ');
+    window._withdrawLock = false;
+    if(wdBtn){ wdBtn.disabled=false; wdBtn.textContent='✅ ຢືນຢັນຖອນເງິນ'; }
   };
   reader.readAsDataURL(qr.files[0]);
 }
@@ -14985,9 +15210,10 @@ function renderPPList(){
 // ── สั่งซื้ออะไหล่ → ใช้ orderModal เหมือนสินค้าทั่วไป ──
 function orderPhonePart(partId){
   if(!currentUser){ showNotif('ກາລຸນາເຂົ້າລະບົບກ່ອນ'); return; }
-  const parts = window._ppParts || getPhoneParts();
+  const parts = window._ppParts || _allPhoneParts.length ? _allPhoneParts : getPhoneParts();
   const p = parts.find(x=>x.id===partId);
   if(!p){ showNotif('ບໍ່ພົບສິນຄ້າ'); return; }
+  if(p.stock <= 0){ showNotif('❌ ສິນຄ້ານີ້ໝົດ stock'); return; }
 
   // แปลง phone part → product object ที่ showGeneralOrder รับได้
   const catEmoji = {screen:'📱',battery:'🔋',back_glass:'🪟',port:'🔌',camera:'📷'};
@@ -15069,7 +15295,7 @@ function showPhonePartOrder(p){
       </select>
     </div>
     <div class="bill-warning">⚠️ ກາລຸນາແຄັບຮູບພາບອາໄຫຼ່ທີ່ມີ ID #${p.id} ໄວ້ ຖ້າສິນຄ້າມີບັນຫາ ໃຫ້ຕິດຕໍ່ Admin</div>
-    <button class="btn btn-gold" onclick="submitGeneralOrder()" style="margin-top:12px;margin-bottom:8px">✅ ຢືນຢັນສັ່ງຊື້</button>
+    <button class="btn btn-gold" id="submitOrderBtn" onclick="submitGeneralOrder()" style="margin-top:12px;margin-bottom:8px">✅ ຢືນຢັນສັ່ງຊື້</button>
     <button class="btn btn-outline" onclick="closeModal('orderModal')">ຍົກເລີກ</button>
   `;
   document.getElementById('orderModalContent').innerHTML = html;
@@ -15773,6 +15999,12 @@ function acsmOpenDetail(orderId){
 
 // ── Admin ກົດຢືນຢັນ → ໂອນເງິນ ──
 async function acsmConfirmRelease(orderId){
+  // ✅ Double-submit guard
+  if(window._releaseLock) return;
+  window._releaseLock = true;
+  const btn = document.querySelector('.acsm-confirm-btn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ ກຳລັງໂອນ...'; }
+  try {
   const idx = orders.findIndex(x=>x.id===orderId);
   if(idx<0){ showNotif('ບໍ່ພົບ Order'); return; }
   const o = orders[idx];
@@ -15845,13 +16077,26 @@ async function acsmConfirmRelease(orderId){
   saveOrders();
   sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(release):', e));
 
+  // ── ✅ ບັນທຶກ Transaction Log ──
+  sbSaveTransaction({
+    id: 'TX-REL-'+orderId,
+    type: 'release',
+    amount: sellerAmt,
+    fromUserId: currentUser.id,
+    fromUserName: currentUser.name||'Admin',
+    toUserId: o.sellerId,
+    toUserName: sellerName,
+    orderId: orderId,
+    note: 'Admin Release: Order '+orderId,
+    balanceBefore: currentSellerWallet,
+    balanceAfter: newWallet
+  });
+
   // ── Notification ──
   showNotif(`✅ ໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ "${sellerName}" ສຳເລັດ! ຍອດໃໝ່: ${Number(newWallet).toLocaleString()} ₭`, 'success');
 
   // ── ຖ້າ seller = currentUser → ກະຕຸ້ນ Realtime refresh wallet ──
   if(currentUser && currentUser.id === o.sellerId){
-    // Realtime จะ trigger เองผ่าน startWalletRealtime
-    // แต่ force pull อีกครั้งเผื่อ realtime delay
     setTimeout(async ()=>{
       try {
         const { data } = await supa.from('kd_users').select('wallet').eq('id', currentUser.id).single();
@@ -15866,6 +16111,10 @@ async function acsmConfirmRelease(orderId){
   updateAdminConfirmSaleBtnVisibility();
   renderSaleHistoryPage();
   renderBillsPage();
+  } finally {
+    window._releaseLock = false;
+    if(btn){ btn.disabled = false; btn.textContent = '✅ ຢືນຢັນ — ໂອນ'; }
+  }
 }
 
 </script>
