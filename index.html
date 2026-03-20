@@ -1250,6 +1250,7 @@ async function syncFromSupabase(){
   }
 })();
 </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="notif-container" id="notifContainer"></div>
@@ -2575,7 +2576,42 @@ async function syncFromSupabase(){
   </div>
 
   <!-- ══════ MANAGE PRODUCTS PAGE ══════ -->
-  <div class="page" id="page-manage">
+  
+  <!-- SALE HISTORY FULL PAGE -->
+  <div class="page" id="page-sale-history" style="padding-top:0">
+    <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 16px;position:sticky;top:0;z-index:50">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="switchPage('profile')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div>
+          <div style="font-family:'Cinzel Decorative',serif;font-size:14px;color:var(--gold)">📊 ປະຫວັດການຂາຍ</div>
+          <div style="font-size:11px;color:var(--text2)" id="shPageSubtitle">ທຸກ Order</div>
+        </div>
+      </div>
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:2px">
+        <button class="mp-ftab active" id="shft-all" onclick="setSHFilter('all',this)">ທັງໝົດ</button>
+        <button class="mp-ftab" id="shft-pending" onclick="setSHFilter('pending',this)">⏳ ລໍຖ້າ</button>
+        <button class="mp-ftab" id="shft-packed" onclick="setSHFilter('packed',this)">📦 ຫຸ້ມຫໍ່</button>
+        <button class="mp-ftab" id="shft-sent" onclick="setSHFilter('sent',this)">🚚 ສົ່ງ</button>
+        <button class="mp-ftab" id="shft-done" onclick="setSHFilter('done',this)">✅ ສຳເລັດ</button>
+        <button class="mp-ftab" id="shft-cancelled" onclick="setSHFilter('cancelled',this)">❌ ຍົກເລີກ</button>
+      </div>
+    </div>
+    <div id="shPageList" style="padding:12px 16px 80px;overflow-y:auto;flex:1"></div>
+  </div>
+
+  <!-- SELLER ORDER DETAIL FULL PAGE -->
+  <div class="page" id="page-seller-order" style="padding-top:0;display:flex;flex-direction:column">
+    <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="switchPage('sale-history');renderSaleHistoryPage()" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;padding:0">←</button>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:14px;color:var(--gold)" id="soPageTitle">📋 ລາຍລະອຽດ Order</div>
+      </div>
+    </div>
+    <div id="soPageContent" style="padding:12px 16px 80px;overflow-y:auto;flex:1"></div>
+  </div>
+
+<div class="page" id="page-manage">
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
@@ -2584,7 +2620,10 @@ async function syncFromSupabase(){
           <div style="font-size:16px;font-weight:700;color:var(--gold)">🗂️ ຈັດການສິນຄ້າ</div>
           <div style="font-size:11px;color:var(--text2)" id="mpPageSubtitle">ສິນຄ້າຂອງຂ້ອຍ</div>
         </div>
-        <button onclick="switchPage('profile');showSellProduct()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">➕ ລົງຂາຍ</button>
+        <div style="display:flex;gap:6px">
+          <button onclick="showSaleHistory()" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:10px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">📊 ປ.</button>
+          <button onclick="switchPage('profile');showSellProduct()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:700;font-family:'Sarabun',sans-serif">➕ ລົງຂາຍ</button>
+        </div>
       </div>
       <!-- Stat row -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="mpStatRow">
@@ -2613,6 +2652,7 @@ async function syncFromSupabase(){
         <button class="mp-ftab" id="mpft-low" onclick="setMpFilter('low',this)">⚠️ ຈວນໝົດ</button>
         <button class="mp-ftab" id="mpft-out" onclick="setMpFilter('out',this)">🔴 ໝົດ</button>
         <button class="mp-ftab" id="mpft-old" onclick="setMpFilter('old',this)">⏰ ຄ້າງດົນ</button>
+        <button class="mp-ftab" id="mpft-parts" onclick="setMpFilter('parts',this)" style="display:none">🔧 ອະໄຫຼ່</button>
       </div>
     </div>
     <!-- Product list -->
@@ -4578,10 +4618,12 @@ function showProductDetail(id){
       </div>
       <div style="font-size:11px;color:var(--text2)">ກົດດູໂປຣໄຟລ →</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <button class="btn btn-outline" onclick="addToCart('${p.id}')" style="font-size:13px">🛒 ໃສ່ຕະກ້າ</button>
-      <button class="btn btn-gold" onclick="startOrder('${p.id}')" style="font-size:13px">⚡ ສັ່ງຊື້ເລີຍ</button>
-    </div>
+    ${(()=>{
+      const _outOfStock = p.qty !== undefined && p.qty <= 0;
+      return _outOfStock
+        ? '<div style="background:rgba(220,38,38,.12);border:2px solid rgba(220,38,38,.4);border-radius:12px;padding:12px;text-align:center;margin-bottom:8px"><div style="font-size:14px;font-weight:700;color:#f87171">❌ ສິນຄ້າໝົດ</div><div style="font-size:11px;color:var(--text2);margin-top:4px">ລໍຖ້າຜູ້ຂາຍເພີ່ມ stock</div></div>'
+        : '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><button class="btn btn-outline" onclick="addToCart(\''+ p.id +'\')" style="font-size:13px">🛒 ໃສ່ຕະກ້າ</button><button class="btn btn-gold" onclick="startOrder(\''+ p.id +'\')" style="font-size:13px">⚡ ສັ່ງຊື້ເລີຍ</button></div>';
+    })()}
     <button class="btn btn-outline" onclick="closeModal('productModal')" style="width:100%;margin-bottom:4px">ປິດ</button>
     ${reviewsHtml}
     ${relatedHtml}
@@ -4740,6 +4782,14 @@ function submitGeneralOrder(){
   
   const total = p.price * qty;
   if(currentUser.wallet < total){showNotif('ຍອດ Wallet ບໍ່ພໍ');return;}
+  // ✅ ກວດ stock ກ່ອນສັ່ງ
+  const stockIdx = products.findIndex(x=>x.id===p.id);
+  if(stockIdx>=0 && products[stockIdx].qty !== undefined && products[stockIdx].qty <= 0){
+    showNotif('❌ ສິນຄ້າໝົດ — ກະລຸນາລໍຖ້າຜູ້ຂາຍເພີ່ມ stock');return;
+  }
+  if(stockIdx>=0 && products[stockIdx].qty !== undefined && products[stockIdx].qty < qty){
+    showNotif('⚠️ stock ເຫຼືອ '+products[stockIdx].qty+' ຊິ້ນ');return;
+  }
   
   const orderId = 'ORD-'+Date.now().toString().slice(-6);
   const order = {
@@ -4754,9 +4804,13 @@ function submitGeneralOrder(){
   };
   orders.push(order); saveOrders();
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
-  // Update product sold
+  // ✅ ລຸດ stock + ເພີ່ມ sold
   const idx = products.findIndex(x=>x.id===p.id);
-  if(idx>=0){products[idx].sold=(products[idx].sold||0)+qty;saveProducts();}
+  if(idx>=0){
+    products[idx].sold=(products[idx].sold||0)+qty;
+    if(products[idx].qty !== undefined) products[idx].qty = Math.max(0, (products[idx].qty||0)-qty);
+    saveProducts();
+  }
   // Pay seller: game/ID gets 95% (5% commission), general gets 100%
   if(p.sellerId && p.sellerId !== 'admin'){
     const isGameProd = p.cat==='game'||p.cat==='game_id'||p.isGame;
@@ -4829,22 +4883,12 @@ function proceedGameOrder(){
       <input class="form-input" type="number" id="gorderQty" value="1" min="1">
     </div>
     <div class="form-group">
-      <label class="form-label">ໂທລະສັບ</label>
+      <label class="form-label">ໂທລະສັບ (ສຳລັບຕິດຕໍ່)</label>
       <input class="form-input" type="tel" id="gorderPhone" value="${saved.phone||''}" placeholder="020-XXXXXXXX">
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">ບ້ານ</label>
-        <input class="form-input" id="gorderBan" value="${saved.ban||''}" placeholder="ບ້ານ">
-      </div>
-      <div class="form-group">
-        <label class="form-label">ເມືອງ</label>
-        <input class="form-input" id="gorderMuang" value="${saved.muang||''}" placeholder="ເມືອງ">
-      </div>
-      <div class="form-group">
-        <label class="form-label">ແຂວງ</label>
-        <input class="form-input" id="gorderKhwaeng" value="${saved.khwaeng||''}" placeholder="ແຂວງ">
-      </div>
+    <div class="form-group">
+      <label class="form-label">🎮 Game ID ຂອງທ່ານ (ສຳລັບຢືນຢັນ)</label>
+      <input class="form-input" type="text" id="gorderGameId" value="" placeholder="ໃສ່ Game ID ຂອງທ່ານ (ຖ້າມີ)">
     </div>
     <div class="info-box" style="background:rgba(240,160,0,.08);border-color:rgba(240,160,0,.3);color:#f0c000">
       ⚠️ ຖ້າສິນຄ້າມີບັນຫາ ໂປຣດຕິດຕໍ່ Admin ດ່ວນ<br>
@@ -4861,22 +4905,36 @@ function submitGameOrder(){
   const p = currentProduct;
   const qty = parseInt(document.getElementById('gorderQty').value)||1;
   const phone = document.getElementById('gorderPhone').value;
-  const ban = document.getElementById('gorderBan').value;
-  const muang = document.getElementById('gorderMuang').value;
-  const khwaeng = document.getElementById('gorderKhwaeng').value;
-  if(!phone||!ban||!muang||!khwaeng){showNotif('ກະລຸນາໃສ່ຂໍ້ມູນ');return;}
+  const buyerGameId = document.getElementById('gorderGameId')?.value||'';
+  if(!phone){showNotif('ກະລຸນາໃສ່ເບີໂທ');return;}
   const total = p.price * qty;
   if(currentUser.wallet < total){showNotif('ຍອດ Wallet ບໍ່ພໍ');return;}
+  // ✅ ກວດ stock ກ່ອນສັ່ງ
+  const stockIdx = products.findIndex(x=>x.id===p.id);
+  if(stockIdx>=0 && products[stockIdx].qty !== undefined && products[stockIdx].qty <= 0){
+    showNotif('❌ ສິນຄ້າໝົດ — ກະລຸນາລໍຖ້າຜູ້ຂາຍເພີ່ມ stock');return;
+  }
+  if(stockIdx>=0 && products[stockIdx].qty !== undefined && products[stockIdx].qty < qty){
+    showNotif('⚠️ stock ເຫຼືອ '+products[stockIdx].qty+' ຊິ້ນ');return;
+  }
   
   const orderId = 'ORD-'+Date.now().toString().slice(-6);
   const order = {
     id: orderId, productId: p.id, productName: p.name, productEmoji: p.emoji,
-    price: p.price, qty, total, phone, ban, muang, khwaeng,
+    price: p.price, qty, total, phone, buyerGameId,
     status: 'pending', date: new Date().toLocaleDateString('lo-LA'), isGame: true,
-    gameType: p.gameType, sellerId: p.sellerId||'admin'
+    gameType: p.gameType, sellerId: p.sellerId||'admin',
+    userId: currentUser?.id||'', buyerId: currentUser?.id||'', userName: currentUser?.name||''
   };
   orders.push(order); saveOrders();
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
+  // ✅ ລຸດ stock ເກມ
+  const gIdx = products.findIndex(x=>x.id===p.id);
+  if(gIdx>=0){
+    products[gIdx].sold=(products[gIdx].sold||0)+qty;
+    if(products[gIdx].qty !== undefined) products[gIdx].qty = Math.max(0,(products[gIdx].qty||0)-qty);
+    saveProducts();
+  }
   waNewGameOrder(currentUser, order);
   waNotifySeller(order);
   closeModal('gameOrderModal');
@@ -4891,7 +4949,10 @@ function showGameBillPopup(order, p){
   const imgHtml = imgs.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">${imgs.map(src=>`<img src="${src}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--gold-dark)" onclick="adminViewImg('${src}')">`).join('')}</div>` : '';
 
   const html = `
-    <div style="text-align:center;padding:14px 0 4px">
+    <div style="position:relative;text-align:center;padding:14px 0 4px">
+      <button onclick="orders=orders.filter(x=>x.id!=='${order.id}');saveOrders();renderBillsPage();closeModal('billDetailModal');showNotif('ລຶບບິນແລ້ວ')"
+        style="position:absolute;top:0;left:0;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.4);color:#f87171;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer">🗑 ລຶບ</button>
+      <div id="gameBillQR_${order.id}" style="position:absolute;top:0;right:0;width:52px;height:52px;background:var(--dark3);border-radius:8px;border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
       <div style="font-size:40px">${p.emoji||'🎮'}</div>
       <div style="font-family:'Cinzel Decorative',serif;font-size:14px;color:var(--gold);margin-top:6px">🎮 ຂໍ້ມູນ ID ເກມຂອງທ່ານ</div>
       <div style="font-size:11px;color:var(--text2);margin-top:2px">ບິນ #${order.id}</div>
@@ -4925,6 +4986,18 @@ function showGameBillPopup(order, p){
   document.getElementById('billDetailContent').innerHTML = html;
   openModal('billDetailModal');
   renderBillsPage();
+  // ✅ Generate QR code สำหรับบิล ID เกม
+  setTimeout(()=>{
+    const qrEl = document.getElementById('gameBillQR_'+order.id);
+    if(qrEl){
+      const qrData = JSON.stringify({id:order.id,pid:order.productId,type:'game'});
+      if(typeof QRCode !== 'undefined'){
+        new QRCode(qrEl,{text:qrData,width:52,height:52,colorDark:'#c9a84c',colorLight:'#1a1b24'});
+      } else {
+        qrEl.innerHTML = '<div style="font-size:20px;line-height:52px">📱</div>';
+      }
+    }
+  }, 200);
 }
 
 // ============ BILLS PAGE ============
@@ -5048,7 +5121,10 @@ function viewBillDetail(id){
   const doneEta    = sentMs ? new Date(sentMs + 48*60*60*1000) : null;
   const fmtEta = d => d ? `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` : '';
 
-  const steps = [
+  const steps = o.isGame ? [
+    {key:'pending', icon:'🛒', label:'ສັ່ງຊື້ສຳເລັດ', sub:'ລໍຖ້າ Admin ສົ່ງ ID'},
+    {key:'done',    icon:'✅', label:'ໄດ້ຮັບ ID ເກມ',  sub:'ສຳເລັດ'},
+  ] : [
     {key:'pending',   icon:'🛒', label:'ສັ່ງຊື້ສຳເລັດ',      sub:'ລໍຖ້າຜູ້ຂາຍຮັບອໍເດີ'},
     {key:'packed',    icon:'📦', label:'ຜູ້ຂາຍຫຸ້ມຫໍ່ສຳເລັດ', sub:'ກຳລັງກຽມສົ່ງຂົນສ່ງ'},
     {key:'sent',      icon:'🚚', label:'ຝາກຂົນສ່ງແລ້ວ',       sub:'ຜູ້ຂາຍມອບສິນຄ້າໃຫ້ຂົນສ່ງ'},
@@ -5074,7 +5150,18 @@ function viewBillDetail(id){
     </div>`;
   }).join('');
 
+  const hasSentAt = !!o.sentAt;
   const hasTracking = (o.status==='sent'||o.status==='delivering'||o.status==='done') && o.trackingNum;
+  // ✅ QR บิลขนส่ง — แสดงเมื่อ sentAt มีค่า (ผู้ขายยืนยันแล้ว) และไม่ใช่ game
+  const deliveryQRHtml = (hasSentAt && !o.isGame) ? `
+    <div style="background:rgba(201,168,76,.06);border:1.5px solid rgba(201,168,76,.35);border-radius:14px;padding:14px;margin:10px 0;display:flex;align-items:center;gap:14px">
+      <div id="delQR_${o.id}" style="width:72px;height:72px;background:var(--dark3);border-radius:8px;border:1px solid rgba(201,168,76,.4);overflow:hidden;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">📦 ບິນຈັດສົ່ງ</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6">ສະແກນ QR ເພື່ອເບິ່ງລາຍລະອຽດສິນຄ້າ<br>${o.trackingNum ? '📮 ' + o.trackingNum : 'ລໍຖ້າເລກພັດສົ່ງ...'}</div>
+      </div>
+    </div>` : '';
+
   const trackingBox = hasTracking ? `
     <div class="tracking-num-box" style="flex-direction:column;align-items:stretch;gap:10px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -5109,6 +5196,26 @@ function viewBillDetail(id){
       </div>
     </div>` : '';
 
+  // ✅ countdown 48h จาก sentAt
+  const sentMsCD = o.sentAt ? new Date(o.sentAt).getTime() : null;
+  const doneEtaTS = sentMsCD ? sentMsCD + 48*60*60*1000 : null;
+  const now2 = Date.now();
+  const msLeft = doneEtaTS ? Math.max(0, doneEtaTS - now2) : null;
+  const hoursLeft = msLeft !== null ? Math.floor(msLeft/3600000) : null;
+  const minsLeft  = msLeft !== null ? Math.floor((msLeft%3600000)/60000) : null;
+
+  const countdownHtml = (o.sentAt && o.status !== 'done' && o.status !== 'cancelled') ? `
+    <div id="cdBox_${o.id}" style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.04));border:1.5px solid rgba(74,222,128,.35);border-radius:14px;padding:14px;margin:10px 0;text-align:center">
+      <div style="font-size:11px;color:#4ade80;margin-bottom:6px;font-weight:700">⏳ ນັບຖອຍຫລັງຈັດສົ່ງ</div>
+      <div id="cdTimer_${o.id}" style="font-size:22px;font-weight:800;color:#4ade80;letter-spacing:2px">${hoursLeft}h ${minsLeft}m</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">ຮອດ ${doneEtaTS ? new Date(doneEtaTS).toLocaleString('lo-LA') : '-'}</div>
+      <div style="margin-top:8px">
+        <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${msLeft !== null ? Math.min(100,Math.round((1-(msLeft/(48*3600000)))*100)) : 0}%;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:2px;transition:.5s"></div>
+        </div>
+      </div>
+    </div>` : '';
+
   const proofHtml = (o.sellerImg || o.sellerVideo) ? `
     <div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:12px;padding:12px;margin:10px 0">
       <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:10px">📦 ຫຼັກຖານການສົ່ງຈາກຜູ້ຂາຍ</div>
@@ -5125,11 +5232,15 @@ function viewBillDetail(id){
     </div>` : '';
 
   const html = `
-    <div class="modal-title">📦 ຕິດຕາມອໍເດີ</div>
+    <div class="modal-title">${o.isGame ? '🎮 ຂໍ້ມູນ ID ເກມ' : '📦 ຕິດຕາມອໍເດີ'}</div>
     <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:12px;color:var(--text2)">ບິນ #${o.id}</span>
-        <span class="bill-status ${getStatusClass(o.status)}">${getStatusLabel(o.status)}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${o.isGame ? `<button onclick="orders=orders.filter(x=>x.id!=='${o.id}');saveOrders();renderBillsPage();closeModal('billDetailModal');showNotif('ລຶບບິນແລ້ວ')" style="background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.4);color:#f87171;border-radius:6px;padding:3px 7px;font-size:10px;cursor:pointer">🗑</button>
+          <div id="vbdQR_${o.id}" style="width:40px;height:40px;background:var(--dark3);border-radius:6px;border:1px solid rgba(201,168,76,.3);overflow:hidden"></div>` : ''}
+          <span class="bill-status ${getStatusClass(o.status)}">${getStatusLabel(o.status)}</span>
+        </div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <div style="font-size:36px">${o.productEmoji||'📦'}</div>
@@ -5140,39 +5251,127 @@ function viewBillDetail(id){
         </div>
       </div>
     </div>
-    ${trackingBox}
-    <div style="font-size:12px;color:var(--text2);margin:12px 0 8px;font-weight:600">📍 ສະຖານະການຈັດສົ່ງ</div>
+    ${!o.isGame ? deliveryQRHtml : ''}
+    ${!o.isGame ? trackingBox : ''}
+    <div style="font-size:12px;color:var(--text2);margin:12px 0 8px;font-weight:600">${o.isGame ? '📍 ສະຖານະ ID ເກມ' : '📍 ສະຖານະການຈັດສົ່ງ'}</div>
     <div class="tracking-wrap">${stepsHtml}</div>
+    ${countdownHtml}
     ${proofHtml}
+    ${!o.isGame && o.sentAt ? `
+    <div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.25);border-radius:12px;padding:12px;margin:10px 0">
+      <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:8px">📦 ບິນຂົນສ່ງ (QR)</div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div id="shippingQR_${o.id}" style="width:80px;height:80px;background:var(--dark3);border-radius:8px;border:1px solid rgba(201,168,76,.3);flex-shrink:0;overflow:hidden"></div>
+        <div style="font-size:11px;color:var(--text2);line-height:2">
+          <div>📮 Tracking: <strong style="color:#fff">${o.trackingNum||'-'}</strong></div>
+          <div>🚚 ຂົນສ່ງ: ${o.courier||o.shipping||'-'}</div>
+          <div>⏱ ສ່ງເມື່ອ: <strong style="color:#4ade80">${new Date(o.sentAt).toLocaleString('lo-LA')}</strong></div>
+          <div>✅ auto ສຳເລັດ: <strong style="color:#4ade80">${fmtEta(doneEta)}</strong></div>
+        </div>
+      </div>
+    </div>` : ''}
+    ${!o.isGame ? `
     <div style="border-top:1px solid rgba(255,255,255,.06);margin:12px 0 8px;padding-top:8px">
       <div class="bill-detail-row"><span>ທີ່ຢູ່ຈັດສົ່ງ</span><span>${[o.ban,o.muang,o.khwaeng].filter(Boolean).join(', ')||'-'}</span></div>
       <div class="bill-detail-row"><span>ຂົນສ່ງ</span><span>${o.shipping||'-'}</span></div>
       <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${o.date}</span></div>
-    </div>
+    </div>` : `
+    <div style="border-top:1px solid rgba(255,255,255,.06);margin:12px 0 8px;padding-top:8px">
+      <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${o.date}</span></div>
+      <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold)">${fmtPrice(o.total)}</span></div>
+      ${o.buyerGameId?`<div class="bill-detail-row"><span>Game ID ຂອງທ່ານ</span><span style="color:#69f">${o.buyerGameId}</span></div>`:''}
+    </div>`}
     <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:4px">ປິດ</button>
   `;
   document.getElementById('billDetailContent').innerHTML = html;
   openModal('billDetailModal');
-}
+  // ✅ QR gen ທຸກ type ໃນ viewBillDetail
+  setTimeout(()=>{
+    if(typeof QRCode === 'undefined') return;
+    // game bill QR (ມຸມ)
+    const vbdQ = document.getElementById('vbdQR_'+o.id);
+    if(vbdQ && o.isGame){
+      new QRCode(vbdQ,{text:JSON.stringify({id:o.id,pid:o.productId,type:'game'}),width:40,height:40,colorDark:'#c9a84c',colorLight:'#1a1b24'});
+    }
+    // delivery QR (general + ສົ່ງແລ້ວ)
+    const delQ = document.getElementById('delQR_'+o.id);
+    if(delQ && !o.isGame && o.sentAt){
+      new QRCode(delQ,{text:JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt,pid:o.productId}),width:72,height:72,colorDark:'#c9a84c',colorLight:'#0a0a0a'});
+    }
+    // shipping bill QR
+    const shipQ = document.getElementById('shippingQR_'+o.id);
+    if(shipQ && !o.isGame && o.sentAt){
+      new QRCode(shipQ,{text:JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt}),width:80,height:80,colorDark:'#4ade80',colorLight:'#0a0a0a'});
+    }
+  }, 250);
+
+}  // end viewBillDetail
 
 // ============ SALE HISTORY (SELLER) ============
+let _shFilter = 'all';
+
 function showSaleHistory(){
-  const mySales = orders.filter(o=>o.sellerId===currentUser?.id);
-  const html = mySales.length ? mySales.map(o=>`
-    <div class="history-item" onclick="sellerViewBill('${o.id}')">
-      <div style="font-size:30px">${o.productEmoji||'📦'}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600">${o.productName}</div>
-        <div style="font-size:12px;color:var(--gold)">${fmtPrice(o.total)}</div>
-        <div style="font-size:11px;color:var(--text2)">${o.date} • #${o.id}</div>
-        <div style="font-size:11px;color:var(--text2)">${o.name||''} ${o.phone||''}</div>
-        ${o.trackingNum?`<div style="font-size:11px;color:var(--accent)">📮 ${o.trackingNum}</div>`:''}
+  _shFilter = 'all';
+  // reset active tab
+  document.querySelectorAll('.mp-ftab[id^="shft-"]').forEach(b=>b.classList.remove('active'));
+  const allTab = document.getElementById('shft-all');
+  if(allTab) allTab.classList.add('active');
+  switchPage('sale-history');
+  renderSaleHistoryPage();
+}
+
+function setSHFilter(f, el){
+  _shFilter = f;
+  document.querySelectorAll('.mp-ftab[id^="shft-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderSaleHistoryPage();
+}
+
+function renderSaleHistoryPage(){
+  if(!currentUser) return;
+  let sales = orders.filter(o=>
+    o.sellerId===currentUser.id ||
+    (currentUser.isAdmin && !o.sellerId)
+  ).sort((a,b)=>new Date(b.createdAt||b.date)-new Date(a.createdAt||a.date));
+
+  if(_shFilter !== 'all') sales = sales.filter(o=>o.status===_shFilter);
+
+  const sub = document.getElementById('shPageSubtitle');
+  if(sub) sub.textContent = sales.length + ' ລາຍການ';
+
+  const container = document.getElementById('shPageList');
+  if(!container) return;
+
+  if(!sales.length){
+    container.innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--text2)"><div style="font-size:48px;margin-bottom:12px">📭</div><div>ຍັງບໍ່ມີ Order</div></div>';
+    return;
+  }
+
+  container.innerHTML = sales.map(o=>{
+    const sc = getStatusClass(o.status);
+    const sl = getStatusLabel(o.status);
+    const isGame = o.isGame || o.cat==='game' || o.gameType;
+    const isPhonePart = o.cat==='phoneparts';
+    const typeTag = isGame ? '<span style="font-size:9px;background:rgba(105,100,255,.2);color:#9090ff;border-radius:4px;padding:1px 5px;margin-left:4px">🎮 ID</span>'
+                 : isPhonePart ? '<span style="font-size:9px;background:rgba(100,200,255,.2);color:#64c8ff;border-radius:4px;padding:1px 5px;margin-left:4px">🔧 ອະໄຫຼ່</span>'
+                 : '';
+    return `<div onclick="sellerViewBill('${o.id}')"
+      style="background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;transition:.2s"
+      onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='rgba(201,168,76,.15)'">
+      <div style="font-size:32px;flex-shrink:0">${o.productEmoji||'📦'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+          <span style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||'-'}</span>
+          ${typeTag}
+        </div>
+        <div style="font-size:12px;color:var(--gold);font-weight:700">${fmtPrice(o.total)} × ${o.qty||1}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${o.date} • <span style="color:var(--text2)">#${o.id}</span></div>
+        <div style="font-size:11px;color:var(--text2)">${o.name||o.userName||''} ${o.phone||''}</div>
+        ${o.trackingNum?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📮 ${o.trackingNum}</div>`:''}
       </div>
-      <div class="bill-status ${getStatusClass(o.status)}" style="font-size:10px;text-align:center;max-width:60px">${getStatusLabel(o.status)}</div>
-    </div>
-  `).join('') : '<div style="text-align:center;color:var(--text2);padding:20px">ຍັງບໍ່ມີການຂາຍ</div>';
-  document.getElementById('saleHistoryContent').innerHTML = html;
-  openModal('saleHistoryModal');
+      <span class="bill-status ${sc}" style="font-size:10px;text-align:center;flex-shrink:0;max-width:64px;white-space:nowrap">${sl}</span>
+    </div>`;
+  }).join('');
 }
 
 function sellerViewBill(id){
@@ -5182,12 +5381,21 @@ function sellerViewBill(id){
   const statusOrder = ['pending','packed','sent','delivering','done'];
   const curIdx = statusOrder.indexOf(o.status||'pending');
 
+  // ✅ ຜູ້ຂາຍທົ່ວໄປ: ກົດໄດ້ສະເພາະ packed
+  //    Admin: ກົດໄດ້ທຸກສະຖານະ
+  const isGameOrder = o.isGame || o.cat==='game' || o.gameType;
+  // ✅ Game: admin only, ກົດ done ໂດຍກົງ
+  // ✅ General: admin ກົດໄດ້ທຸກ, seller ກົດໄດ້ packed ເທົ່ານັ້ນ
+  const allowedKeys = isGameOrder
+    ? (currentUser?.isAdmin ? ['done'] : [])
+    : (currentUser?.isAdmin ? ['packed','sent','delivering','done'] : ['packed']);
+
   const statusBtns = [
     {key:'packed',    label:'📦 ຫຸ້ມຫໍ່ສຳເລັດ',   color:'#ffa040'},
     {key:'sent',      label:'🚚 ຝາກຂົນສ່ງແລ້ວ',    color:'var(--accent)'},
     {key:'delivering',label:'🏃 ກຳລັງຈັດສົ່ງ',     color:'#64b4ff'},
     {key:'done',      label:'✅ ຮັບສຳເລັດ',        color:'#4c8'},
-  ].map(s=>{
+  ].filter(s=>allowedKeys.includes(s.key)).map(s=>{
     const idx2 = statusOrder.indexOf(s.key);
     const isCur = s.key === o.status;
     const isDone2 = idx2 < curIdx;
@@ -5207,7 +5415,30 @@ function sellerViewBill(id){
     </div>
     <button class="btn btn-gold" onclick="saveTrackingNum('${o.id}')" style="margin-bottom:8px">💾 ບັນທຶກເລກພັດສົ່ງ</button>` : '';
 
+  // ✅ ສະຖານະ: ຖ້ານັບຖອຍຫຼັງໄດ້ 48ຊມ. ກ່ອນ
+  const hasSent = !!o.sentAt;
+  const sentMs = hasSent ? new Date(o.sentAt).getTime() : null;
+  const doneEtaTs = sentMs ? sentMs + 48*60*60*1000 : null;
+  const deliverEtaTs = sentMs ? sentMs + 24*60*60*1000 : null;
+  const fmtTs = ts => ts ? new Date(ts).toLocaleString('lo-LA') : '';
+
+  const countdownHtml = hasSent ? `
+    <div style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.05));border:1px solid rgba(74,222,128,.3);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:8px">⏱ ລະບົບນັບຖອຍຫຼັງ Auto 48ຊມ.</div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+        <div id="soQR_${o.id}" style="width:80px;height:80px;background:var(--dark3);border-radius:8px;border:1px solid rgba(74,222,128,.3);flex-shrink:0;overflow:hidden"></div>
+        <div style="font-size:11px;color:var(--text2);line-height:2">
+          <div>📦 ສົ່ງເມື່ອ: <strong style="color:#4ade80">${fmtTs(sentMs)}</strong></div>
+          <div>🚚 ກຳລັງຈັດສົ່ງ: <strong style="color:#64b4ff">${fmtTs(deliverEtaTs)}</strong></div>
+          <div>✅ ສຳເລັດ (auto): <strong style="color:#4ade80">${fmtTs(doneEtaTs)}</strong></div>
+          ${o.trackingNum ? `<div>📮 Tracking: <strong style="color:#fff">${o.trackingNum}</strong></div>` : ''}
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text2);line-height:1.6">💡 QR ນີ້ລູກຄ້າສາມາດສະແກນເພື່ອດູ ລາຍລະອຽດ Order ໄດ້</div>
+    </div>` : '';
+
   const proofSection = `
+    ${countdownHtml}
     <div class="form-group">
       <label class="form-label">📷 ຮູບຫຼັກຖານການສົ່ງ</label>
       <div class="upload-box" onclick="document.getElementById('sellerBillImg_${o.id}').click()">${o.sellerImg?'✅ ມີຮູບແລ້ວ — ກົດເພື່ອປ່ຽນ':'📸 ອັດໂຫລດຮູບ'}</div>
@@ -5219,7 +5450,13 @@ function sellerViewBill(id){
       <div class="upload-box" onclick="document.getElementById('sellerBillVideo_${o.id}').click()">${o.sellerVideo?'✅ ມີວິດີໂອແລ້ວ — ກົດເພື່ອປ່ຽນ':'🎥 ອັດໂຫລດວິດີໂອ'}</div>
       <input type="file" id="sellerBillVideo_${o.id}" accept="video/*" style="display:none" onchange="previewSellerVideo(this,'sellerVideoPrev_${o.id}','${o.id}')">
       <div id="sellerVideoPrev_${o.id}" style="margin-top:8px">${o.sellerVideo?`<video src="${o.sellerVideo}" style="width:100%;border-radius:8px;max-height:200px" controls playsinline></video>`:''}</div>
-    </div>`;
+    </div>
+    ${!hasSent && (o.status==='packed'||o.status==='pending') ? `
+    <button class="btn btn-gold" onclick="sellerConfirmShipment('${o.id}')" style="margin-top:10px;margin-bottom:4px">
+      ✅ ຢືນຢັນ ແລະ ສົ່ງບິນໃຫ້ລູກຄ້າ (ເລີ່ມ 48ຊມ.)
+    </button>
+    <div style="font-size:11px;color:var(--text2);text-align:center">ລະຫຼັງກົດ — ລູກຄ້າຈະໄດ້ຮັບ QR + ຮູບ/ວິດີໂອ</div>` : ''}
+  `;
 
   const rejectBtn = (o.status === 'pending' || o.status === 'packed') ? `
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">
@@ -5229,8 +5466,28 @@ function sellerViewBill(id){
       </button>
     </div>` : '';
 
+  // ✅ Game order: ดึง ID/Pass จาก product
+  const gameProduct = isGameOrder ? products.find(p=>p.id===o.productId) : null;
+  const gameEmail = gameProduct ? (gameProduct.gameEmail||gameProduct.gameCredEmail||'—') : '—';
+  const gamePass  = gameProduct ? (gameProduct.gamePass||gameProduct.gameCredPass||'—') : '—';
+
+  const gameInfoSection = isGameOrder ? `
+    <div style="background:linear-gradient(135deg,rgba(26,58,92,.5),rgba(36,83,160,.3));border:2px solid rgba(74,127,193,.5);border-radius:14px;padding:14px;margin:10px 0">
+      <div style="font-size:12px;font-weight:700;color:#69f;margin-bottom:10px;text-align:center">🔐 ຂໍ້ມູນ ID ເກມທີ່ຕ້ອງສົ່ງ</div>
+      <div style="background:rgba(0,0,0,.4);border-radius:8px;padding:10px;margin-bottom:8px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px">📧 Email / Username</div>
+        <div style="font-size:15px;font-weight:700;color:#fff;word-break:break-all">${gameEmail}</div>
+      </div>
+      <div style="background:rgba(0,0,0,.4);border-radius:8px;padding:10px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px">🔑 Password</div>
+        <div style="font-size:15px;font-weight:700;color:var(--gold)">${gamePass}</div>
+      </div>
+      <div style="font-size:10px;color:#69f;margin-top:8px;text-align:center">⚠️ ກວດໃຫ້ຖືກຕ້ອງກ່ອນກົດຢືນຢັນ</div>
+    </div>
+  ` : '';
+
   const html = `
-    <div class="modal-title">🚚 ຈັດການການຈັດສົ່ງ</div>
+    <div class="modal-title">${isGameOrder ? '🎮 ຈັດການ ID ເກມ' : '🚚 ຈັດການການຈັດສົ່ງ'}</div>
     <div class="seller-track-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;color:var(--text2)">#${o.id}</span>
@@ -5241,21 +5498,44 @@ function sellerViewBill(id){
       <div style="font-size:11px;color:var(--text2)">${o.date}</div>
     </div>
     <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px;margin-bottom:12px">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">📍 ທີ່ຢູ່ຈັດສົ່ງ</div>
-      <div style="font-size:13px;font-weight:600">${o.name||'-'} | ${o.phone||'-'}</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">${[o.ban,o.muang,o.khwaeng].filter(Boolean).join(', ')||'-'}</div>
-      <div style="font-size:12px;color:var(--text2)">ຂົນສ່ງ: ${o.shipping||'-'}</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${isGameOrder ? '👤 ຂໍ້ມູນລູກຄ້າ' : '📍 ທີ່ຢູ່ຈັດສົ່ງ'}</div>
+      <div style="font-size:13px;font-weight:600">${o.name||o.userName||'-'} | ${o.phone||'-'}</div>
+      ${!isGameOrder ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">${[o.ban,o.muang,o.khwaeng].filter(Boolean).join(', ')||'-'}</div>
+      <div style="font-size:12px;color:var(--text2)">ຂົນສ່ງ: ${o.shipping||'-'}</div>` : `
+      ${o.buyerGameId ? `<div style="font-size:12px;color:#69f;margin-top:3px">Game ID ລູກຄ້າ: ${o.buyerGameId}</div>` : ''}`}
     </div>
+    ${gameInfoSection}
     <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">🔄 ອັບເດດສະຖານະ</div>
+    ${!currentUser?.isAdmin && isGameOrder ? '<div style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);border-radius:8px;padding:8px;font-size:11px;color:#f87171;margin-bottom:10px">⛔ ສະເພາະ Admin ເທົ່ານັ້ນທີ່ສາມາດຢືນຢັນ ID ເກມ</div>' : ''}
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${statusBtns}</div>
-    ${trackSection}
+    ${!isGameOrder ? trackSection : ''}
     ${proofSection}
     ${rejectBtn}
-    <button class="btn btn-outline" onclick="closeModal('sellerBillModal')" style="margin-top:10px">ປິດ</button>
+    <button class="btn btn-outline" onclick="switchPage('sale-history');renderSaleHistoryPage()" style="margin-top:10px">← ກັບ</button>
   `;
-  document.getElementById('sellerBillContent').innerHTML = html;
-  closeModal('saleHistoryModal');
-  openModal('sellerBillModal');
+  // ✅ เปิดเป็น full page แทน modal
+  const soContent = document.getElementById('soPageContent');
+  const soTitle   = document.getElementById('soPageTitle');
+  if(soContent){
+    soContent.innerHTML = html;
+    if(soTitle) soTitle.textContent = isGameOrder ? '🎮 ຈັດການ ID ເກມ' : '🚚 ຈັດການການຈັດສົ່ງ';
+    switchPage('seller-order');
+    // ✅ QR ໃນ page ຜູ້ຂາຍ (ຖ້ານັບຖອຍຫຼັງເລີ່ມ)
+    if(!isGameOrder && o.sentAt){
+      setTimeout(()=>{
+        const qrEl = document.getElementById('soQR_'+id);
+        if(qrEl && typeof QRCode !== 'undefined'){
+          const qrData = JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt});
+          new QRCode(qrEl,{text:qrData,width:80,height:80,colorDark:'#4ade80',colorLight:'#0a0a0a'});
+        }
+      }, 300);
+    }
+  } else {
+    // fallback modal
+    document.getElementById('sellerBillContent').innerHTML = html;
+    closeModal('saleHistoryModal');
+    openModal('sellerBillModal');
+  }
 }
 
 function sellerUpdateStatus(id, newStatus){
@@ -5281,7 +5561,7 @@ function sellerUpdateStatus(id, newStatus){
   sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder:',e));
   scheduleAutoAdvance(orders[idx]);
   sellerViewBill(id);
-  showSaleHistory();
+  // renderSaleHistoryPage จะ call ใน sellerViewBill แล้ว
 }
 
 
@@ -5362,6 +5642,38 @@ function getAutoStatus(o){
   return 'sent';
 }
 
+// ✅ ຜູ້ຂາຍກົດຢືນຢັນ → sentAt = now → 48ຊມ. countdown → ສົ່ງບິນ QR ໃຫ້ລູກຄ້າ
+function sellerConfirmShipment(id){
+  const idx = orders.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const o = orders[idx];
+  // ດຶງຮູບ/ວິດີໂອທີ່ upload
+  const imgEl = document.getElementById('sellerBillImg_'+id);
+  const vidEl = document.getElementById('sellerBillVideo_'+id);
+  const imgPreview = document.querySelector('#sellerImgPrev_'+id+' img');
+  const vidPreview = document.querySelector('#sellerVideoPrev_'+id+' video');
+  if(imgPreview) orders[idx].sellerImg = imgPreview.src;
+  if(vidPreview) orders[idx].sellerVideo = vidPreview.src;
+
+  // ຕັ້ງ sentAt + auto flags
+  orders[idx].sentAt = new Date().toISOString();
+  orders[idx].autoDelivering = false;
+  orders[idx].autoDone = false;
+  if(orders[idx].status === 'pending' || orders[idx].status === 'packed'){
+    orders[idx].status = 'sent';
+    if(!orders[idx].trackingDates) orders[idx].trackingDates = {};
+    orders[idx].trackingDates['sent'] = new Date().toLocaleString('th-TH');
+  }
+  saveOrders();
+  sbSaveOrder(orders[idx]).catch(e=>console.warn('sbConfirmShip:',e));
+  scheduleAutoAdvance(orders[idx]);
+  renderBillsPage();
+  renderSaleHistoryPage();
+  showNotif('✅ ສົ່ງບິນໃຫ້ລູກຄ້າແລ້ວ! ລະບົບນັບຖອຍຫຼັງ 48ຊມ. ເລີ່ມ');
+  // Refresh full page
+  setTimeout(()=> sellerViewBill(id), 300);
+}
+
 function saveTrackingNum(id){
   const idx = orders.findIndex(x=>x.id===id);
   if(idx<0) return;
@@ -5440,7 +5752,7 @@ function sellerRejectOrder(id){
   saveOrders();
   sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(reject):',e));
   showNotif('❌ ປະຕິເສດ Order + Refund ສຳເລັດ');
-  closeModal('sellerBillModal');
+  switchPage('sale-history');
   showSaleHistory();
   renderBillsPage();
 }
@@ -5540,6 +5852,9 @@ function getAgeLabel(days){
 
 function renderManagePage(){
   if(!currentUser) return;
+  // ✅ ສະແດງ tab ອະໄຫຼ່ ສະເພາະ Admin
+  const partsTab = document.getElementById('mpft-parts');
+  if(partsTab) partsTab.style.display = currentUser.isAdmin ? 'block' : 'none';
   const myProds = products.filter(p=>p.sellerId===currentUser.id);
   // Stats
   const totalSold = myProds.reduce((s,p)=>s+(p.sold||0),0);
@@ -5557,6 +5872,29 @@ function renderManagePage(){
   else if(mpFilter==='low') filtered = myProds.filter(p=>p.qty>0&&p.qty<=3);
   else if(mpFilter==='out') filtered = myProds.filter(p=>p.qty<=0);
   else if(mpFilter==='old') filtered = myProds.filter(p=>{const d=getProductAgeDays(p);return d!==null&&d>14;}).sort((a,b)=>new Date(a.postedAt)-new Date(b.postedAt));
+  else if(mpFilter==='parts' && currentUser.isAdmin){
+    // ✅ ສະແດງລາຍການອະໄຫຼ່ຈາກ _allPhoneParts
+    const allParts = _allPhoneParts.length ? _allPhoneParts : getPhoneParts();
+    const container2 = document.getElementById('mpPageList');
+    if(container2){
+      container2.innerHTML = allParts.length ? allParts.map(p=>`
+        <div style="background:var(--dark2);border:1px solid rgba(100,130,255,.25);border-radius:14px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:center">
+          ${p.img?`<img src="${p.img}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0">`:`<div style="width:52px;height:52px;border-radius:8px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🔧</div>`}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.brand} ${p.model}</div>
+            <div style="font-size:12px;color:var(--text2)">${p.part}</div>
+            <div style="font-size:12px;color:var(--gold);font-weight:700">${fmtPrice(p.price)}</div>
+            <div style="font-size:11px;color:${p.stock<=0?'#f87171':p.stock<=3?'#ffa500':'#4ade80'}">${p.stock<=0?'❌ ໝົດ':p.stock<=3?`⚠️ ເຫຼືອ ${p.stock}`:`✅ stock ${p.stock}`}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button onclick="openPhonePartsAdmin('edit_'+${JSON.stringify(p.id||'')})" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer">✏️ ແກ້ໄຂ</button>
+            <button onclick="deletePPItem('${p.id}')" style="background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.4);color:#f87171;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer">🗑 ລຶບ</button>
+          </div>
+        </div>`).join('') : '<div style="text-align:center;padding:40px;color:var(--text2)">ຍັງບໍ່ມີອະໄຫຼ່</div>';
+    }
+    document.getElementById('mpPageSubtitle').textContent = allParts.length+' ລາຍການ';
+    return;
+  }
 
   const subtitle = document.getElementById('mpPageSubtitle');
   if(subtitle) subtitle.textContent = `${filtered.length} ລາຍການ`;
