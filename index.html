@@ -4875,6 +4875,7 @@ function submitGeneralOrder(){
     userName: currentUser?.name||name,
   };
   orders.push(order); saveOrders();
+  sbSaveOrder(order).catch(e=>console.warn('sbSaveOrder(submit):',e));
   currentUser.wallet -= total; saveUser(); updateWalletDisplay();
   // ✅ ລຸດ stock + ເພີ່ມ sold
   const idx = products.findIndex(x=>x.id===p.id);
@@ -4899,6 +4900,8 @@ function submitGeneralOrder(){
   waNotifySeller(order);
   closeModal('orderModal');
   showBillPopup(order);
+  // refresh ປະຫວັດການຂາຍທັນທີ
+  renderSaleHistoryPage();
 }
 
 function showBillPopup(order){
@@ -5505,12 +5508,26 @@ let _shFilter = 'all';
 
 function showSaleHistory(){
   _shFilter = 'all';
-  // reset active tab
   document.querySelectorAll('.mp-ftab[id^="shft-"]').forEach(b=>b.classList.remove('active'));
   const allTab = document.getElementById('shft-all');
   if(allTab) allTab.classList.add('active');
   switchPage('sale-history');
   renderSaleHistoryPage();
+  // sync ຈາກ Supabase ເພື່ອໃຫ້ຂໍ້ມູນລ່າສຸດ
+  sbLoadOrders().then(fresh=>{
+    if(fresh && fresh.length){
+      // merge: ເພີ່ມ order ໃໝ່ທີ່ຍັງບໍ່ມີໃນ local
+      fresh.forEach(fo=>{
+        if(!orders.find(o=>o.id===fo.id)) orders.push(fo);
+        else {
+          const idx = orders.findIndex(o=>o.id===fo.id);
+          orders[idx] = {...orders[idx], ...fo};
+        }
+      });
+      saveOrders();
+      renderSaleHistoryPage();
+    }
+  }).catch(()=>{});
 }
 
 function setSHFilter(f, el){
