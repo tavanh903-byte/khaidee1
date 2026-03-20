@@ -327,8 +327,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 
 
 /* PAGE WRAPPER */
-.page{display:none;flex-direction:column;flex:1;padding-bottom:calc(80px + env(safe-area-inset-bottom));overflow:hidden}#page-adminshop{display:none;flex-direction:column}#page-adminshop.active{display:flex;overflow-y:auto;height:100%;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
-.page.active{display:flex}
+.page{display:none;flex-direction:column;flex:1;padding-bottom:calc(80px + env(safe-area-inset-bottom));overflow:hidden;clip:rect(0,auto,auto,0)}#page-adminshop{display:none;flex-direction:column}#page-adminshop.active{display:flex;overflow-y:auto;height:100%;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+.page.active{display:flex}.page:not(.active){visibility:hidden;pointer-events:none}
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
