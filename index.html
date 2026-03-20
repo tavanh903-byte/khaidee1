@@ -4341,6 +4341,8 @@ async function _loadPhonePartsToHome(){
 }
 function renderProducts(list){
   if(!list) list = products;
+  // ── ກັ່ນ hidden ອອກ (ສິນຄ້າທີ່ຖືກລຶບ/ຊ່ອນ) ──
+  list = list.filter(p => !p.hidden);
   updateAdminShopBanner();
   const grid = document.getElementById('productsGrid');
   if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text2);padding:40px">ບໍ່ພົບສິນຄ້າ</div>';return;}
@@ -4572,7 +4574,11 @@ function getVariantSummary(){
 function showProductDetail(id){
   carouselIdx = 0;
   const p = products.find(x=>x.id===id);
-  if(!p) return;
+  if(!p || p.hidden){
+    showNotif('❌ ສິນຄ້ານີ້ບໍ່ມີຢູ່ໃນຮ້ານແລ້ວ');
+    renderProducts(products);
+    return;
+  }
   currentProduct = p;
   // ✅ เพิ่ม views ทุกครั้งที่เปิดดูสินค้า
   const _pidx = products.findIndex(x=>x.id===id);
@@ -4750,7 +4756,16 @@ function getCatLabel(cat){
 // ============ ORDER FLOW ============
 function startOrder(id){
   const p = products.find(x=>x.id===id);
-  if(!p) return;
+  if(!p || p.hidden){
+    showNotif('❌ ສິນຄ້ານີ້ຖືກນຳອອກຈາກຮ້ານແລ້ວ');
+    closeModal('productModal');
+    renderProducts(products);
+    return;
+  }
+  if((p.qty !== undefined) && p.qty <= 0 && !p.isGame){
+    showNotif('❌ ສິນຄ້ານີ້ໝົດສ໊ອກ');
+    return;
+  }
   currentProduct = p;
   closeModal('productModal');
   if(!currentUser){showNotif('ກະລຸນາເຂົ້າລະບົບກ່ອນ');showLogin();return;}
@@ -4866,6 +4881,19 @@ function submitGeneralOrder(){
   if(currentUser.wallet < total){showNotif('ຍອດ Wallet ບໍ່ພໍ');return;}
   // ✅ ກວດ stock ກ່ອນສັ່ງ
   const stockIdx = products.findIndex(x=>x.id===p.id);
+  // ── ກວດ hidden / ລຶບໄປແລ້ວ ──
+  if(stockIdx < 0){
+    showNotif('❌ ສິນຄ້ານີ້ບໍ່ມີຢູ່ໃນຮ້ານແລ້ວ');
+    closeModal('orderModal');
+    renderProducts(products);
+    return;
+  }
+  if(products[stockIdx].hidden){
+    showNotif('❌ ສິນຄ້ານີ້ຖືກນຳອອກຈາກຮ້ານແລ້ວ');
+    closeModal('orderModal');
+    renderProducts(products);
+    return;
+  }
   if(stockIdx>=0 && products[stockIdx].qty !== undefined && products[stockIdx].qty <= 0){
     showNotif('❌ ສິນຄ້າໝົດ — ກະລຸນາລໍຖ້າຜູ້ຂາຍເພີ່ມ stock');return;
   }
@@ -6451,21 +6479,36 @@ function quickEditStock(id){
 function deleteProductFromManage(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
-  if(!confirm(`🗑 ລຶບ "${p.name}" ?\nຂໍ້ມູນຈະຫາຍຖາວອນ`)) return;
+  if(!confirm(`🗑 ລຶບ "${p.name}" ?
+
+ສິນຄ້ານີ້ຈະບໍ່ສະແດງໃນຮ້ານ
+ແລະ ລູກຄ້າຈະສັ່ງຊື້ບໍ່ໄດ້ທັນທີ`)) return;
   const idx = products.findIndex(x=>x.id===id);
-  products.splice(idx,1);
-  // ✅ Track deleted IDs to prevent sync from bringing them back
+  if(idx < 0) return;
+
+  // ── ໝາຍ hidden=true + qty=0 ກ່ອນ (ກັນລູກຄ້າສັ່ງໄດ້ທັນທີ) ──
+  products[idx].hidden = true;
+  products[idx].qty = 0;
+  products[idx].deletedAt = new Date().toISOString();
+
+  // ── ລຶບອອກຈາກ array ──
+  products.splice(idx, 1);
+
+  // ── Track deleted IDs ──
   _addDeletedProductId(id);
-  // ✅ Save local state first (without re-uploading deleted product)
+
+  // ── Save local ──
   localStorage.setItem('kd_products', JSON.stringify(products));
-  // ✅ Delete from Supabase (fire and don't let saveProducts re-add it)
+
+  // ── ລຶບຈາກ Supabase ──
   sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
-  // If on edit page, go back
+
+  // ── ກັບໜ້າ + refresh ──
   const curPage = document.querySelector('.page.active');
-  if(curPage&&curPage.id==='page-edit-product') switchPage('manage');
+  if(curPage && curPage.id==='page-edit-product') switchPage('manage');
   renderManagePage();
-  renderProducts(products);
-  showNotif('🗑 ລຶບ '+p.name+' ແລ້ວ');
+  renderProducts(products); // ← refresh ໜ້າຫຼັກທັນທີ
+  showNotif('🗑 ລຶບ "'+p.name+'" ແລ້ວ — ສິນຄ້າບໍ່ສະແດງໃນຮ້ານແລ້ວ');
 }
 
 // Old alias kept for compatibility
@@ -12379,8 +12422,19 @@ function renderAdminOrders(){
           <option value="completed" ${o.status==='completed'?'selected':''}>✅ Completed</option>
           <option value="cancelled" ${o.status==='cancelled'?'selected':''}>❌ Cancelled</option>
         </select>
+        \${(o.status==='completed'||o.status==='cancelled'||o.status==='done'||o.adminReleased)?`
+        <button onclick="adminDeleteOrder('\${o.id}')" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#f87171;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;margin-top:6px;width:100%">🗑 ລຶບ Order ນີ້</button>
+        `:''}
       </div>
-    </div>`).join('')}`;
+    </div>`).join('')}\`;
+}
+
+function adminDeleteOrder(id){
+  if(!confirm('ລຶບ Order #'+id+' ອອກຈາກລາຍການ?')) return;
+  orders = orders.filter(o=>o.id!==id);
+  saveOrders();
+  showNotif('🗑 ລຶບ Order ແລ້ວ');
+  renderAdminTab('orders');
 }
 
 function adminUpdateOrderStatus(id, status){
