@@ -5147,15 +5147,16 @@ function renderBillsPage(){
       ? `showMyDiamondOrderDetail('${o.id}')`
       : `viewBillDetail('${o.id}')`;
     return `
-    <div class="bill-card" onclick="${clickFn}" style="border-color:${type==='diamond'?'rgba(100,68,255,.3)':type==='game'?'rgba(105,100,255,.2)':type==='phonepart'?'rgba(100,200,255,.2)':'rgba(201,168,76,.15)'}">
-      <div class="bill-header">
+    <div class="bill-card" style="border-color:${type==='diamond'?'rgba(100,68,255,.3)':type==='game'?'rgba(105,100,255,.2)':type==='phonepart'?'rgba(100,200,255,.2)':'rgba(201,168,76,.15)'};position:relative">
+      ${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?`<button onclick="event.stopPropagation();deleteBillItem('${o.id}','${isDia?'diamond':'order'}')" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:'Sarabun',sans-serif;z-index:2" title="ລຶບບິນນີ້">🗑</button>`:''}
+      <div class="bill-header" onclick="${clickFn}" style="cursor:pointer">
         <span class="bill-id">#${o.id}</span>
-        <div style="display:flex;align-items:center;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;padding-right:${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?'36px':'0'}">
           ${_billTypeTag(type)}
           <span class="bill-status ${getStatusClass(o.status)}" style="font-size:10px">${getStatusLabel(o.status)}</span>
         </div>
       </div>
-      <div class="bill-product">
+      <div class="bill-product" onclick="${clickFn}" style="cursor:pointer">
         <div class="bill-product-img">${o.productEmoji||'📦'}</div>
         <div class="bill-product-info">
           <div class="bill-product-name">${o.productName||o.name}</div>
@@ -5167,6 +5168,19 @@ function renderBillsPage(){
       </div>
     </div>`;
   }).join('');
+}
+
+function deleteBillItem(id, type){
+  if(type === 'diamond'){
+    let dOrders = getDiamondOrders();
+    dOrders = dOrders.filter(o => o.id !== id);
+    localStorage.setItem('kd_diamond_orders', JSON.stringify(dOrders));
+  } else {
+    orders = orders.filter(o => o.id !== id);
+    saveOrders();
+  }
+  showNotif('🗑 ລຶບບິນແລ້ວ');
+  renderBillsPage();
 }
 
 function showMyDiamondOrderDetail(id){
@@ -14365,7 +14379,7 @@ function renderPhonePartsAdminPanel(mode){
     <!-- Add new part form -->
     <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px">➕ ເພີ່ມ / ແກ້ໄຂອາໄຫຼ່</div>
-      <input class="form-input" id="ppEditId" placeholder="ID (ຖ້າປ່ອຍວ່າງ = ສ້າງໃໝ່)" style="margin-bottom:8px">
+      <input type="hidden" id="ppEditId" value="">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <input class="form-input" id="ppEditBrand" placeholder="ຍີ່ຫໍ້ (Samsung, Apple...)">
         <input class="form-input" id="ppEditModel" placeholder="ລຸ່ນ (S24 Ultra...)">
@@ -14507,7 +14521,9 @@ function editPPItem(id){
   document.getElementById('ppEditCat').value   = p.cat||'screen';
   document.getElementById('ppEditImg').value   = p.img||'';
   previewPPImg(p.img||'');
-  document.getElementById('ppEditId').scrollIntoView({behavior:'smooth',block:'center'});
+  // scroll to form top
+  const formBox = document.querySelector('#phonePartsAdminModal .popup-box');
+  if(formBox) formBox.scrollTo({top:0,behavior:'smooth'});
 }
 
 async function deletePPItem(id){
