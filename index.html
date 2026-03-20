@@ -12401,8 +12401,17 @@ function adminOpenEditUser(uid){
         <input class="form-input" id="adminEditPhone" value="${u.phone||''}" placeholder="ເບີໂທ">
       </div>
       <div class="form-group">
+        <label class="form-label">🔓 ລະຫັດຜ່ານປັດຈຸບັນ <span style="font-size:10px;color:var(--text2)">(ລະຫັດຂອງລູກຄ້າຕອນນີ້)</span></label>
+        <div style="position:relative">
+          <input class="form-input" id="adminViewPass" value="${u.pass||''}" readonly
+            style="background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.25);color:var(--gold);font-family:monospace;letter-spacing:1px;padding-right:48px" type="password">
+          <button type="button" onclick="toggleAdminViewPass()" id="adminViewPassToggleBtn"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:0">👁️</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="form-label">🔑 ລະຫັດຜ່ານໃໝ່ <span style="font-size:10px;color:var(--text2)">(ຫວ່າງໄວ້ = ບໍ່ປ່ຽນ)</span></label>
-        <input class="form-input" id="adminEditPass" type="password" placeholder="ລະຫັດຜ່ານໃໝ່">
+        <input class="form-input" id="adminEditPass" type="text" placeholder="ພິມລະຫັດຜ່ານໃໝ່ທີ່ຕ້ອງການ">
       </div>
       <div class="form-group">
         <label class="form-label">💰 Wallet (ກີບ) — ບໍ່ຈຳກັດ</label>
@@ -12464,17 +12473,23 @@ function adminSaveEditUser(uid){
       }
     }
   }
-  // Sync to Supabase (name, email, phone, wallet only — not password)
+  // Sync to Supabase — ລວມ password ດ້ວຍ ເພື່ອໃຫ້ login ດ້ວຍລະຫັດໃໝ່ໄດ້
   const _allU = getAllUsers();
   const _savedU = _allU.find(x=>x.id===uid);
   if(_savedU){
-    const _syncU = {..._savedU};
-    delete _syncU.pass; // never sync password change from admin
-    sbSaveUser(_syncU).catch(e=>console.warn('sbSaveEditUser:',e));
+    sbSaveUser(_savedU).catch(e=>console.warn('sbSaveEditUser:',e));
   }
   closeModal('adminEditUserModal');
   renderAdminTab('users');
   showNotif('✅ ແກ້ໄຂຂໍ້ມູນສຳເລັດ!');
+}
+
+function toggleAdminViewPass(){
+  const inp = document.getElementById('adminViewPass');
+  const btn = document.getElementById('adminViewPassToggleBtn');
+  if(!inp) return;
+  if(inp.type === 'password'){ inp.type='text'; if(btn) btn.textContent='🙈'; }
+  else { inp.type='password'; if(btn) btn.textContent='👁️'; }
 }
 
 function adminDeleteUser(uid){
