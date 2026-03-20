@@ -4200,6 +4200,7 @@ function initApp() {
     setSupabaseUser(currentUser.id); // ✅ RLS
     startWalletRealtime();
     startProductsRealtime();
+    startOrdersRealtime();
   }
   // Clear demo products permanently
   const _demoIds2 = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010'];
@@ -4363,6 +4364,88 @@ function stopProductsRealtime(){
   }
 }
 
+// ✅ Orders Realtime — sync ທຸກ device ທັນທີເມື່ອ order ປ່ຽນ
+let _ordersChannel = null;
+let _ordersRtRetry = 0;
+const _ORDERS_RT_MAX_RETRY = 5;
+function startOrdersRealtime(){
+  if(_ordersChannel){
+    try{ supa.removeChannel(_ordersChannel); }catch(e){}
+    _ordersChannel = null;
+  }
+  _ordersChannel = supa
+    .channel('kd_orders_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'kd_orders' }, (payload) => {
+      const ev = payload.eventType;
+      if(ev === 'DELETE'){
+        const did = payload.old && payload.old.id;
+        if(did){
+          orders = orders.filter(o => o.id !== did);
+          localStorage.setItem('kd_orders', JSON.stringify(orders));
+          renderBillsPage();
+          if(typeof renderAdminTab === 'function') renderAdminTab('orders');
+        }
+      } else if(ev === 'INSERT'){
+        const row = payload.new;
+        if(row && row.id && !orders.find(o => o.id === row.id)){
+          const no = _sbRowToOrder(row);
+          if(no){ orders.unshift(no); localStorage.setItem('kd_orders', JSON.stringify(orders)); renderBillsPage(); }
+        }
+      } else if(ev === 'UPDATE'){
+        const row = payload.new;
+        if(row && row.id){
+          const no = _sbRowToOrder(row);
+          const idx = orders.findIndex(o => o.id === row.id);
+          if(no){
+            if(idx >= 0) orders[idx] = no; else orders.unshift(no);
+            localStorage.setItem('kd_orders', JSON.stringify(orders));
+            renderBillsPage();
+            if(typeof renderSaleHistoryPage === 'function') renderSaleHistoryPage();
+          }
+        }
+      }
+    })
+    .subscribe((status) => {
+      if(status === 'SUBSCRIBED'){
+        _ordersRtRetry = 0;
+        console.log('✅ Orders Realtime connected');
+      } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
+        _ordersChannel = null;
+        if(_ordersRtRetry < _ORDERS_RT_MAX_RETRY){
+          _ordersRtRetry++;
+          setTimeout(startOrdersRealtime, 5000 * _ordersRtRetry);
+        }
+      }
+    });
+}
+function stopOrdersRealtime(){
+  if(_ordersChannel){
+    try{ supa.removeChannel(_ordersChannel); }catch(e){}
+    _ordersChannel = null;
+  }
+}
+// ✅ Helper: Supabase row → order object
+function _sbRowToOrder(r){
+  if(!r || !r.id) return null;
+  return {
+    id:r.id, buyerId:r.buyer_id, buyerName:r.buyer_name,
+    userId:r.buyer_id, userName:r.buyer_name,
+    sellerId:r.seller_id, productId:r.product_id,
+    name:r.product_name, productName:r.product_name,
+    qty:r.qty, total:r.total, status:r.status,
+    shippingStatus:r.shipping_status, trackingNumber:r.tracking_number,
+    note:r.note, date:r.created_at,
+    sellerImg:r.seller_img||null, sellerVideo:r.seller_video||null,
+    sentAt:r.sent_at||null,
+    autoDelivering:r.auto_delivering||false,
+    autoDone:r.auto_done||false,
+    adminReleased:r.admin_released||false,
+    adminReleasedAt:r.admin_released_at||null,
+    adminReleasedBy:r.admin_released_by||null,
+    adminReleasedAmt:r.admin_released_amt||null
+  };
+}
+
 // Helper: convert Supabase kd_products row → app product object
 function _sbRowToProduct(r){
   if(!r || !r.id) return null;
@@ -4371,7 +4454,7 @@ function _sbRowToProduct(r){
   if(!imgs.length && r.img) imgs = [r.img];
   return {
     id: r.id, name: r.name, price: r.price,
-    cat: r.category, subcat: r.subcat||r.category||null, desc: r.description||'',
+    cat: r.category, subcat: r.subcat||r.category||null, desc: r.description||'', hidden: r.hidden||false,
     images: imgs, img: imgs[0]||null,
     sellerId: r.seller_id||null, sellerName: r.seller_name||'',
     qty: r.qty!=null ? r.qty : 99,
@@ -4447,8 +4530,20 @@ function saveProducts(){
       }
     }
   }
-  // Sync each product to Supabase
-  products.forEach(p=>sbSaveProduct(p).catch(e=>console.warn('sbSaveProduct:',e)));
+  // Sync each product to Supabase (batch — only sync changed/new ones to avoid overload)
+  products.forEach(p => {
+    supa.from('kd_products').upsert({
+      id:p.id, name:p.name, price:p.price, category:p.cat,
+      subcat:p.subcat||p.cat||null,
+      emoji:p.emoji, description:p.desc, qty:p.qty||0, sold:p.sold||0,
+      seller_id:p.sellerId||'', seller_name:p.seller||'',
+      image_img:(p.images&&p.images[0])||p.img||null,
+      images_json:p.images&&p.images.length ? JSON.stringify(p.images) : null,
+      is_game:!!p.isGame, game_type:p.gameType||null,
+      hidden:!!p.hidden,
+      updated_at:new Date().toISOString()
+    }).catch(e=>console.warn('saveProducts upsert:',e));
+  });
 }
 
 // ✅ Re-sync all products with images to Supabase (run once after images_json column created)
@@ -4478,7 +4573,11 @@ function saveOneOrder(orderId){
 }
 // saveUser is defined above in USER DATABASE SYSTEM
 function _saveUserCompat(){ saveUser(); } // alias for any legacy calls
-function saveChat(){localStorage.setItem('kd_chat',JSON.stringify(chatMsgs));}
+function saveChat(){
+  localStorage.setItem('kd_chat', JSON.stringify(chatMsgs));
+  // ✅ sync ໄປ Supabase kd_app_settings (ໃຊ້ key 'chat_data' store JSON)
+  sbSetSetting('chat_data', JSON.stringify(chatMsgs)).catch(e=>console.warn('saveChat sync:',e));
+}
 
 // ============ PRODUCTS RENDER ============
 let currentCat = 'all';
@@ -6603,18 +6702,26 @@ function saveEditProductPage(){
     products[idx].gamePass = pass;
   }
   saveProducts();
+  // ✅ sync ໄປ Supabase ໂດຍກົງທັນທີ
+  sbSaveProduct(products[idx]).catch(e=>console.warn('saveEditProductPage sync:',e));
   showNotif('✅ ບັນທຶກແລ້ວ!');
   switchPage('manage');
   renderManagePage();
+  renderProducts(products);
 }
 
 function toggleProductActive(id){
   const idx = products.findIndex(p=>p.id===id);
   if(idx<0) return;
   products[idx].hidden = !products[idx].hidden;
-  saveProducts();
+  const isHidden = products[idx].hidden;
+  // ✅ sync hidden flag ໄປ Supabase ທັນທີ
+  localStorage.setItem('kd_products', JSON.stringify(products));
+  supa.from('kd_products').update({ hidden: isHidden, updated_at: new Date().toISOString() }).eq('id', id)
+    .catch(e => console.warn('toggleProductActive sync:', e));
   renderManagePage();
-  showNotif(products[idx].hidden?'🙈 ຊ່ອນສິນຄ້າແລ້ວ':'👁 ສະແດງສິນຄ້າແລ້ວ');
+  renderProducts(products);
+  showNotif(isHidden ? '🙈 ຊ່ອນສິນຄ້າແລ້ວ' : '👁 ສະແດງສິນຄ້າແລ້ວ');
 }
 
 function quickEditStock(id){
@@ -6627,6 +6734,9 @@ function quickEditStock(id){
   const idx = products.findIndex(x=>x.id===id);
   products[idx].qty = n;
   saveProducts();
+  // ✅ sync stock ໄປ Supabase ໂດຍກົງ
+  supa.from('kd_products').update({ qty: n, updated_at: new Date().toISOString() }).eq('id', id)
+    .catch(e=>console.warn('quickEditStock sync:',e));
   renderManagePage();
   showNotif(`✅ ອັບເດດສ໊ອກ ${p.name} → ${n}`);
 }
@@ -6986,6 +7096,8 @@ function saveEditProduct(){
     products[idx] = {...products[idx], name, desc:document.getElementById('editDesc').value, cat, price, qty, emoji:cats[cat]||'📦'};
   }
   saveProducts();
+  // ✅ sync ໄປ Supabase ໂດຍກົງທັນທີ
+  sbSaveProduct(products[idx]).catch(e=>console.warn('saveEditProduct sync:',e));
   closeModal('editProductModal');
   renderMpProducts();
   renderProducts(products);
@@ -7787,12 +7899,18 @@ function admShopEditProd(id){
 
 function admShopDeleteProd(id){
   if(!confirm('ຕ້ອງການລຶບສິນຄ້ານີ້ບໍ?')) return;
-  products=products.filter(p=>p.id!==id);
-  saveProducts();
+  const p = products.find(x=>x.id===id);
+  products = products.filter(p=>p.id!==id);
+  _addDeletedProductId(id);
+  localStorage.setItem('kd_products', JSON.stringify(products));
   renderProducts();
   updateAdminShopBannerProfile();
   renderAdmShopProdList();
-  showNotif('🗑️ ລຶບສິນຄ້າສຳເລັດ');
+  renderManagePage();
+  showNotif('⏳ ກຳລັງລຶບ...','info');
+  sbDeleteProduct(id)
+    .then(()=>showNotif('🗑️ ລຶບ "'+(p?.name||id)+'" ສຳເລັດ','success'))
+    .catch(e=>{ console.warn('admShopDeleteProd:',e); showNotif('⚠️ ລຶບ offline — sync ໃໝ່ທີຫຼັງ','warning'); });
 }
 
 // ── Restore login session — bulletproof 3-layer restore ──
@@ -8135,6 +8253,7 @@ async function doLogin(){
 function logoutUser(){
   stopWalletRealtime();
   stopProductsRealtime();
+  stopOrdersRealtime();
   clearSupabaseUser(); // ✅ RLS
   currentUser = null;
   localStorage.removeItem('kd_session');
@@ -12978,6 +13097,16 @@ function adminRejectWithdraw(id){
   withs[idx].status='rejected';
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
   sbUpdateWithdrawalStatus(id,'rejected').catch(e=>console.warn('sbRejectWith:',e));
+  // ✅ sync wallet refund ກັບ Supabase
+  if(_witUid){
+    supa.from('kd_users').select('wallet').eq('id',_witUid).single()
+      .then(({data})=>{
+        if(data){
+          const refunded = (data.wallet||0) + (withs[idx].amount||0);
+          return supa.from('kd_users').update({wallet: refunded, updated_at: new Date().toISOString()}).eq('id',_witUid);
+        }
+      }).catch(e=>console.warn('rejectWithdraw wallet sync:',e));
+  }
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   showNotif('❌ ປະຕິເສດ ແລະ ຄືນເງິນ');
