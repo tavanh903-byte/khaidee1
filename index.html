@@ -4883,11 +4883,10 @@ function submitGeneralOrder(){
     if(products[idx].qty !== undefined) products[idx].qty = Math.max(0, (products[idx].qty||0)-qty);
     saveProducts();
   }
-  // Pay seller: game/ID gets 95% (5% commission), general gets 100%
-  if(p.sellerId && p.sellerId !== 'admin'){
-    const isGameProd = p.cat==='game'||p.cat==='game_id'||p.isGame;
-    const commission = isGameProd ? 0.05 : 0;
-    const sellerPay = Math.round(total * (1 - commission));
+  // ❌ ບໍ່ pay seller ທັນທີ — ລໍ seller ຝາກຂົນສ່ງກ່ອນ ແລ້ວ auto release
+  // (game/ID order ຍັງ pay ທັນທີ ຍ້ອນ digital ສົ່ງທັນທີ)
+  if(p.sellerId && p.sellerId !== 'admin' && (p.cat==='game'||p.cat==='game_id'||p.isGame)){
+    const sellerPay = Math.round(total * 0.95); // 5% commission for game
     const db = getUsersDB();
     if(db[p.sellerId]){
       db[p.sellerId].wallet = (db[p.sellerId].wallet||0) + sellerPay;
@@ -5590,10 +5589,10 @@ function sellerViewBill(id){
       <input class="form-input" id="trackNum_${o.id}" placeholder="ເຊັ່ນ: LP123456789TH" value="${o.trackingNum||''}">
     </div>
     <div class="form-group">
-      <label class="form-label">🚛 ຊື່ຂົນສ່ງ</label>
-      <input class="form-input" id="courierName_${o.id}" placeholder="ເຊັ່ນ: ຂົນສ່ງດ່ວນ, JNT, ໄປສະນີລາວ" value="${o.courier||''}">
+      <label class="form-label">🚛 ຂົນສ່ງ (ອັດຕະໂນມັດຈາກ Order ລູກຄ້າ)</label>
+      <input class="form-input" id="courierName_${o.id}" value="${o.courier||o.shipping||''}" readonly style="background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.3);color:var(--gold);cursor:default">
     </div>
-    <button class="btn btn-gold" onclick="saveTrackingNum('${o.id}')" style="margin-bottom:8px">💾 ບັນທຶກເລກພັດສົ່ງ</button>` : '';
+    <button class="btn btn-gold" onclick="saveTrackingNum('${o.id}')" style="margin-bottom:8px">💾 ບັນທຶກ ແລະ ສົ່ງບິນໃຫ້ລູກຄ້າ</button>` : '';
 
   // ✅ ສະຖານະ: ຖ້ານັບຖອຍຫຼັງໄດ້ 48ຊມ. ກ່ອນ
   const hasSent = !!o.sentAt;
@@ -5843,11 +5842,13 @@ function sellerConfirmShipment(id){
   saveOrders();
   sbSaveOrder(orders[idx]).catch(e=>console.warn('sbConfirmShip:',e));
   scheduleAutoAdvance(orders[idx]);
-  renderBillsPage();
+  // ── ໂອນເງິນ → seller ທັນທີ ──
+  _autoReleaseToSeller(orders[idx]);
+  showNotif('✅ ສົ່ງບິນໃຫ້ລູກຄ້າແລ້ວ! ລະບົບນັບຖອຍຫຼັງ 48ຊມ. ເລີ່ມ', 'success');
+  closeModal('sellerBillModal');
+  switchPage('sale-history');
   renderSaleHistoryPage();
-  showNotif('✅ ສົ່ງບິນໃຫ້ລູກຄ້າແລ້ວ! ລະບົບນັບຖອຍຫຼັງ 48ຊມ. ເລີ່ມ');
-  // Refresh full page
-  setTimeout(()=> sellerViewBill(id), 300);
+  renderBillsPage();
 }
 
 function saveTrackingNum(id){
@@ -5857,9 +5858,69 @@ function saveTrackingNum(id){
   const courier = (document.getElementById('courierName_'+id)||{value:''}).value.trim();
   if(!num){ showNotif('ກະລຸນາໃສ່ເລກພັດສົ່ງ'); return; }
   orders[idx].trackingNum = num;
-  if(courier) orders[idx].courier = courier;
+  orders[idx].courier = courier || orders[idx].shipping || orders[idx].courier || '';
+  // ── auto confirmShipment: ບັນທຶກ + ເລີ່ມ 48ຊມ. ທັນທີ ──
+  const imgPreview = document.querySelector('#sellerImgPrev_'+id+' img');
+  const vidPreview = document.querySelector('#sellerVideoPrev_'+id+' video');
+  if(imgPreview) orders[idx].sellerImg = imgPreview.src;
+  if(vidPreview) orders[idx].sellerVideo = vidPreview.src;
+  if(!orders[idx].sentAt){
+    orders[idx].sentAt = new Date().toISOString();
+    orders[idx].autoDelivering = false;
+    orders[idx].autoDone = false;
+  }
+  if(orders[idx].status === 'pending' || orders[idx].status === 'packed'){
+    orders[idx].status = 'sent';
+    if(!orders[idx].trackingDates) orders[idx].trackingDates = {};
+    orders[idx].trackingDates['sent'] = new Date().toLocaleString('lo-LA');
+  }
   saveOrders();
-  showNotif('✅ ບັນທຶກເລກພັດສົ່ງ: '+num);
+  sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(tracking):',e));
+  scheduleAutoAdvance(orders[idx]);
+  // ── ໂອນເງິນ → seller wallet ທັນທີ (ບໍ່ຕ້ອງລໍ admin) ──
+  _autoReleaseToSeller(orders[idx]);
+  // ── ປິດ modal/page ແລ້ວ refresh ──
+  showNotif('✅ ສົ່ງບິນໃຫ້ລູກຄ້າແລ້ວ! ລະບົບນັບຖອຍຫຼັງ 48ຊມ. ເລີ່ມ', 'success');
+  closeModal('sellerBillModal');
+  switchPage('sale-history');
+  renderSaleHistoryPage();
+  renderBillsPage();
+}
+
+// ── Auto release ເງິນ → seller ທັນທີ ເມື່ອຝາກຂົນສ່ງ ──
+async function _autoReleaseToSeller(order){
+  if(!order.sellerId || order.sellerId==='admin') return;
+  if(order.adminReleased) return; // already released
+  const isGameProd = order.isGame || order.cat==='game' || order.gameType;
+  const commission = isGameProd ? 0.05 : 0;
+  const sellerAmt  = Math.round((order.total||0)*(1-commission));
+  if(sellerAmt <= 0) return;
+  try {
+    // ດຶງ wallet ປັດຈຸບັນຈາກ Supabase
+    const { data: sbUser } = await supa.from('kd_users').select('wallet').eq('id', order.sellerId).single();
+    const curWallet = Number(sbUser?.wallet) || 0;
+    const newWallet = curWallet + sellerAmt;
+    // ອັບເດດ Supabase
+    await supa.from('kd_users').update({ wallet: newWallet, updated_at: new Date().toISOString() }).eq('id', order.sellerId);
+    // ອັບເດດ localStorage
+    const db = getUsersDB();
+    if(db[order.sellerId]){ db[order.sellerId].wallet = newWallet; saveUsersDB(db); }
+    // ຖ້າ seller = currentUser → update UI
+    if(currentUser && currentUser.id === order.sellerId){
+      currentUser.wallet = newWallet; saveUser(); updateBalanceUI(newWallet);
+    }
+    // mark released ໃນ order
+    const idx = orders.findIndex(x=>x.id===order.id);
+    if(idx>=0){
+      orders[idx].adminReleased = true;
+      orders[idx].adminReleasedAt = new Date().toLocaleString('lo-LA');
+      orders[idx].adminReleasedBy = 'auto';
+      orders[idx].adminReleasedAmt = sellerAmt;
+      saveOrders();
+      sbSaveOrder(orders[idx]).catch(()=>{});
+    }
+    console.log('✅ Auto released to seller:', order.sellerId, sellerAmt);
+  } catch(e){ console.warn('_autoReleaseToSeller error:', e); }
 }
 
 function previewSellerImg(input, targetId){
@@ -14836,15 +14897,14 @@ function updateAdminConfirmSaleBtnVisibility(){
 
 // ── ດຶງ orders ທີ່ admin ຕ້ອງ confirm ──
 function _acsmGetOrders(tab){
-  // orders ທີ່ seller ສົ່ງ (status: sent/delivering) ແລະ ຍັງລໍ release (adminReleased ไม่ใช่ true)
-  // orders ທີ່ admin release ແລ້ວ (adminReleased === true)
   return orders.filter(o => {
-    if(!o.sellerId || o.sellerId === 'admin') return false; // skip admin/game items
+    // ຕ້ອງມີ seller (ບໍ່ແມ່ນ admin/ສິນຄ້າ admin)
+    if(!o.sellerId || o.sellerId === 'admin') return false;
+    // ຂ້າມ order ທີ່ cancelled
     if(o.status === 'cancelled') return false;
-    if(tab === 'pending') return (o.status === 'sent' || o.status === 'delivering') && !o.adminReleased;
+    if(tab === 'pending') return !o.adminReleased;   // ທຸກ order ທີ່ຍັງບໍ່ release
     if(tab === 'done')    return o.adminReleased === true;
-    // all = all non-cancelled with seller
-    return true;
+    return true; // all
   }).sort((a,b)=>new Date(b.createdAt||b.date)-new Date(a.createdAt||a.date));
 }
 
