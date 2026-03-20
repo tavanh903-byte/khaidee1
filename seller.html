@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ຂາຍດີ — ຜູ້ຂາຍ</title>
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Sarabun:wght@300;400;600;700&family=Noto+Sans+Lao:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#c9a84c;--gold-lt:#f0d080;--bg:#0a0a0a;--dark:#111218;--dark2:#1a1b24;--dark3:#22242f;--gray:#2e3040;--text:#e8e0cc;--text2:#a09880;--green:#22c55e;--red:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;max-width:480px;margin:0 auto;overflow-x:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--dark);border-bottom:1px solid rgba(201,168,76,.15);position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:'Cinzel Decorative',serif;font-size:16px;color:var(--gold)}
+.badge{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:4px 10px;font-size:12px;color:var(--gold)}
+.page{display:none;padding:16px;padding-bottom:100px}
+.page.active{display:block}
+.section-title{font-size:16px;font-weight:700;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.stat-card{background:var(--dark2);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px;text-align:center}
+.stat-num{font-size:22px;font-weight:700;color:var(--gold)}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:3px}
+/* Product cards */
+.prod-card{background:var(--dark2);border:1px solid rgba(255,255,255,.06);border-radius:12px;display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:10px}
+.prod-thumb{width:60px;height:60px;border-radius:8px;object-fit:cover;background:var(--dark3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px}
+.prod-info{flex:1;min-width:0}
+.prod-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-price{font-size:14px;color:var(--gold);font-weight:700}
+.prod-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.prod-actions{display:flex;flex-direction:column;gap:6px}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px}
+.edit-btn{background:rgba(201,168,76,.15);color:var(--gold)}
+.del-btn{background:rgba(239,68,68,.15);color:var(--red)}
+/* Order cards */
+.order-card{background:var(--dark2);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px;margin-bottom:10px}
+.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.order-id{font-size:11px;color:var(--text2)}
+.status-badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+.s-pending{background:rgba(245,158,11,.15);color:#f59e0b}
+.s-packed{background:rgba(96,165,250,.15);color:#60a5fa}
+.s-shipped{background:rgba(34,197,94,.15);color:var(--green)}
+.s-done{background:rgba(34,197,94,.2);color:var(--green)}
+.s-cancelled{background:rgba(239,68,68,.15);color:var(--red)}
+/* Form */
+.form-group{margin-bottom:16px}
+.form-label{font-size:13px;color:var(--text2);margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--dark3);border:1px solid var(--gray);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text);font-family:'Sarabun',sans-serif;outline:none;transition:.2s}
+.form-input:focus{border-color:var(--gold)}
+.form-textarea{min-height:80px;resize:vertical}
+select.form-input{cursor:pointer}
+/* Image upload */
+.img-upload-area{border:2px dashed rgba(201,168,76,.3);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;position:relative}
+.img-upload-area:hover,.img-upload-area.drag{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.img-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-previews{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.img-preview{position:relative;width:72px;height:72px}
+.img-preview img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid rgba(201,168,76,.3)}
+.img-preview-del{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg)}
+/* Buttons */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.2s;margin-bottom:8px}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:#000}
+.btn-outline{background:transparent;border:1px solid rgba(201,168,76,.4);color:var(--gold)}
+.btn-red{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:var(--red)}
+.btn:active{filter:brightness(.9)}
+/* Bottom nav */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--dark);border-top:1px solid rgba(201,168,76,.15);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--text2);font-size:10px;padding:4px 0;transition:.2s}
+.bnav-item.active,.bnav-item:hover{color:var(--gold)}
+.bnav-icon{font-size:20px}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--dark2);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-height:92dvh;overflow-y:auto}
+.modal-handle{width:40px;height:4px;background:var(--gray);border-radius:2px;margin:0 auto 20px;cursor:pointer}
+.modal-title{font-size:17px;font-weight:700;color:var(--gold);margin-bottom:20px}
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--text2)}
+.loading-spin{display:inline-block;animation:spin 1s linear infinite;font-size:28px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Select status */
+.status-select{width:100%;background:var(--dark3);border:1px solid var(--gray);border-radius:8px;padding:8px;font-size:13px;color:var(--text);font-family:'Sarabun',sans-serif;cursor:pointer}
+.rt-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.rt-dot.offline{background:var(--red);animation:none}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">ຂາຍດີ — ຜູ້ຂາຍ</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span style="font-size:11px;color:var(--text2)"><span class="rt-dot" id="rtDot"></span>Sync</span>
+    <div class="badge" id="sellerBadge">...</div>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="page active" id="page-products">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">📦 ສິນຄ້າທັງໝົດ</div></div>
+    <div class="stat-card"><div class="stat-num" id="statOrders">0</div><div class="stat-lbl">🛒 ອໍເດີໃໝ່</div></div>
+    <div class="stat-card"><div class="stat-num" id="statRevenue">0</div><div class="stat-lbl">💰 ລາຍຮັບ (₭)</div></div>
+    <div class="stat-card"><div class="stat-num" id="statWallet">0</div><div class="stat-lbl">💎 Wallet (₭)</div></div>
+  </div>
+
+  <div class="section-title">
+    ສິນຄ້າຂອງຂ້ອຍ
+    <button class="btn btn-gold" style="width:auto;padding:8px 16px;font-size:13px;margin:0" onclick="openAddProduct()">+ ເພີ່ມ</button>
+  </div>
+  <div id="myProductsList"><div class="loading"><div class="loading-spin">⚙️</div><br>ກຳລັງໂຫລດ...</div></div>
+</div>
+
+<div class="page" id="page-orders">
+  <div class="section-title">ອໍເດີທີ່ຕ້ອງຈັດການ <span id="pendingCount" style="background:rgba(245,158,11,.2);color:#f59e0b;border-radius:20px;padding:2px 10px;font-size:12px">0</span></div>
+  <div id="myOrdersList"><div class="loading"><div class="loading-spin">⚙️</div><br>ກຳລັງໂຫລດ...</div></div>
+</div>
+
+<div class="page" id="page-wallet">
+  <div class="section-title">💎 Wallet ຂອງຂ້ອຍ</div>
+  <div style="background:var(--dark2);border:1px solid rgba(201,168,76,.3);border-radius:16px;padding:24px;text-align:center;margin-bottom:20px">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px">ຍອດເງິນທີ່ຮັບໄດ້</div>
+    <div style="font-size:32px;font-weight:700;color:var(--gold)" id="walletBigAmt">0 ₭</div>
+  </div>
+  <div id="walletHistory"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottomnav">
+  <div class="bnav-item active" id="bnav-products" onclick="switchPage('products')"><div class="bnav-icon">📦</div><span>ສິນຄ້າ</span></div>
+  <div class="bnav-item" id="bnav-orders"   onclick="switchPage('orders')"  ><div class="bnav-icon">🛒</div><span>ອໍເດີ</span></div>
+  <div class="bnav-item" id="bnav-wallet"   onclick="switchPage('wallet')"  ><div class="bnav-icon">💰</div><span>Wallet</span></div>
+</div>
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-sheet">
+    <div class="modal-handle" onclick="closeModal('productModal')"></div>
+    <div class="modal-title" id="productModalTitle">➕ ເພີ່ມສິນຄ້າໃໝ່</div>
+
+    <div class="form-group">
+      <label class="form-label">ຊື່ສິນຄ້າ *</label>
+      <input class="form-input" id="pName" placeholder="ຊື່ສິນຄ້າ...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ລາຄາ (₭) *</label>
+      <input class="form-input" id="pPrice" type="number" placeholder="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ຈຳນວນ (stock)</label>
+      <input class="form-input" id="pQty" type="number" placeholder="99" value="99">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ໝວດໝູ່</label>
+      <select class="form-input" id="pCat">
+        <option value="other">📦 ອື່ນໆ</option>
+        <option value="phone">📱 ໂທລະສັບ</option>
+        <option value="parts">🔧 ອາໄຫຼ່</option>
+        <option value="fashion">👗 ແຟຊັ່ນ</option>
+        <option value="food">🍜 ອາຫານ</option>
+        <option value="game">🎮 Game</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ລາຍລະອຽດ</label>
+      <textarea class="form-input form-textarea" id="pDesc" placeholder="ລາຍລະອຽດສິນຄ້າ..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ຮູບພາບ (ສູງສຸດ 5 ຮູບ)</label>
+      <div class="img-upload-area" id="imgUploadArea">
+        <input type="file" accept="image/*" multiple id="imgFileInput" onchange="handleImgSelect(this)">
+        <div style="font-size:28px;margin-bottom:6px">📷</div>
+        <div style="font-size:13px;color:var(--text2)">ແຕະເພື່ອເລືອກຮູບ</div>
+      </div>
+      <div class="img-previews" id="imgPreviews"></div>
+    </div>
+
+    <button class="btn btn-gold" id="saveProductBtn" onclick="saveProduct()">💾 ບັນທຶກສິນຄ້າ</button>
+    <button class="btn btn-outline" onclick="closeModal('productModal')">ຍົກເລີກ</button>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-sheet">
+    <div class="modal-handle" onclick="closeModal('orderModal')"></div>
+    <div class="modal-title">📋 ລາຍລະອຽດ Order</div>
+    <div id="orderDetailContent"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="kd-core.js"></script>
+<script>
+// ═══════════════════════════════════════
+//  SELLER APP STATE
+// ═══════════════════════════════════════
+let _seller   = null;
+let _myProds  = [];
+let _myOrders = [];
+let _editingId = null;   // null = new product, string = edit existing
+let _pendingImages = []; // { file, previewUrl, uploaded: null }
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+async function boot() {
+  // Restore seller session
+  const saved = localStorage.getItem('kd_seller_session');
+  if (!saved) { window.location.href = 'login.html'; return; }
+  try { _seller = JSON.parse(saved); } catch(e) { window.location.href = 'login.html'; return; }
+
+  kdSetUser(_seller.id);
+  document.getElementById('sellerBadge').textContent = _seller.name || _seller.user || '?';
+
+  await Promise.all([loadMyProducts(), loadMyOrders()]);
+  startRealtime();
+  updateWalletUI();
+}
+
+// ═══════════════════════════════════════
+//  PRODUCTS
+// ═══════════════════════════════════════
+async function loadMyProducts() {
+  try {
+    const all = await KDProducts.load({ sellerId: _seller.id });
+    _myProds  = all;
+    renderMyProducts();
+    document.getElementById('statTotal').textContent = all.length;
+  } catch(e) {
+    document.getElementById('myProductsList').innerHTML = '<div style="color:#f87171;padding:20px">❌ ໂຫລດລົ້ມເຫຼວ</div>';
+  }
+}
+
+function renderMyProducts() {
+  const el = document.getElementById('myProductsList');
+  if (!_myProds.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">ຍັງບໍ່ມີສິນຄ້າ — ກົດ "+ ເພີ່ມ" ເລີ່ມຂາຍໄດ້ເລີຍ!</div>';
+    return;
+  }
+  el.innerHTML = _myProds.map(p => `
+    <div class="prod-card" id="pc_${p.id}">
+      ${p.images?.length
+        ? `<img class="prod-thumb" src="${p.images[0]}" loading="lazy" onerror="this.textContent='📦';this.style.fontSize='24px'">`
+        : `<div class="prod-thumb">${p.emoji||'📦'}</div>`}
+      <div class="prod-info">
+        <div class="prod-name">${esc(p.name)}</div>
+        <div class="prod-price">${Number(p.price||0).toLocaleString()} ₭</div>
+        <div class="prod-meta">Stock: ${p.qty||0} | ຂາຍ: ${p.sold||0}</div>
+      </div>
+      <div class="prod-actions">
+        <button class="icon-btn edit-btn" onclick="openEditProduct('${p.id}')">✏️</button>
+        <button class="icon-btn del-btn"  onclick="deleteProduct('${p.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── ADD / EDIT ──
+function openAddProduct() {
+  _editingId = null;
+  _pendingImages = [];
+  document.getElementById('productModalTitle').textContent = '➕ ເພີ່ມສິນຄ້າໃໝ່';
+  document.getElementById('pName').value   = '';
+  document.getElementById('pPrice').value  = '';
+  document.getElementById('pQty').value    = '99';
+  document.getElementById('pCat').value    = 'other';
+  document.getElementById('pDesc').value   = '';
+  document.getElementById('imgPreviews').innerHTML = '';
+  openModal('productModal');
+}
+
+function openEditProduct(id) {
+  const p = _myProds.find(x => x.id === id);
+  if (!p) return;
+  _editingId = id;
+  _pendingImages = (p.images || []).map(url => ({ file: null, previewUrl: url, uploaded: url }));
+  document.getElementById('productModalTitle').textContent = '✏️ ແກ້ໄຂສິນຄ້າ';
+  document.getElementById('pName').value   = p.name  || '';
+  document.getElementById('pPrice').value  = p.price || '';
+  document.getElementById('pQty').value    = p.qty   ?? 99;
+  document.getElementById('pCat').value    = p.cat   || 'other';
+  document.getElementById('pDesc').value   = p.desc  || '';
+  renderImgPreviews();
+  openModal('productModal');
+}
+
+function handleImgSelect(input) {
+  const files = Array.from(input.files).slice(0, 5 - _pendingImages.length);
+  files.forEach(f => {
+    const url = URL.createObjectURL(f);
+    _pendingImages.push({ file: f, previewUrl: url, uploaded: null });
+  });
+  input.value = '';
+  renderImgPreviews();
+}
+
+function renderImgPreviews() {
+  document.getElementById('imgPreviews').innerHTML = _pendingImages.map((img, i) => `
+    <div class="img-preview">
+      <img src="${img.previewUrl}">
+      <div class="img-preview-del" onclick="removeImg(${i})">✕</div>
+    </div>
+  `).join('');
+}
+
+function removeImg(idx) {
+  _pendingImages.splice(idx, 1);
+  renderImgPreviews();
+}
+
+async function saveProduct() {
+  const name  = document.getElementById('pName').value.trim();
+  const price = parseFloat(document.getElementById('pPrice').value) || 0;
+  const qty   = parseInt(document.getElementById('pQty').value)    ?? 99;
+  const cat   = document.getElementById('pCat').value;
+  const desc  = document.getElementById('pDesc').value.trim();
+
+  if (!name)  { kdToast('❌ ໃສ່ຊື່ສິນຄ້າກ່ອນ', 'error'); return; }
+  if (!price) { kdToast('❌ ໃສ່ລາຄາກ່ອນ', 'error'); return; }
+
+  const btn = document.getElementById('saveProductBtn');
+  btn.disabled = true; btn.textContent = '⏳ ກຳລັງບັນທຶກ...';
+  kdToast('⏳ ກຳລັງ upload ຮູບ...', 'info', 8000);
+
+  try {
+    // Upload new images (file !== null && uploaded === null)
+    for (let img of _pendingImages) {
+      if (img.file && !img.uploaded) {
+        img.uploaded = await kdUploadImage(img.file, 'products');
+      }
+    }
+    const images = _pendingImages.map(i => i.uploaded).filter(Boolean);
+
+    const product = {
+      id       : _editingId || ('PRD-' + Date.now()),
+      name, price, qty, cat, desc,
+      images,
+      img      : images[0] || null,
+      sellerId : _seller.id,
+      seller   : _seller.shopName || _seller.name || _seller.user,
+      sold     : _editingId ? (_myProds.find(p => p.id === _editingId)?.sold || 0) : 0,
+    };
+
+    await KDProducts.save(product);
+
+    // Update local state
+    const idx = _myProds.findIndex(p => p.id === product.id);
+    if (idx >= 0) _myProds[idx] = product; else _myProds.unshift(product);
+    renderMyProducts();
+    document.getElementById('statTotal').textContent = _myProds.length;
+
+    closeModal('productModal');
+    kdToast(_editingId ? '✅ ແກ້ໄຂສຳເລັດ' : '✅ ເພີ່ມສິນຄ້າສຳເລັດ', 'success');
+  } catch(e) {
+    console.error('saveProduct error:', e);
+    kdToast('❌ ບັນທຶກລົ້ມເຫຼວ: ' + (e.message||e), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 ບັນທຶກສິນຄ້າ';
+  }
+}
+
+async function deleteProduct(id) {
+  const p = _myProds.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`🗑 ລຶບ "${p.name}" ?\n\nສິນຄ້ານີ້ຈະຫາຍໄປທັນທີໃນທຸກ App`)) return;
+
+  // Optimistic: remove from UI first
+  const card = document.getElementById('pc_' + id);
+  if (card) { card.style.opacity = '0.4'; card.style.pointerEvents = 'none'; }
+
+  try {
+    await KDProducts.delete(id);
+    // Also remove images from Storage
+    if (p.images?.length) {
+      await KDProducts.deleteStorageImages(p.images);
+    }
+    _myProds = _myProds.filter(x => x.id !== id);
+    renderMyProducts();
+    document.getElementById('statTotal').textContent = _myProds.length;
+    kdToast('🗑 ລຶບສຳເລັດ — Customer App ຈະ update ທັນທີ', 'success');
+  } catch(e) {
+    console.error('deleteProduct error:', e);
+    if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
+    kdToast('❌ ລຶບລົ້ມເຫຼວ: ' + (e.message||e), 'error');
+  }
+}
+
+// ═══════════════════════════════════════
+//  ORDERS
+// ═══════════════════════════════════════
+async function loadMyOrders() {
+  try {
+    const all = await KDOrders.load({ sellerId: _seller.id });
+    _myOrders = all;
+    renderMyOrders();
+    const pending = all.filter(o => o.status === 'pending').length;
+    document.getElementById('statOrders').textContent  = pending;
+    document.getElementById('pendingCount').textContent = pending;
+    const revenue = all.filter(o=>o.status==='done').reduce((s,o)=>s+(o.total||0),0);
+    document.getElementById('statRevenue').textContent = Number(revenue).toLocaleString();
+  } catch(e) {
+    document.getElementById('myOrdersList').innerHTML = '<div style="color:#f87171;padding:20px">❌ ໂຫລດລົ້ມເຫຼວ</div>';
+  }
+}
+
+function renderMyOrders() {
+  const el = document.getElementById('myOrdersList');
+  if (!_myOrders.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">ຍັງບໍ່ມີ Order</div>';
+    return;
+  }
+  const statusLabel = { pending:'ລໍຖ້າ', packed:'ກຽມ', sent:'ສົ່ງແລ້ວ', delivering:'ກຳລັງສົ່ງ', done:'ສຳເລັດ', cancelled:'ຍົກເລີກ' };
+  const statusClass = { pending:'s-pending', packed:'s-packed', sent:'s-shipped', delivering:'s-shipped', done:'s-done', cancelled:'s-cancelled' };
+  el.innerHTML = _myOrders.slice().reverse().map(o => `
+    <div class="order-card" onclick="openOrderDetail('${o.id}')">
+      <div class="order-header">
+        <span class="order-id">${o.id}</span>
+        <span class="status-badge ${statusClass[o.status]||'s-pending'}">${statusLabel[o.status]||o.status}</span>
+      </div>
+      <div style="font-weight:600;margin-bottom:4px">${esc(o.productName||o.name||'?')}</div>
+      <div style="font-size:12px;color:var(--text2)">👤 ${esc(o.buyerName||'?')} &nbsp;·&nbsp; 💰 ${Number(o.total||0).toLocaleString()} ₭</div>
+    </div>
+  `).join('');
+}
+
+function openOrderDetail(id) {
+  const o = _myOrders.find(x => x.id === id);
+  if (!o) return;
+  const statusLabel = { pending:'⏳ ລໍຖ້າ', packed:'📦 ກຽມ', sent:'📮 ສົ່ງແລ້ວ', delivering:'🚚 ກຳລັງສົ່ງ', done:'✅ ສຳເລັດ', cancelled:'❌ ຍົກເລີກ' };
+  document.getElementById('orderDetailContent').innerHTML = `
+    <div style="background:var(--dark3);border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">Order ID</span><span style="font-size:12px">${o.id}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">ສິນຄ້າ</span><span style="font-weight:600;text-align:right;max-width:60%">${esc(o.productName||'?')}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">ລູກຄ້າ</span><span>${esc(o.buyerName||'?')}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--text2)">ຍອດ</span><span style="color:var(--gold);font-weight:700">${Number(o.total||0).toLocaleString()} ₭</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">ສະຖານະ</span><span>${statusLabel[o.status]||o.status}</span></div>
+    </div>
+
+    ${o.status === 'pending' ? `
+    <div style="margin-bottom:12px">
+      <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">ປ່ຽນສະຖານະ:</label>
+      <select class="status-select" id="newStatusSel">
+        <option value="pending">⏳ ລໍຖ້າ</option>
+        <option value="packed">📦 ກຽມສົ່ງ</option>
+        <option value="sent">📮 ສົ່ງແລ້ວ</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" onclick="updateOrderStatus('${o.id}')">✅ ອັບເດດສະຖານະ</button>
+    ` : ''}
+    <button class="btn btn-outline" onclick="closeModal('orderModal')">← ກັບ</button>
+  `;
+  openModal('orderModal');
+}
+
+async function updateOrderStatus(id) {
+  const newStatus = document.getElementById('newStatusSel').value;
+  try {
+    await KDOrders.updateStatus(id, newStatus);
+    const idx = _myOrders.findIndex(o => o.id === id);
+    if (idx >= 0) _myOrders[idx].status = newStatus;
+    renderMyOrders();
+    closeModal('orderModal');
+    kdToast('✅ ອັບເດດສະຖານະສຳເລັດ', 'success');
+  } catch(e) {
+    kdToast('❌ ອັບເດດລົ້ມເຫຼວ: ' + (e.message||e), 'error');
+  }
+}
+
+// ═══════════════════════════════════════
+//  WALLET
+// ═══════════════════════════════════════
+async function updateWalletUI() {
+  try {
+    const u = await KDUsers.get(_seller.id);
+    const w = u?.wallet || 0;
+    document.getElementById('walletBigAmt').textContent = Number(w).toLocaleString() + ' ₭';
+    document.getElementById('statWallet').textContent   = Number(w).toLocaleString();
+    _seller.wallet = w;
+    localStorage.setItem('kd_seller_session', JSON.stringify(_seller));
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+//  REALTIME
+// ═══════════════════════════════════════
+function startRealtime() {
+  // Orders realtime — new orders for this seller
+  KDRealtime.subscribe('seller-orders-' + _seller.id, {
+    table: 'kd_orders', event: '*', filter: 'seller_id=eq.' + _seller.id
+  }, async payload => {
+    await loadMyOrders();
+    if (payload.eventType === 'INSERT') {
+      kdToast('🛒 ມີ Order ໃໝ່!', 'success', 4000);
+    }
+  });
+
+  // Wallet realtime
+  KDRealtime.subscribe('seller-wallet-' + _seller.id, {
+    table: 'kd_users', event: 'UPDATE', filter: 'id=eq.' + _seller.id
+  }, payload => {
+    const w = payload.new?.wallet;
+    if (w != null) {
+      document.getElementById('walletBigAmt').textContent = Number(w).toLocaleString() + ' ₭';
+      document.getElementById('statWallet').textContent   = Number(w).toLocaleString();
+    }
+  });
+
+  document.getElementById('rtDot').className = 'rt-dot';
+}
+
+// ═══════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════
+function switchPage(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.getElementById('bnav-' + tab).classList.add('active');
+  if (tab === 'orders') loadMyOrders();
+  if (tab === 'wallet') updateWalletUI();
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ═══════════════════════════════════════
+//  START
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
