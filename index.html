@@ -1250,7 +1250,6 @@ async function syncFromSupabase(){
   }
 })();
 </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="notif-container" id="notifContainer"></div>
@@ -2601,7 +2600,7 @@ async function syncFromSupabase(){
   </div>
 
   <!-- SELLER ORDER DETAIL FULL PAGE -->
-  <div class="page" id="page-seller-order" style="padding-top:0;display:flex;flex-direction:column">
+  <div class="page" id="page-seller-order" style="padding-top:0;flex-direction:column">
     <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(201,168,76,.2);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px">
         <button onclick="switchPage('sale-history');renderSaleHistoryPage()" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;padding:0">←</button>
@@ -3631,6 +3630,7 @@ async function syncFromSupabase(){
     <button class="admin-side-btn" id="aside-diamond" onclick="switchAdminTab('diamond')" title="💎 Diamond Topup" style="position:relative">
       <span>💎</span>
     </button>
+    <button class="admin-side-btn" id="aside-scan" onclick="switchAdminTab('scan')" title="📷 ສະແກນ QR" style="position:relative"><span>📷</span></button>
     <button class="admin-side-btn" id="aside-social" onclick="switchAdminTab('social')" title="👥 Online Users" style="position:relative">
       <span>🌐</span>
       <span id="onlineBadge" style="position:absolute;top:3px;right:3px;background:#0c6;color:#fff;border-radius:8px;padding:1px 4px;font-size:9px;min-width:14px;text-align:center;display:none">0</span>
@@ -3672,6 +3672,7 @@ async function syncFromSupabase(){
       <button class="admin-tab" id="atab-sellers" onclick="switchAdminTab('sellers')">🏪 ຜູ້ຂາຍ</button>
       <button class="admin-tab" id="atab-history" onclick="switchAdminTab('history')">📋 ປະຫວັດ</button>
       <button class="admin-tab" id="atab-diamond" onclick="switchAdminTab('diamond')">💎 Diamond</button>
+      <button class="admin-tab" id="atab-scan" onclick="switchAdminTab('scan')">📷 QR ສະແກນ</button>
       <button class="admin-tab" id="atab-social" onclick="switchAdminTab('social')">🌐 Online</button>
     </div>
     <!-- CONTENT -->
@@ -4986,18 +4987,10 @@ function showGameBillPopup(order, p){
   document.getElementById('billDetailContent').innerHTML = html;
   openModal('billDetailModal');
   renderBillsPage();
-  // ✅ Generate QR code สำหรับบิล ID เกม
+  // ✅ QR สำหรับบิล ID เกม popup
   setTimeout(()=>{
-    const qrEl = document.getElementById('gameBillQR_'+order.id);
-    if(qrEl){
-      const qrData = JSON.stringify({id:order.id,pid:order.productId,type:'game'});
-      if(typeof QRCode !== 'undefined'){
-        new QRCode(qrEl,{text:qrData,width:52,height:52,colorDark:'#c9a84c',colorLight:'#1a1b24'});
-      } else {
-        qrEl.innerHTML = '<div style="font-size:20px;line-height:52px">📱</div>';
-      }
-    }
-  }, 200);
+    renderQRInto(document.getElementById('gameBillQR_'+order.id), JSON.stringify({id:order.id,pid:order.productId,type:'game'}), 52, '#c9a84c', '#1a1b24');
+  }, 150);
 }
 
 // ============ BILLS PAGE ============
@@ -5027,8 +5020,8 @@ function renderBillsPage(){
         <div class="bill-product-img">${o.productEmoji||'📦'}</div>
         <div class="bill-product-info">
           <div class="bill-product-name">${o.productName||o.name}</div>
-          <div class="bill-product-price">${fmtPrice(o.total)}</div>
-          <div style="font-size:11px;color:var(--text2)">${o.date} • #${o.productId}</div>
+          <div class="bill-product-price">${fmtPrice(o.total)} × ${o.qty||1}</div>
+          <div style="font-size:11px;color:var(--text2)">${fmtBillDate(o.date||o.createdAt)}</div>
           ${o.trackingNum?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📮 ${o.trackingNum}</div>`:''}
         </div>
       </div>
@@ -5036,6 +5029,14 @@ function renderBillsPage(){
   `).join('');
 }
 
+function fmtBillDate(d){
+  if(!d) return '';
+  try{
+    const dt = new Date(d);
+    if(isNaN(dt)) return String(d).split('T')[0];
+    return dt.toLocaleDateString('lo-LA',{day:'2-digit',month:'short',year:'numeric'});
+  }catch(e){ return String(d).split('T')[0]; }
+}
 function getStatusLabel(s){
   return {pending:'⏳ ລໍຖ້າຜູ້ຂາຍ', packed:'📦 ຫຸ້ມຫໍ່ສຳເລັດ', sent:'🚚 ສົ່ງຂົນສ່ງແລ້ວ', delivering:'🏃 ກຳລັງສົ່ງ', done:'✅ ຮັບສຳເລັດ', cancelled:'❌ ຍົກເລີກ'}[s]||'⏳ ລໍຖ້າ';
 }
@@ -5247,7 +5248,7 @@ function viewBillDetail(id){
         <div>
           <div style="font-size:14px;font-weight:700">${o.productName}</div>
           <div style="font-size:13px;color:var(--gold)">${fmtPrice(o.total)} × ${o.qty||1}</div>
-          <div style="font-size:11px;color:var(--text2)">${o.date}</div>
+          <div style="font-size:11px;color:var(--text2)">${fmtBillDate(o.date||o.createdAt)}</div>
         </div>
       </div>
     </div>
@@ -5274,10 +5275,10 @@ function viewBillDetail(id){
     <div style="border-top:1px solid rgba(255,255,255,.06);margin:12px 0 8px;padding-top:8px">
       <div class="bill-detail-row"><span>ທີ່ຢູ່ຈັດສົ່ງ</span><span>${[o.ban,o.muang,o.khwaeng].filter(Boolean).join(', ')||'-'}</span></div>
       <div class="bill-detail-row"><span>ຂົນສ່ງ</span><span>${o.shipping||'-'}</span></div>
-      <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${o.date}</span></div>
+      <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${fmtBillDate(o.date||o.createdAt)}</span></div>
     </div>` : `
     <div style="border-top:1px solid rgba(255,255,255,.06);margin:12px 0 8px;padding-top:8px">
-      <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${o.date}</span></div>
+      <div class="bill-detail-row"><span>ວັນສັ່ງ</span><span>${fmtBillDate(o.date||o.createdAt)}</span></div>
       <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold)">${fmtPrice(o.total)}</span></div>
       ${o.buyerGameId?`<div class="bill-detail-row"><span>Game ID ຂອງທ່ານ</span><span style="color:#69f">${o.buyerGameId}</span></div>`:''}
     </div>`}
@@ -5285,25 +5286,15 @@ function viewBillDetail(id){
   `;
   document.getElementById('billDetailContent').innerHTML = html;
   openModal('billDetailModal');
-  // ✅ QR gen ທຸກ type ໃນ viewBillDetail
+  // ✅ QR gen — ใช้ renderQRInto (img-based, ไม่ต้องพึ่ง library)
   setTimeout(()=>{
-    if(typeof QRCode === 'undefined') return;
-    // game bill QR (ມຸມ)
-    const vbdQ = document.getElementById('vbdQR_'+o.id);
-    if(vbdQ && o.isGame){
-      new QRCode(vbdQ,{text:JSON.stringify({id:o.id,pid:o.productId,type:'game'}),width:40,height:40,colorDark:'#c9a84c',colorLight:'#1a1b24'});
+    if(o.isGame){
+      renderQRInto(document.getElementById('vbdQR_'+o.id), JSON.stringify({id:o.id,pid:o.productId,type:'game'}), 40, '#c9a84c', '#1a1b24');
+    } else if(o.sentAt){
+      renderQRInto(document.getElementById('delQR_'+o.id), JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt,pid:o.productId}), 72, '#c9a84c', '#0a0a0a');
+      renderQRInto(document.getElementById('shippingQR_'+o.id), JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt}), 80, '#4ade80', '#0a0a0a');
     }
-    // delivery QR (general + ສົ່ງແລ້ວ)
-    const delQ = document.getElementById('delQR_'+o.id);
-    if(delQ && !o.isGame && o.sentAt){
-      new QRCode(delQ,{text:JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt,pid:o.productId}),width:72,height:72,colorDark:'#c9a84c',colorLight:'#0a0a0a'});
-    }
-    // shipping bill QR
-    const shipQ = document.getElementById('shippingQR_'+o.id);
-    if(shipQ && !o.isGame && o.sentAt){
-      new QRCode(shipQ,{text:JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt}),width:80,height:80,colorDark:'#4ade80',colorLight:'#0a0a0a'});
-    }
-  }, 250);
+  }, 150);
 
 }  // end viewBillDetail
 
@@ -5365,7 +5356,7 @@ function renderSaleHistoryPage(){
           ${typeTag}
         </div>
         <div style="font-size:12px;color:var(--gold);font-weight:700">${fmtPrice(o.total)} × ${o.qty||1}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">${o.date} • <span style="color:var(--text2)">#${o.id}</span></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${fmtBillDate(o.date||o.createdAt)}</div>
         <div style="font-size:11px;color:var(--text2)">${o.name||o.userName||''} ${o.phone||''}</div>
         ${o.trackingNum?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📮 ${o.trackingNum}</div>`:''}
       </div>
@@ -5495,7 +5486,7 @@ function sellerViewBill(id){
       </div>
       <div style="font-size:14px;font-weight:700">${o.productName} × ${o.qty||1}</div>
       <div style="font-size:13px;color:var(--gold);margin:2px 0">${fmtPrice(o.total)}</div>
-      <div style="font-size:11px;color:var(--text2)">${o.date}</div>
+      <div style="font-size:11px;color:var(--text2)">${fmtBillDate(o.date||o.createdAt)}</div>
     </div>
     <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px;margin-bottom:12px">
       <div style="font-size:11px;color:var(--text2);margin-bottom:4px">${isGameOrder ? '👤 ຂໍ້ມູນລູກຄ້າ' : '📍 ທີ່ຢູ່ຈັດສົ່ງ'}</div>
@@ -5523,12 +5514,8 @@ function sellerViewBill(id){
     // ✅ QR ໃນ page ຜູ້ຂາຍ (ຖ້ານັບຖອຍຫຼັງເລີ່ມ)
     if(!isGameOrder && o.sentAt){
       setTimeout(()=>{
-        const qrEl = document.getElementById('soQR_'+id);
-        if(qrEl && typeof QRCode !== 'undefined'){
-          const qrData = JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt});
-          new QRCode(qrEl,{text:qrData,width:80,height:80,colorDark:'#4ade80',colorLight:'#0a0a0a'});
-        }
-      }, 300);
+        renderQRInto(document.getElementById('soQR_'+id), JSON.stringify({id:o.id,tracking:o.trackingNum||'',courier:o.courier||o.shipping||'',sentAt:o.sentAt}), 80, '#4ade80', '#0a0a0a');
+      }, 200);
     }
   } else {
     // fallback modal
@@ -8388,7 +8375,7 @@ function showOrderHistory(){
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600">${o.productName}</div>
         <div style="font-size:13px;color:var(--gold);font-weight:700">${fmtPrice(o.total)}</div>
-        <div style="font-size:11px;color:var(--text2)">#${o.productId} • ${o.date}</div>
+        <div style="font-size:11px;color:var(--text2)">${fmtBillDate(o.date||o.createdAt)}</div>
         <div style="font-size:11px;color:var(--text2)">${o.status==='done'?'✅ ສຳເລັດ':o.status==='sent'?'📦 ສົ່ງແລ້ວ':'⏳ ລໍຖ້າ'}</div>
       </div>
     </div>
@@ -9917,7 +9904,7 @@ function renderDssOrders(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-size:13px;font-weight:700;color:${color}">${icon} ${o.gameName||o.game} — ${Number(o.amount).toLocaleString()} 💎</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">#${o.id} · ${o.date} ${o.status==='pending'?renderDeadlineCountdown(o.id,o.deadlineMs):''}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${fmtBillDate(o.date||o.createdAt)} ${o.status==='pending'?renderDeadlineCountdown(o.id,o.deadlineMs):''}</div>
         </div>
         <div style="font-size:11px;font-weight:700;color:${statusColor}">${statusText}</div>
       </div>
@@ -10979,6 +10966,52 @@ async function doAdminLogin(){
   updateAdminNotifBadge();
 }
 
+
+// ══════════════════════════════════════════════════════
+// ✅ QR GENERATOR — ใช้ img src จาก QR API (ไม่ต้องพึ่ง library)
+// ══════════════════════════════════════════════════════
+function makeQRImg(text, size, darkColor, lightColor){
+  size = size || 80;
+  darkColor = (darkColor||'#c9a84c').replace('#','');
+  lightColor = (lightColor||'#0a0a0a').replace('#','');
+  const enc = encodeURIComponent(text);
+  const url = 'https://api.qrserver.com/v1/create-qr-code/?data='+enc+'&size='+size+'x'+size+'&color='+darkColor+'&bgcolor='+lightColor+'&qzone=1&format=svg';
+  const safeId = 'qr_'+Math.random().toString(36).slice(2,8);
+  setTimeout(()=>{
+    const img = document.getElementById(safeId);
+    if(img) img.onerror = function(){ this.outerHTML = makeQRFallback(text, size); };
+  }, 10);
+  return '<img id="'+safeId+'" src="'+url+'" width="'+size+'" height="'+size+'" style="display:block;border-radius:4px" loading="lazy">';
+}
+
+function makeQRFallback(text, size){
+  // Pattern สุ่มจาก text hash เมื่อ offline
+  size = size || 80;
+  let hash = 0;
+  for(let i=0;i<text.length;i++) hash = ((hash<<5)-hash)+text.charCodeAt(i);
+  hash = Math.abs(hash);
+  const cell = 6; const cols = Math.floor(size/cell);
+  let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg"><rect width="${size}" height="${size}" fill="#0a0a0a"/>`;
+  // corner marks
+  const corner = (x,y)=>{
+    svg += `<rect x="${x*cell}" y="${y*cell}" width="${3*cell}" height="${3*cell}" fill="#c9a84c"/>`;
+    svg += `<rect x="${x*cell+cell}" y="${y*cell+cell}" width="${cell}" height="${cell}" fill="#0a0a0a"/>`;
+  };
+  corner(1,1); corner(cols-4,1); corner(1,cols-4);
+  for(let r=0;r<cols;r++) for(let cc=0;cc<cols;cc++){
+    if((r<5&&cc<5)||(r<5&&cc>cols-6)||(r>cols-6&&cc<5)) continue;
+    const bit = (hash >> ((r*cols+cc)%31)) & 1;
+    if(bit) svg += `<rect x="${cc*cell}" y="${r*cell}" width="${cell}" height="${cell}" fill="#c9a84c"/>`;
+  }
+  svg += `<text x="${size/2}" y="${size-4}" text-anchor="middle" font-size="7" fill="#c9a84c66">QR</text></svg>`;
+  return svg;
+}
+
+function renderQRInto(el, text, size, darkColor, lightColor){
+  if(!el) return;
+  el.innerHTML = makeQRImg(text, size, darkColor, lightColor);
+}
+
 function switchAdminTab(tab){
   if(!adminLoggedIn){return;}
   currentAdminTab = tab;
@@ -11033,8 +11066,185 @@ function renderAdminTab(tab){
   else if(tab==='social'){
     sbLoadUsers().finally(()=>{ c.innerHTML = renderAdminSocial(); });
   }
+  else if(tab==='scan'){
+    c.innerHTML = renderAdminQRScan();
+    initAdminQRScanner();
+  }
   updateAdminNotifBadge();
 }
+
+
+// ══════════════════════════════════════════════════════
+// ✅ ADMIN QR SCANNER PAGE
+// ══════════════════════════════════════════════════════
+function renderAdminQRScan(){
+  return `
+  <div style="padding:16px">
+    <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px">📷 ສະແກນ QR ສິນຄ້າ / Order</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:16px">ສະແກນ QR ຈາກບິນລູກຄ້າ ຫຼື QR ສິນຄ້າ</div>
+
+    <!-- Camera View -->
+    <div style="position:relative;background:#000;border-radius:16px;overflow:hidden;margin-bottom:16px;aspect-ratio:1/1;max-width:380px;margin-left:auto;margin-right:auto">
+      <video id="adminQRVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <canvas id="adminQRCanvas" style="display:none"></canvas>
+      <!-- Scan frame overlay -->
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+        <div style="width:65%;height:65%;border:3px solid var(--gold);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)">
+          <div style="position:absolute;top:-3px;left:-3px;width:24px;height:24px;border-top:4px solid #fff;border-left:4px solid #fff;border-radius:4px 0 0 0"></div>
+          <div style="position:absolute;top:-3px;right:-3px;width:24px;height:24px;border-top:4px solid #fff;border-right:4px solid #fff;border-radius:0 4px 0 0"></div>
+          <div style="position:absolute;bottom:-3px;left:-3px;width:24px;height:24px;border-bottom:4px solid #fff;border-left:4px solid #fff;border-radius:0 0 0 4px"></div>
+          <div style="position:absolute;bottom:-3px;right:-3px;width:24px;height:24px;border-bottom:4px solid #fff;border-right:4px solid #fff;border-radius:0 0 4px 0"></div>
+          <div id="scanLine" style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scanAnim 2s linear infinite"></div>
+        </div>
+      </div>
+      <div id="adminQRStatus" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:12px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)">ກຳລັງເລີ່ມກ້ອງ...</div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:center">
+      <button onclick="startAdminQRScan()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold));border:none;color:#000;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer">▶ ເລີ່ມສະແກນ</button>
+      <button onclick="stopAdminQRScan()" style="background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.4);color:#f87171;border-radius:10px;padding:8px 18px;font-size:13px;cursor:pointer">⏹ ຢຸດ</button>
+    </div>
+
+    <!-- Manual input fallback -->
+    <div style="background:var(--dark2);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">🔍 ຄົ້ນຫາ Order ID ດ້ວຍຕົນເອງ</div>
+      <div style="display:flex;gap:8px">
+        <input id="adminQRManualInput" class="form-input" style="flex:1" placeholder="ໃສ່ Order ID ເຊັ່ນ ORD-123456">
+        <button onclick="adminLookupQR(document.getElementById('adminQRManualInput').value)"
+          style="background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;white-space:nowrap">ຄົ້ນຫາ</button>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div id="adminQRResult" style="background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:14px;min-height:80px;display:flex;align-items:center;justify-content:center">
+      <div style="text-align:center;color:var(--text2);font-size:12px">ຜົນການສະແກນຈະສະແດງທີ່ນີ້</div>
+    </div>
+  </div>
+  <style>
+    @keyframes scanAnim{0%{top:0}100%{top:calc(100% - 2px)}}
+  </style>`;
+}
+
+let _qrStream = null;
+let _qrInterval = null;
+
+function initAdminQRScanner(){
+  // auto-start on tab load
+  setTimeout(startAdminQRScan, 500);
+}
+
+function startAdminQRScan(){
+  const vid = document.getElementById('adminQRVideo');
+  const status = document.getElementById('adminQRStatus');
+  if(!vid) return;
+  if(status) status.textContent = 'ກຳລັງເປີດກ້ອງ...';
+  navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment',width:{ideal:640},height:{ideal:640}}})
+  .then(stream=>{
+    _qrStream = stream;
+    vid.srcObject = stream;
+    vid.play();
+    if(status) status.textContent = '🟢 ສະແກນໄດ້ — ຊີ້ QR ໃສ່ກ່ອງ';
+    _startQRDecode();
+  })
+  .catch(err=>{
+    if(status) status.textContent = '❌ ບໍ່ສາມາດໃຊ້ກ້ອງໄດ້ — ໃຊ້ຊ່ອງຄົ້ນຫາດ້ານລ່າງ';
+    console.warn('QR camera err:', err);
+  });
+}
+
+function stopAdminQRScan(){
+  if(_qrInterval){ clearInterval(_qrInterval); _qrInterval=null; }
+  if(_qrStream){ _qrStream.getTracks().forEach(t=>t.stop()); _qrStream=null; }
+  const vid = document.getElementById('adminQRVideo');
+  if(vid){ vid.srcObject=null; }
+  const status = document.getElementById('adminQRStatus');
+  if(status) status.textContent = '⏹ ຢຸດສະແກນ';
+}
+
+function _startQRDecode(){
+  // ใช้ BarcodeDetector API ถ้ามี, ไม่งั้น fallback
+  if('BarcodeDetector' in window){
+    const detector = new BarcodeDetector({formats:['qr_code']});
+    _qrInterval = setInterval(async()=>{
+      const vid = document.getElementById('adminQRVideo');
+      if(!vid || !vid.videoWidth) return;
+      try{
+        const codes = await detector.detect(vid);
+        if(codes.length){ adminOnQRDetected(codes[0].rawValue); }
+      }catch(e){}
+    }, 500);
+  } else {
+    // Canvas fallback — ยังไม่มี decode library แจ้งผู้ใช้ใส่ manual
+    const status = document.getElementById('adminQRStatus');
+    if(status) status.textContent = '⚠️ Browser ບໍ່ຮອງຮັບ auto-scan — ໃຊ້ຊ່ອງດ້ານລ່າງ';
+  }
+}
+
+function adminOnQRDetected(raw){
+  stopAdminQRScan();
+  let data;
+  try{ data = JSON.parse(raw); } catch(e){ data = {id: raw}; }
+  adminLookupQR(data.id || raw);
+}
+
+function adminLookupQR(query){
+  query = (query||'').trim();
+  if(!query){ showNotif('ກະລຸນາໃສ່ Order ID'); return; }
+  const resEl = document.getElementById('adminQRResult');
+  if(!resEl) return;
+
+  // ค้นหาใน orders
+  const o = orders.find(x=> x.id===query || x.productId===query || (x.trackingNum&&x.trackingNum===query));
+  if(!o){
+    resEl.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">❌ ບໍ່ພົບ Order "<strong>${query}</strong>"</div>`;
+    showNotif('❌ ບໍ່ພົບ Order: '+query);
+    return;
+  }
+
+  const isGame = o.isGame||o.cat==='game'||o.gameType;
+  const gameProduct = isGame ? products.find(p=>p.id===o.productId) : null;
+  const gameEmail = gameProduct ? (gameProduct.gameEmail||gameProduct.gameCredEmail||'—') : '—';
+  const gamePass  = gameProduct ? (gameProduct.gamePass||gameProduct.gameCredPass||'—') : '—';
+
+  resEl.innerHTML = `
+    <div style="width:100%">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-size:32px">${o.productEmoji||'📦'}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700">${o.productName}</div>
+          <div style="font-size:12px;color:var(--gold)">${fmtPrice(o.total)} × ${o.qty||1}</div>
+        </div>
+        <span class="bill-status ${getStatusClass(o.status)}" style="margin-left:auto;font-size:10px">${getStatusLabel(o.status)}</span>
+      </div>
+      <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px;margin-bottom:10px">
+        <div class="bill-detail-row"><span>Order ID</span><span style="color:var(--gold)">#${o.id}</span></div>
+        <div class="bill-detail-row"><span>ລູກຄ້າ</span><span>${o.name||o.userName||'-'}</span></div>
+        <div class="bill-detail-row"><span>ໂທ</span><span>${o.phone||'-'}</span></div>
+        <div class="bill-detail-row"><span>ວັນທີ</span><span>${o.date||'-'}</span></div>
+        ${o.trackingNum ? `<div class="bill-detail-row"><span>Tracking</span><span style="color:var(--accent)">${o.trackingNum}</span></div>` : ''}
+        ${o.sentAt ? `<div class="bill-detail-row"><span>ສົ່ງເມື່ອ</span><span style="color:#4ade80">${new Date(o.sentAt).toLocaleString('lo-LA')}</span></div>` : ''}
+      </div>
+      ${isGame ? `
+      <div style="background:linear-gradient(135deg,rgba(26,58,92,.5),rgba(36,83,160,.3));border:2px solid rgba(74,127,193,.5);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#69f;margin-bottom:8px">🔐 ຂໍ້ມູນ ID ເກມ</div>
+        <div style="background:rgba(0,0,0,.4);border-radius:8px;padding:8px;margin-bottom:6px">
+          <div style="font-size:10px;color:var(--text2)">📧 Email</div>
+          <div style="font-size:14px;font-weight:700;color:#fff;word-break:break-all">${gameEmail}</div>
+        </div>
+        <div style="background:rgba(0,0,0,.4);border-radius:8px;padding:8px">
+          <div style="font-size:10px;color:var(--text2)">🔑 Password</div>
+          <div style="font-size:14px;font-weight:700;color:var(--gold)">${gamePass}</div>
+        </div>
+      </div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="sellerViewBill('${o.id}')" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer">📋 ດູ/ຈັດການ Order</button>
+        <button onclick="viewBillDetail('${o.id}')" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:#4ade80;border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer">🧾 ດູບິນລູກຄ້າ</button>
+      </div>
+    </div>`;
+  showNotif('✅ ພົບ Order: '+o.productName);
+}
+
 
 // ── getAllUsers: combines owner accounts + all registered users ──
 function getAllUsers(){
