@@ -11916,9 +11916,12 @@ async function analyzeSlipImage(dataUrl){
 
       // ── ปฏิเสธรูปที่ไม่เหมือนสลิปทันที ──
       let rejectReason = null;
-      const isNaturalPhoto = (colorPct > 0.55 && whitePct < 0.20);
-      const isTooDark = (avgBright < 80 && whitePct < 0.10);
-      const isColorful = (colorPct > 0.70);
+      // ✅ ສລິບ JDB/BCEL ລາວ ມີແຖບສີແດງ/ສີເຂັ້ມ → colorPct ສູງ ແຕ່ມີພື້ນຂາວກາງ
+      // ຖ້າ topColorPct ສູງ (ມີ banner ສີ) = ໜ້າຈໍ app ທະນາຄານ → ຜ່ານ
+      const hasColorBanner = topColorPct > 0.15;
+      const isNaturalPhoto = (colorPct > 0.65 && whitePct < 0.15 && !hasColorBanner);
+      const isTooDark = (avgBright < 60 && whitePct < 0.08);
+      const isColorful = (colorPct > 0.80 && whitePct < 0.10);
       if(isNaturalPhoto) rejectReason = 'natural_photo';
       else if(isTooDark) rejectReason = 'too_dark';
       else if(isColorful) rejectReason = 'too_colorful';
@@ -11936,10 +11939,11 @@ async function analyzeSlipImage(dataUrl){
       if(avgBright>150) score+=20;
       else if(avgBright>120) score+=12;
       else if(avgBright>90) score+=5;
-      if(topColorPct>0.20) score+=20;
-      else if(topColorPct>0.10) score+=10;
+      if(topColorPct>0.15) score+=25;   // ✅ JDB/BCEL banner ສີ
+      else if(topColorPct>0.08) score+=12;
       if(colorPct<0.30) score+=10;
-      const likelySlip = score >= 50;
+      else if(colorPct<0.50 && topColorPct>0.15) score+=8; // ✅ ສລິບ app ທີ່ມີສີ
+      const likelySlip = score >= 40;  // ✅ ຫຼຸດ threshold ຈາກ 50 → 40
       resolve({likelySlip, score, rejectReason:null, whitePct, darkPct, avgBright, colorPct, topColorPct});
     };
     img.onerror=()=>resolve({likelySlip:false,score:0});
@@ -12027,11 +12031,15 @@ function previewDepositSlip(){
         validEl.style.background='rgba(220,38,38,0.15)';
         validEl.style.border='2px solid rgba(220,38,38,0.6)';
         validEl.style.color='#f87171';
-        validEl.innerHTML = '<div style="font-size:15px;font-weight:700;margin-bottom:8px">🚫 ຮູບນີ້ບໍ່ແມ່ນສລິບໂອນເງິນ</div>' +
+        validEl.innerHTML = '<div style="font-size:15px;font-weight:700;margin-bottom:8px">❌ AI ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່</div>' +
           '<div style="font-size:12px;line-height:1.9;background:rgba(239,68,68,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
-          'ລະບົບກວດພົບວ່າຮູບຂອງທ່ານ <strong>ບໍ່ແມ່ນສລິບທະນາຄານ</strong><br>' +
-          'ກາລຸນາ: 📱 ເປີດແອັບທະນາຄານ → 🔍 ຊອກລາຍການໂອນ → 📸 ຖ່າຍ Screenshot → ⬆️ ອັບໂຫລດໃໝ່' +
-          '</div><button onclick="resetSlipInput()" style="width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">🔄 ເລືອກຮູບໃໝ່</button>';
+          'ສລິບຕ້ອງມີຄົບ 4 ລາຍການ:<br>' +
+          '1. ຊື່ຜູ້ຮັບ (Merchant Name)<br>' +
+          '2. ຈຳນວນເງິນ (Amount)<br>' +
+          '3. ວັນທີ/ເວລາທີ່ໂອນ (ບໍ່ເກີນ 10 ນາທີ)<br>' +
+          '4. ເລກອ້າງອີງ (Reference)<br>' +
+          '📸 ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ' +
+          '</div><button onclick="resetSlipInput()" style="width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">🔄 ລອງໃໝ່ອີກຄັ້ງ</button>';
         if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
         return;
       }
