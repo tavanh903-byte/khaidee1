@@ -12753,12 +12753,6 @@ async function analyzeSlipImage(dataUrl){
   });
 }
 
-function extractSlipDateTime(dataUrl){
-  // ดึงเวลาจาก metadata ของรูป (EXIF) ถ้ามี
-  // หรือใช้เวลา file.lastModified แทน
-  return null; // จะรับจาก file object โดยตรง
-}
-
 function resetSlipInput(){
   const input = document.getElementById('depositSlipInput');
   const prev = document.getElementById('depositSlipPreview');
@@ -13155,33 +13149,31 @@ function doDeposit(){
     if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';delete confirmBtn.dataset.slipData;}
     document.getElementById('dep-step2').style.display='none';
     document.getElementById('dep-step1').style.display='block';
-    stopSlipCountdown();
 
     // ══════════════════════════════════════════════
-    // ✅ AUTO-APPROVE: ถ้าสลิปผ่านทุกเงื่อนไข
+    // ✅ AUTO-APPROVE: ตรวจจาก dataset ที่ set ตอน verify slip จริง
     // ══════════════════════════════════════════════
-    if(!slipWarning){
-      // ✅ Gemini ยืนยันครบ 4 ด่าน — Auto approve ทันที
-      // อัพเดท wallet ทันที
+    const isAutoApproved = confirmBtn?.dataset?.autoApproved === '1';
+    const isPendingAdmin = confirmBtn?.dataset?.pendingAdmin === '1';
+
+    if(isAutoApproved && !slipWarning){
+      // ✅ Edge Function ยืนยัน approved ครบ 4 ด่าน — Auto approve ทันที
       const newWallet = (currentUser.wallet||0) + amt;
       updateBalanceUI(newWallet);
-      // อัพเดท Supabase wallet โดยตรง
       sbUpdateDepositStatus(newDep.id, 'approved', currentUser.id, amt)
         .then(()=>{
-          // อัพเดท local deposit status
           const deps2 = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
           const idx2 = deps2.findIndex(d=>d.id===newDep.id);
           if(idx2>=0){ deps2[idx2].status='approved'; deps2[idx2].autoApproved=true; deps2[idx2].approvedAt=new Date().toLocaleString('lo-LA'); }
           localStorage.setItem('kd_deposit_requests', JSON.stringify(deps2));
-          
         })
         .catch(e=>console.warn('Auto-approve error:', e));
       showNotif('✅ ຝາກເງິນ +'+Number(amt).toLocaleString()+' ກີບ ສຳເລັດ! ຍອດເງິນໄດ້ຮັບການອັບເດດ', 'success');
-    } else if(slipWarning){
-      // สลิปน่าสงสัย — ส่งให้ Admin ตรวจก่อน
-      showNotif('⚠️ ສລິບໜ້າສົງໄສ — Admin ຈະກວດສອບ ແລ້ວເຕີມເງິນໃຫ້ໃນໄວໆ', 'warning');
+    } else if(isPendingAdmin || slipWarning){
+      // ⏳ Edge Function บอกว่า pending_admin หรือสลิปน่าสงสัย — รอ Admin
+      showNotif('⏳ ສລິບຖືກສົ່ງໃຫ້ Admin ກວດສອບ — ຈະໄດ້ຮັບເງິນໃນໄວໆ 🙏', 'warning');
     } else {
-      // ส่ง pending ปกติ
+      // pending ปกติ (ผ่าน local check แต่ Edge Function ไม่ตอบ / network error)
       showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+Number(amt).toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ', 'success');
     }
   } catch(err){
@@ -14616,14 +14608,18 @@ function ppRenderPage(){
   });
 }
 
+// ── shared constants for phone parts category ──
+const _ppCatIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️',port:'🔌',camera:'📷'};
+const _ppCatName = {screen:'ໜ້າຈໍ',battery:'ແບດເຕີລີ',back_glass:'ກະຈົກຫຼັງ',tempered:'ກັນແຕກ'};
+
 // ── เปิดหน้า detail ของอะไหล่ — switchPage ไป product page จริง ──
 function ppOpenDetail(partId){
   // ถ้าเปิดจากหน้าแรก _ppgParts อาจยังว่าง → fallback ไปใช้ _allPhoneParts แทน
   const p = _ppgParts.find(x=>x.id===partId) || _allPhoneParts.find(x=>x.id===partId);
   if(!p) return;
 
-  const catIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️',port:'🔌',camera:'📷'};
-  const catName = {screen:'ໜ້າຈໍ',battery:'ແບດເຕີລີ',back_glass:'ກະຈົກຫຼັງ',tempered:'ກັນແຕກ'};
+  const catIcon = _ppCatIcon;
+  const catName = _ppCatName;
 
   // สร้าง product object เหมือนสินค้าทั่วไป
   const fakeProd = {
@@ -14656,8 +14652,8 @@ function ppOpenDetail(partId){
 
 // ── Render หน้า product detail สำหรับอะไหล่ ──
 function renderPPDetailPage(fakeProd, p){
-  const catIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️'};
-  const catName = {screen:'ໜ້າຈໍ',battery:'ແບດເຕີລີ',back_glass:'ກະຈົກຫຼັງ',tempered:'ກັນແຕກ'};
+  const catIcon = _ppCatIcon;
+  const catName = _ppCatName;
   const inStock = p.stock > 0;
   const el = document.getElementById('productDetailBody');
   if(!el){ showProductDetail(fakeProd.id); return; }
@@ -14738,10 +14734,9 @@ function renderPPDetailPage(fakeProd, p){
 // ── สั่งซื้อตรงจากหน้า detail ──
 function ppOrderDirect(p){
   if(!currentUser){ showNotif('ກາລຸນາເຂົ້າລະບົບກ່ອນ'); return; }
-  const catEmoji = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️'};
   const fakeProd = {
     id:p.id, name:`${p.brand} ${p.model} — ${p.part}`,
-    emoji:catEmoji[p.cat]||'🔧', price:p.price, qty:p.stock,
+    emoji:_ppCatIcon[p.cat]||'🔧', price:p.price, qty:p.stock,
     desc:p.desc, cat:'phoneparts', sellerId:'admin',
     images:p.img?[p.img]:[], productImg:p.img||'', productImages:p.img?[p.img]:[],
     colors:[],sizes:[],storages:[],
