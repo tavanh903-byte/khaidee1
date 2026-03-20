@@ -826,20 +826,43 @@ function clearSupabaseUser(){
 // 🖼️  SUPABASE STORAGE — Product Images
 // ══════════════════════════════════════════
 async function uploadImageToStorage(file, folder){
+  const BUCKET = 'product-images';
+  const mimeMap = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',heic:'image/heic',heif:'image/heif'};
+  const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+  const contentType = file.type || mimeMap[ext] || 'image/jpeg';
+  const uid = Date.now() + '_' + Math.random().toString(36).slice(2,9);
+  const fileName = folder + '/' + uid + '.' + ext;
   try{
-    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
-    const fileName = folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + ext;
-    const { data, error } = await supa.storage
-      .from('product-images')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+    const { error } = await supa.storage
+      .from(BUCKET)
+      .upload(fileName, file, { cacheControl: '31536000', upsert: true, contentType });
     if(error) throw error;
-    const { data: urlData } = supa.storage
-      .from('product-images')
-      .getPublicUrl(fileName);
-    return urlData.publicUrl;
+    const { data: urlData } = supa.storage.from(BUCKET).getPublicUrl(fileName);
+    const url = urlData && urlData.publicUrl;
+    if(!url) throw new Error('getPublicUrl returned empty');
+    return url;
   } catch(e){
-    console.warn('uploadImageToStorage failed:', e);
-    return null;
+    console.warn('uploadImageToStorage failed, using base64 fallback:', e.message||e);
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 900;
+          let w = img.width, h = img.height;
+          if(w > MAX){ h = Math.round(h*MAX/w); w = MAX; }
+          if(h > MAX){ w = Math.round(w*MAX/h); h = MAX; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        img.onerror = () => resolve(ev.target.result);
+        img.src = ev.target.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
   }
 }
 
@@ -977,7 +1000,8 @@ async function sbSaveProduct(p){
   }
 }
 async function sbDeleteProduct(id){
-  await supa.from('kd_products').delete().eq('id',id);
+  const { error } = await supa.from('kd_products').delete().eq('id', id);
+  if(error) throw error;
 }
 
 // ── Orders ──
@@ -1040,6 +1064,11 @@ async function sbSaveOrder(o){
       note:payload.note,created_at:payload.created_at,updated_at:payload.updated_at};
     await supa.from('kd_orders').upsert(base).catch(e=>console.warn('sbSaveOrder fallback:',e.message));
   }
+}
+
+async function sbDeleteOrder(id){
+  const {error} = await supa.from('kd_orders').delete().eq('id', id);
+  if(error) throw error;
 }
 
 // ── Deposits ──
@@ -4161,6 +4190,7 @@ function initApp() {
     // เริ่ม Realtime subscription
     setSupabaseUser(currentUser.id); // ✅ RLS
     startWalletRealtime();
+    startProductsRealtime();
   }
   // Clear demo products permanently
   const _demoIds2 = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010'];
@@ -4251,20 +4281,132 @@ function stopWalletRealtime(){
   }
 }
 
-// ✅ Fallback polling 15s (backup ถ้า Realtime หลุด)
+// ══════════════════════════════════════════════════════
+// ✅ REALTIME — kd_products (INSERT / UPDATE / DELETE)
+// Frontend refreshes instantly when admin changes products
+// ══════════════════════════════════════════════════════
+let _productsChannel = null;
+let _productsRtRetry = 0;
+const _PRODUCTS_RT_MAX_RETRY = 3;
+
+function startProductsRealtime(){
+  if(_productsChannel){
+    try{ supa.removeChannel(_productsChannel); }catch(e){}
+    _productsChannel = null;
+  }
+  _productsChannel = supa
+    .channel('kd_products_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'kd_products' }, async (payload) => {
+      const ev = payload.eventType; // INSERT UPDATE DELETE
+      const deletedIds = _getDeletedProductIds();
+      if(ev === 'DELETE'){
+        const deletedId = payload.old && payload.old.id;
+        if(deletedId){
+          _addDeletedProductId(deletedId);
+          products = products.filter(p => p.id !== deletedId);
+          localStorage.setItem('kd_products', JSON.stringify(products));
+          renderProducts(products);
+        }
+      } else if(ev === 'INSERT'){
+        const row = payload.new;
+        if(row && row.id && !deletedIds.has(row.id)){
+          // Avoid duplicate
+          if(!products.find(p => p.id === row.id)){
+            const np = _sbRowToProduct(row);
+            if(np) products.unshift(np);
+            localStorage.setItem('kd_products', JSON.stringify(products));
+            renderProducts(products);
+          }
+        }
+      } else if(ev === 'UPDATE'){
+        const row = payload.new;
+        if(row && row.id){
+          if(deletedIds.has(row.id)) return;
+          const idx = products.findIndex(p => p.id === row.id);
+          const np = _sbRowToProduct(row);
+          if(np){
+            if(idx >= 0) products[idx] = np;
+            else products.unshift(np);
+            localStorage.setItem('kd_products', JSON.stringify(products));
+            renderProducts(products);
+          }
+        }
+      }
+    })
+    .subscribe((status) => {
+      if(status === 'SUBSCRIBED'){
+        _productsRtRetry = 0;
+        console.log('✅ Products Realtime connected');
+      } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
+        _productsChannel = null;
+        if(_productsRtRetry < _PRODUCTS_RT_MAX_RETRY){
+          _productsRtRetry++;
+          setTimeout(startProductsRealtime, 5000 * _productsRtRetry);
+        }
+      }
+    });
+}
+
+function stopProductsRealtime(){
+  if(_productsChannel){
+    try{ supa.removeChannel(_productsChannel); }catch(e){}
+    _productsChannel = null;
+  }
+}
+
+// Helper: convert Supabase kd_products row → app product object
+function _sbRowToProduct(r){
+  if(!r || !r.id) return null;
+  let imgs = [];
+  try{ if(r.images_json) imgs = JSON.parse(r.images_json); }catch(e){}
+  if(!imgs.length && r.img) imgs = [r.img];
+  return {
+    id: r.id, name: r.name, price: r.price,
+    cat: r.category, desc: r.description||'',
+    images: imgs, img: imgs[0]||null,
+    sellerId: r.seller_id||null, sellerName: r.seller_name||'',
+    qty: r.qty!=null ? r.qty : 99,
+    isGame: r.is_game||false, gameType: r.game_type||null,
+    postedAt: r.created_at||null,
+    colors: r.colors_json ? JSON.parse(r.colors_json||'[]') : [],
+    sizes: r.sizes_json ? JSON.parse(r.sizes_json||'[]') : [],
+    storages: r.storages_json ? JSON.parse(r.storages_json||'[]') : []
+  };
+}
+
+// ✅ Fallback polling 15s — wallet (backup ถ้า Realtime หลุด)
 setInterval(function(){
   if(!currentUser) return;
-  // ถ้า Realtime connected → skip (ประหยัด bandwidth)
   const rtOk = _walletChannel && _walletChannel.state === 'joined';
   if(rtOk) return;
   supa.from('kd_users').select('wallet').eq('id',currentUser.id).single()
     .then(({data})=>{
       if(data && data.wallet != null && data.wallet !== currentUser.wallet){
-        
         updateBalanceUI(data.wallet);
       }
     }).catch(()=>{});
 }, 15000);
+
+// ✅ Fallback polling 2min — products (backup ถ้า Realtime หลุด)
+setInterval(async function(){
+  const rtOk = _productsChannel && _productsChannel.state === 'joined';
+  if(rtOk) return; // Realtime ทำงานอยู่ — ข้ามได้
+  try{
+    const rows = await sbLoadProducts();
+    if(!rows || !rows.length) return;
+    const deletedIds = _getDeletedProductIds();
+    const fresh = rows.filter(p => !deletedIds.has(p.id));
+    // Only update if something changed
+    const oldIds = new Set(products.map(p=>p.id));
+    const newIds = new Set(fresh.map(p=>p.id));
+    const changed = fresh.some(p=>!oldIds.has(p.id)) || products.some(p=>!newIds.has(p.id));
+    if(changed){
+      products = fresh;
+      localStorage.setItem('kd_products', JSON.stringify(products));
+      renderProducts(products);
+    }
+  } catch(e){ /* silent */ }
+}, 120000);
 
 // ✅ Free up localStorage by clearing images from old products
 function _freeUpStorage(){
@@ -6068,25 +6210,29 @@ async function _autoReleaseToSeller(order){
   } catch(e){ console.warn('_autoReleaseToSeller error:', e); }
 }
 
-function previewSellerImg(input, targetId){
+async function previewSellerImg(input, targetId){
   const file = input.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const url = e.target.result;
-    const ordId = targetId.replace('sellerImgPrev_','');
-    const idx = orders.findIndex(x=>x.id===ordId);
-    if(idx>=0){
-      orders[idx].sellerImg = url;
-      saveOrders();
-      sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(img):',e));
-    }
-    const el = document.getElementById(targetId);
-    if(el) el.innerHTML = `<img src="${url}" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">`;
-    showNotif('✅ ບັນທຶກຮູບຫຼັກຖານແລ້ວ');
-    renderBillsPage();
-  };
-  reader.readAsDataURL(file);
+  const ordId = targetId.replace('sellerImgPrev_','');
+  const el = document.getElementById(targetId);
+  if(el) el.innerHTML = '<div style="color:var(--text2);font-size:12px">⏳ ກຳລັງອັດໂຫລດ...</div>';
+  showNotif('⏳ ກຳລັງອັດໂຫລດຮູບ...');
+  // Try Supabase Storage first, fallback to base64
+  let url = await uploadImageToStorage(file, 'order_proofs');
+  if(!url){
+    // fallback: read as dataURL
+    url = await new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>res(null); r.readAsDataURL(file); });
+  }
+  if(!url){ showNotif('❌ ອັດໂຫລດຮູບລົ້ມເຫຼວ', 'error'); return; }
+  const idx = orders.findIndex(x=>x.id===ordId);
+  if(idx>=0){
+    orders[idx].sellerImg = url;
+    saveOrders();
+    sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(img):',e));
+  }
+  if(el) el.innerHTML = '<img src="'+url+'" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">';
+  showNotif('✅ ບັນທຶກຮູບຫຼັກຖານແລ້ວ');
+  renderBillsPage();
 }
 
 function previewSellerVideo(input, targetId, ordId){
@@ -6500,15 +6646,16 @@ function deleteProductFromManage(id){
   // ── Save local ──
   localStorage.setItem('kd_products', JSON.stringify(products));
 
-  // ── ລຶບຈາກ Supabase ──
-  sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
-
-  // ── ກັບໜ້າ + refresh ──
+  // ── ກັບໜ້າ + refresh ໜ້າຫຼັກທັນທີ (local) ──
   const curPage = document.querySelector('.page.active');
   if(curPage && curPage.id==='page-edit-product') switchPage('manage');
   renderManagePage();
-  renderProducts(products); // ← refresh ໜ້າຫຼັກທັນທີ
-  showNotif('🗑 ລຶບ "'+p.name+'" ແລ້ວ — ສິນຄ້າບໍ່ສະແດງໃນຮ້ານແລ້ວ');
+  renderProducts(products);
+  showNotif('🗑 ລຶບ "'+p.name+'" ແລ້ວ — ກຳລັງ sync...');
+  // ── ລຶບຈາກ Supabase ──
+  sbDeleteProduct(id)
+    .then(()=>showNotif('🗑 ລຶບ "'+p.name+'" ສຳເລັດ'))
+    .catch(e=>{ console.warn('sbDeleteProduct:', e); showNotif('⚠️ ລຶບ offline — sync ໃໝ່ທີຫຼັງ', 'warning'); });
 }
 
 // Old alias kept for compatibility
@@ -7978,6 +8125,7 @@ async function doLogin(){
 
 function logoutUser(){
   stopWalletRealtime();
+  stopProductsRealtime();
   clearSupabaseUser(); // ✅ RLS
   currentUser = null;
   localStorage.removeItem('kd_session');
@@ -12381,26 +12529,38 @@ function renderAdminProducts(){
   </div>`;
 }
 
-function adminDeleteProduct(id){
+async function adminDeleteProduct(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
   _addDeletedProductId(id);
   localStorage.setItem('kd_products', JSON.stringify(products));
-  sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
+  showNotif('⏳ ກຳລັງລຶບ...', 'info');
+  try{
+    await sbDeleteProduct(id);
+    showNotif('🗑 ລຶບສິນຄ້າສຳເລັດ');
+  } catch(e){
+    console.warn('sbDeleteProduct:', e);
+    showNotif('⚠️ ລຶບ offline — sync ໃໝ່ທີຫຼັງ', 'warning');
+  }
   const card = document.getElementById('aprd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>{card.remove();},400);}
   else renderAdminTab('products');
-  showNotif('🗑 ລຶບສຳເລັດ');
 }
-function adminDeleteProductSearch(id){
+async function adminDeleteProductSearch(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
   _addDeletedProductId(id);
   localStorage.setItem('kd_products', JSON.stringify(products));
-  sbDeleteProduct(id).catch(e=>console.warn('sbDeleteProduct:',e));
+  showNotif('⏳ ກຳລັງລຶບ...', 'info');
+  try{
+    await sbDeleteProduct(id);
+    showNotif('🗑 ລຶບສິນຄ້າສຳເລັດ');
+  } catch(e){
+    console.warn('sbDeleteProduct:', e);
+    showNotif('⚠️ ລຶບ offline — sync ໃໝ່ທີຫຼັງ', 'warning');
+  }
   const card = document.getElementById('srch_prd_'+id);
   if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>card.remove(),400);}
-  showNotif('🗑 ລຶບສຳເລັດ');
 }
 
 function _adminOrderDeleteBtn(o){
@@ -12439,11 +12599,18 @@ function renderAdminOrders(){
     </div>`).join('')}`;
 }
 
-function adminDeleteOrder(id){
+async function adminDeleteOrder(id){
   if(!confirm('ລຶບ Order #'+id+' ອອກຈາກລາຍການ?')) return;
   orders = orders.filter(o=>o.id!==id);
   saveOrders();
-  showNotif('🗑 ລຶບ Order ແລ້ວ');
+  showNotif('⏳ ກຳລັງລຶບ...', 'info');
+  try {
+    await sbDeleteOrder(id);
+    showNotif('🗑 ລຶບ Order ສຳເລັດ');
+  } catch(e) {
+    console.warn('sbDeleteOrder error:', e);
+    showNotif('⚠️ ລຶບ offline, ຈະ sync ໃໝ່ທີຫຼັງ', 'warning');
+  }
   renderAdminTab('orders');
 }
 
@@ -12715,6 +12882,8 @@ function adminApproveWithdraw(id){
     }, 5*60*1000);
   }
   localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
+  // ✅ Sync approved status to Supabase
+  sbUpdateWithdrawalStatus(id, 'approved').catch(e=>console.warn('sbUpdateWithdrawal(approve):', e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
   // Refresh user-facing history if open
@@ -13460,9 +13629,30 @@ function doDeposit(){
     // บันทึก hash เพื่อตรวจ duplicate ครั้งหน้า
     if(slipHash) saveSlipHash(slipHash);
 
-    sbSaveDeposit(newDep)
-      .then(()=>{ console.log('✅ Deposit saved to Supabase:', newDep.id); })
-      .catch(e=>{ console.warn('❌ sbSaveDeposit failed:', e); });
+    // ✅ Upload slip image to Supabase Storage (not base64 in DB column)
+    (async ()=>{
+      try{
+        if(newDep.slipImg && newDep.slipImg.startsWith('data:')){
+          const mimeType = newDep.slipImg.split(';')[0].split(':')[1]||'image/jpeg';
+          const ext = mimeType.split('/')[1]||'jpg';
+          const byteString = atob(newDep.slipImg.split(',')[1]);
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          for(let i=0;i<byteString.length;i++) ia[i]=byteString.charCodeAt(i);
+          const slipFile = new File([ab], 'slip_'+newDep.id+'.'+ext, {type:mimeType});
+          const slipUrl = await uploadImageToStorage(slipFile, 'slips');
+          if(slipUrl && !slipUrl.startsWith('data:')){
+            newDep.slipImg = slipUrl;
+            // Update localStorage with URL
+            const deps2 = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+            const di = deps2.findIndex(d=>d.id===newDep.id);
+            if(di>=0){ deps2[di].slipImg=slipUrl; localStorage.setItem('kd_deposit_requests',JSON.stringify(deps2)); }
+          }
+        }
+        await sbSaveDeposit(newDep);
+        console.log('✅ Deposit saved to Supabase:', newDep.id);
+      } catch(e){ console.warn('❌ sbSaveDeposit failed:', e); }
+    })();
     addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt, ref, warning:slipWarning});
     waDeposit(currentUser, amt);
 
