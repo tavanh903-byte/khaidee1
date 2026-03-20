@@ -362,10 +362,22 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .profile-cover-edit{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px)}
 .profile-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.7))}
 /* Avatar floats outside cover using negative margin-top */
-.profile-avatar-outer{position:relative;height:52px;padding-left:20px}
+.profile-avatar-outer{position:relative;height:72px;padding-left:20px}
 .profile-avatar-over{position:absolute;top:-44px;left:20px;width:88px;height:88px;border-radius:50%;border:3px solid var(--gold);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:30}
 .profile-avatar-over img{width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none}
 .profile-avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--black);border:2px solid var(--black);pointer-events:none;z-index:31}
+/* Admin Confirm Sale Button (eye icon below avatar) */
+.admin-confirm-sale-btn{position:absolute;bottom:-36px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1f2e,#252c3d);border:1.5px solid rgba(201,168,76,.5);border-radius:20px;padding:5px 14px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;font-weight:700;color:var(--gold);white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:.2s;z-index:40}
+.admin-confirm-sale-btn:hover{background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(201,168,76,.08));border-color:var(--gold);transform:translateX(-50%) scale(1.04)}
+.admin-confirm-sale-btn .notif-dot{position:absolute;top:-4px;right:-4px;background:#e53;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--dark);padding:0 2px}
+/* Admin confirm sale modal */
+.acsm-card{background:var(--dark2);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.2s}
+.acsm-card:hover{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05)}
+.acsm-card.pending-release{border-color:rgba(234,179,8,.5);background:rgba(234,179,8,.05)}
+.acsm-detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.acsm-detail-row:last-child{border-bottom:none}
+.acsm-confirm-btn{width:100%;background:linear-gradient(135deg,#0c6,#0a5);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;color:#fff;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(0,180,100,.3);margin-top:14px;transition:.2s}
+.acsm-confirm-btn:hover{opacity:.88}
 /* PUBLIC PROFILE MODAL */
 .pub-profile-modal{position:fixed;inset:0;z-index:900;background:var(--black);overflow-y:auto;display:none;flex-direction:column}
 .pub-cover{position:relative;width:100%;height:200px;background:linear-gradient(135deg,#1a1200,#2a1f00);overflow:hidden;flex-shrink:0}
@@ -2162,18 +2174,23 @@ async function syncFromSupabase(){
         </label>
       </div>
       <!-- Avatar — อยู่นอก cover ไม่ถูกตัด -->
-      <div class="profile-avatar-outer">
+      <div class="profile-avatar-outer" style="position:relative">
         <label for="avatarFileInput" class="profile-avatar-over" id="profileAvatarOver">
           <img id="profileAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none">
           <span id="profileAvatarEmoji" style="pointer-events:none">👤</span>
           <div class="profile-avatar-edit-btn">📷</div>
         </label>
+        <!-- Admin-only: ປຸ່ມຢືນຢັນການຂາຍ -->
+        <div id="adminConfirmSaleBtn" class="admin-confirm-sale-btn" style="display:none" onclick="openAdminConfirmSalePanel()">
+          👁 ຢືນຢັນການຂາຍ
+          <span class="notif-dot" id="adminConfirmSaleDot" style="display:none">0</span>
+        </div>
       </div>
       <!-- File inputs ต้องอยู่ใน DOM ปกติ ไม่ hidden ด้วย display:none บน iOS -->
       <input type="file" id="avatarFileInput" accept="image/*" style="opacity:0;width:0;height:0;position:absolute;overflow:hidden" onchange="uploadAvatar()">
       <input type="file" id="coverFileInput" accept="image/*" style="opacity:0;width:0;height:0;position:absolute;overflow:hidden" onchange="uploadCover()">
       <!-- Profile info row -->
-      <div style="padding:54px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
+      <div style="padding:16px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)">
         <div style="display:flex;justify-content:space-between;align-items:flex-end">
           <div>
             <div class="profile-name" id="profileDisplayName">ຜູ້ໃຊ້</div>
@@ -3716,6 +3733,39 @@ async function syncFromSupabase(){
     <div class="modal-title">📋 ບິນສົ່ງສິນຄ້າ</div>
     <div id="sellerBillContent"></div>
     <button class="btn btn-outline" onclick="closeModal('sellerBillModal')" style="margin-top:12px">ປິດ</button>
+  </div>
+</div>
+
+<!-- ADMIN CONFIRM SALE PANEL MODAL -->
+<div class="popup-overlay" id="adminConfirmSaleModal" style="display:none">
+  <div class="popup-box" style="max-height:90vh;overflow-y:auto;padding:0">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1a1f2e,#111420);border-bottom:1px solid rgba(201,168,76,.25);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:var(--gold)">👁 ຢືນຢັນການຂາຍ</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px" id="acsmSubtitle">ລາຍການລໍຖ້າ Admin ຢືນຢັນ</div>
+      </div>
+      <button onclick="closeModal('adminConfirmSaleModal')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">✕ ປິດ</button>
+    </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;background:var(--dark3);border-bottom:1px solid rgba(255,255,255,.06);padding:0 16px">
+      <button id="acsmTabPending" onclick="acsmSetTab('pending')" style="flex:1;background:none;border:none;border-bottom:2px solid var(--gold);color:var(--gold);padding:10px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">⏳ ລໍຢືນຢັນ</button>
+      <button id="acsmTabDone" onclick="acsmSetTab('done')" style="flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);padding:10px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">✅ ຢືນຢັນແລ້ວ</button>
+      <button id="acsmTabAll" onclick="acsmSetTab('all')" style="flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);padding:10px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">📋 ທັງໝົດ</button>
+    </div>
+    <!-- List -->
+    <div id="acsmList" style="padding:14px 16px;min-height:200px"></div>
+  </div>
+</div>
+
+<!-- ADMIN CONFIRM SALE DETAIL MODAL -->
+<div class="popup-overlay" id="adminConfirmSaleDetailModal" style="display:none">
+  <div class="popup-box" style="max-height:90vh;overflow-y:auto;padding:0">
+    <div style="background:linear-gradient(135deg,#1a1f2e,#111420);border-bottom:1px solid rgba(201,168,76,.25);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10">
+      <div style="font-size:15px;font-weight:800;color:var(--gold)">📋 ລາຍລະອຽດ Order</div>
+      <button onclick="closeModal('adminConfirmSaleDetailModal')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);padding:5px 10px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">✕</button>
+    </div>
+    <div id="acsmDetailContent" style="padding:16px"></div>
   </div>
 </div>
 
@@ -7752,6 +7802,8 @@ function updateProfileUI(){
     updateWalletDisplay();
     renderBillsPage();
     updateAdminNotifBadge();
+    // Show admin confirm sale button only for admin
+    updateAdminConfirmSaleBtnVisibility();
   } else {
     document.getElementById('profileNotLoggedIn').style.display='block';
     document.getElementById('profileLoggedIn').style.display='none';
@@ -12753,6 +12805,12 @@ async function analyzeSlipImage(dataUrl){
   });
 }
 
+function extractSlipDateTime(dataUrl){
+  // ดึงเวลาจาก metadata ของรูป (EXIF) ถ้ามี
+  // หรือใช้เวลา file.lastModified แทน
+  return null; // จะรับจาก file object โดยตรง
+}
+
 function resetSlipInput(){
   const input = document.getElementById('depositSlipInput');
   const prev = document.getElementById('depositSlipPreview');
@@ -13149,31 +13207,33 @@ function doDeposit(){
     if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';delete confirmBtn.dataset.slipData;}
     document.getElementById('dep-step2').style.display='none';
     document.getElementById('dep-step1').style.display='block';
+    stopSlipCountdown();
 
     // ══════════════════════════════════════════════
-    // ✅ AUTO-APPROVE: ตรวจจาก dataset ที่ set ตอน verify slip จริง
+    // ✅ AUTO-APPROVE: ถ้าสลิปผ่านทุกเงื่อนไข
     // ══════════════════════════════════════════════
-    const isAutoApproved = confirmBtn?.dataset?.autoApproved === '1';
-    const isPendingAdmin = confirmBtn?.dataset?.pendingAdmin === '1';
-
-    if(isAutoApproved && !slipWarning){
-      // ✅ Edge Function ยืนยัน approved ครบ 4 ด่าน — Auto approve ทันที
+    if(!slipWarning){
+      // ✅ Gemini ยืนยันครบ 4 ด่าน — Auto approve ทันที
+      // อัพเดท wallet ทันที
       const newWallet = (currentUser.wallet||0) + amt;
       updateBalanceUI(newWallet);
+      // อัพเดท Supabase wallet โดยตรง
       sbUpdateDepositStatus(newDep.id, 'approved', currentUser.id, amt)
         .then(()=>{
+          // อัพเดท local deposit status
           const deps2 = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
           const idx2 = deps2.findIndex(d=>d.id===newDep.id);
           if(idx2>=0){ deps2[idx2].status='approved'; deps2[idx2].autoApproved=true; deps2[idx2].approvedAt=new Date().toLocaleString('lo-LA'); }
           localStorage.setItem('kd_deposit_requests', JSON.stringify(deps2));
+          
         })
         .catch(e=>console.warn('Auto-approve error:', e));
       showNotif('✅ ຝາກເງິນ +'+Number(amt).toLocaleString()+' ກີບ ສຳເລັດ! ຍອດເງິນໄດ້ຮັບການອັບເດດ', 'success');
-    } else if(isPendingAdmin || slipWarning){
-      // ⏳ Edge Function บอกว่า pending_admin หรือสลิปน่าสงสัย — รอ Admin
-      showNotif('⏳ ສລິບຖືກສົ່ງໃຫ້ Admin ກວດສອບ — ຈະໄດ້ຮັບເງິນໃນໄວໆ 🙏', 'warning');
+    } else if(slipWarning){
+      // สลิปน่าสงสัย — ส่งให้ Admin ตรวจก่อน
+      showNotif('⚠️ ສລິບໜ້າສົງໄສ — Admin ຈະກວດສອບ ແລ້ວເຕີມເງິນໃຫ້ໃນໄວໆ', 'warning');
     } else {
-      // pending ปกติ (ผ่าน local check แต่ Edge Function ไม่ตอบ / network error)
+      // ส่ง pending ปกติ
       showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+Number(amt).toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ', 'success');
     }
   } catch(err){
@@ -14608,18 +14668,14 @@ function ppRenderPage(){
   });
 }
 
-// ── shared constants for phone parts category ──
-const _ppCatIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️',port:'🔌',camera:'📷'};
-const _ppCatName = {screen:'ໜ້າຈໍ',battery:'ແບດເຕີລີ',back_glass:'ກະຈົກຫຼັງ',tempered:'ກັນແຕກ'};
-
 // ── เปิดหน้า detail ของอะไหล่ — switchPage ไป product page จริง ──
 function ppOpenDetail(partId){
   // ถ้าเปิดจากหน้าแรก _ppgParts อาจยังว่าง → fallback ไปใช้ _allPhoneParts แทน
   const p = _ppgParts.find(x=>x.id===partId) || _allPhoneParts.find(x=>x.id===partId);
   if(!p) return;
 
-  const catIcon = _ppCatIcon;
-  const catName = _ppCatName;
+  const catIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️',port:'🔌',camera:'📷'};
+  const catName = {screen:'ໜ້າຈໍ',battery:'ແບດເຕີລີ',back_glass:'ກະຈົກຫຼັງ',tempered:'ກັນແຕກ'};
 
   // สร้าง product object เหมือนสินค้าทั่วไป
   const fakeProd = {
@@ -14652,8 +14708,8 @@ function ppOpenDetail(partId){
 
 // ── Render หน้า product detail สำหรับอะไหล่ ──
 function renderPPDetailPage(fakeProd, p){
-  const catIcon = _ppCatIcon;
-  const catName = _ppCatName;
+  const catIcon = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️'};
+  const catName = {screen:'ໜ້າຈໍ',battery:'ແບດເຕີລີ',back_glass:'ກະຈົກຫຼັງ',tempered:'ກັນແຕກ'};
   const inStock = p.stock > 0;
   const el = document.getElementById('productDetailBody');
   if(!el){ showProductDetail(fakeProd.id); return; }
@@ -14734,9 +14790,10 @@ function renderPPDetailPage(fakeProd, p){
 // ── สั่งซื้อตรงจากหน้า detail ──
 function ppOrderDirect(p){
   if(!currentUser){ showNotif('ກາລຸນາເຂົ້າລະບົບກ່ອນ'); return; }
+  const catEmoji = {screen:'📱',battery:'🔋',back_glass:'🪟',tempered:'🛡️'};
   const fakeProd = {
     id:p.id, name:`${p.brand} ${p.model} — ${p.part}`,
-    emoji:_ppCatIcon[p.cat]||'🔧', price:p.price, qty:p.stock,
+    emoji:catEmoji[p.cat]||'🔧', price:p.price, qty:p.stock,
     desc:p.desc, cat:'phoneparts', sellerId:'admin',
     images:p.img?[p.img]:[], productImg:p.img||'', productImages:p.img?[p.img]:[],
     colors:[],sizes:[],storages:[],
@@ -14744,6 +14801,227 @@ function ppOrderDirect(p){
   currentProduct = fakeProd;
   showPhonePartOrder(fakeProd);
 }
+
+// ══════════════════════════════════════════════════════
+// ADMIN CONFIRM SALE SYSTEM
+// ══════════════════════════════════════════════════════
+
+let _acsmTab = 'pending'; // pending | done | all
+
+// ── ສະແດງ/ຊ່ອນປຸ່ມ + update badge ──
+function updateAdminConfirmSaleBtnVisibility(){
+  const btn = document.getElementById('adminConfirmSaleBtn');
+  const dot = document.getElementById('adminConfirmSaleDot');
+  if(!btn) return;
+  if(!currentUser?.isAdmin){ btn.style.display='none'; return; }
+  btn.style.display='flex';
+  // ນັບ order ທີ່ seller ສົ່ງແລ້ว (sent/delivering) ແລະ ຍັງບໍ່ release ເງິນ
+  const pending = _acsmGetOrders('pending');
+  if(pending.length > 0){
+    dot.style.display='flex';
+    dot.textContent = pending.length > 99 ? '99+' : String(pending.length);
+  } else {
+    dot.style.display='none';
+  }
+}
+
+// ── ດຶງ orders ທີ່ admin ຕ້ອງ confirm ──
+function _acsmGetOrders(tab){
+  // orders ທີ່ seller ສົ່ງ (status: sent/delivering) ແລະ ຍັງລໍ release (adminReleased ไม่ใช่ true)
+  // orders ທີ່ admin release ແລ້ວ (adminReleased === true)
+  return orders.filter(o => {
+    if(!o.sellerId || o.sellerId === 'admin') return false; // skip admin/game items
+    if(o.status === 'cancelled') return false;
+    if(tab === 'pending') return (o.status === 'sent' || o.status === 'delivering') && !o.adminReleased;
+    if(tab === 'done')    return o.adminReleased === true;
+    // all = all non-cancelled with seller
+    return true;
+  }).sort((a,b)=>new Date(b.createdAt||b.date)-new Date(a.createdAt||a.date));
+}
+
+// ── ເປີດ panel ──
+function openAdminConfirmSalePanel(){
+  if(!currentUser?.isAdmin){ showNotif('Admin ເທົ່ານັ້ນ'); return; }
+  _acsmTab = 'pending';
+  openModal('adminConfirmSaleModal');
+  _acsmRenderList();
+}
+
+// ── switch tab ──
+function acsmSetTab(tab){
+  _acsmTab = tab;
+  ['pending','done','all'].forEach(t=>{
+    const btn = document.getElementById('acsmTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(!btn) return;
+    btn.style.borderBottomColor = t===tab ? 'var(--gold)' : 'transparent';
+    btn.style.color = t===tab ? 'var(--gold)' : 'var(--text2)';
+  });
+  _acsmRenderList();
+}
+
+// ── render list ──
+function _acsmRenderList(){
+  const list = document.getElementById('acsmList');
+  const sub  = document.getElementById('acsmSubtitle');
+  if(!list) return;
+  const items = _acsmGetOrders(_acsmTab);
+  if(sub){
+    const labels = {pending:'ລໍ Admin ຢືນຢັນ', done:'ຢືນຢັນ & ເງິນໂອນແລ້ວ', all:'ທຸກ Order'};
+    sub.textContent = (labels[_acsmTab]||'') + ' — ' + items.length + ' ລາຍການ';
+  }
+  if(!items.length){
+    list.innerHTML = `<div style="text-align:center;padding:50px 20px;color:var(--text2)">
+      <div style="font-size:48px;margin-bottom:12px">${_acsmTab==='pending'?'🎉':'📭'}</div>
+      <div style="font-size:14px;font-weight:700">${_acsmTab==='pending'?'ບໍ່ມີ Order ລໍຢືນຢັນ':'ຍັງບໍ່ມີລາຍການ'}</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML = items.map(o=>{
+    const isReleased = !!o.adminReleased;
+    const db = getUsersDB();
+    const seller = db[o.sellerId];
+    const sellerName = seller?.name || o.sellerName || o.sellerId || '?';
+    const isGameProd = o.isGame || o.cat==='game' || o.gameType;
+    const commission = isGameProd ? 0.05 : 0;
+    const sellerAmt  = Math.round((o.total||0)*(1-commission));
+
+    return `<div class="acsm-card ${isReleased?'':'pending-release'}" onclick="acsmOpenDetail('${o.id}')">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:28px;flex-shrink:0">${o.productEmoji||'📦'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||'-'}</div>
+          <div style="font-size:11px;color:var(--text2)">ຜູ້ຂາຍ: <span style="color:var(--gold)">${sellerName}</span></div>
+          <div style="font-size:11px;color:var(--text2)">ຜູ້ຊື້: ${o.name||o.userName||'-'} · ${o.phone||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">${Number(o.total||0).toLocaleString()} ₭</div>
+          <div style="font-size:10px;margin-top:3px;padding:2px 8px;border-radius:8px;${isReleased?'background:rgba(12,180,100,.15);color:#0cb464':'background:rgba(234,179,8,.15);color:#fbbf24'}">
+            ${isReleased?'✅ ໂອນແລ້ວ':'⏳ ລໍຢືນຢັນ'}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);border-top:1px solid rgba(255,255,255,.06);padding-top:7px">
+        <span>💰 ຜູ້ຂາຍໄດ້: <strong style="color:var(--gold)">${Number(sellerAmt).toLocaleString()} ₭</strong></span>
+        <span>${o.date||o.createdAt||'-'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ເປີດ detail + ຢືນຢັນ ──
+function acsmOpenDetail(orderId){
+  const o = orders.find(x=>x.id===orderId);
+  if(!o){ showNotif('ບໍ່ພົບ Order'); return; }
+  const db = getUsersDB();
+  const seller = db[o.sellerId];
+  const buyer  = db[o.userId||o.buyerId];
+  const sellerName = seller?.name || o.sellerName || o.sellerId || '?';
+  const buyerName  = buyer?.name  || o.name || o.userName || '?';
+  const isGameProd = o.isGame || o.cat==='game' || o.gameType;
+  const commission = isGameProd ? 0.05 : 0;
+  const commLabel  = isGameProd ? '5%' : '0%';
+  const sellerAmt  = Math.round((o.total||0)*(1-commission));
+  const isReleased = !!o.adminReleased;
+
+  const statusLabels = {pending:'⏳ ລໍຮັບ',packed:'📦 ກຽມ',sent:'📮 ສົ່ງແລ້ວ',delivering:'🚚 ກຳລັງສົ່ງ',done:'✅ ສຳເລັດ',cancelled:'❌ ຍົກເລີກ'};
+  const sl = statusLabels[o.status||'pending'] || o.status;
+
+  const rows = [
+    ['Order ID', o.id],
+    ['ສິນຄ້າ', (o.productEmoji||'📦')+' '+(o.productName||'-')],
+    ['ຈຳນວນ', (o.qty||1)+' ຊິ້ນ'],
+    ['ຍອດຮວມ', Number(o.total||0).toLocaleString()+' ₭'],
+    ['ຄ່ານາຍໜ້າ', commLabel],
+    ['ຜູ້ຂາຍໄດ້ຮັບ', '<strong style="color:var(--gold)">'+Number(sellerAmt).toLocaleString()+' ₭</strong>'],
+    ['ຜູ້ຂາຍ', sellerName+' ('+o.sellerId+')'],
+    ['ຜູ້ຊື້', buyerName+(o.phone?' · '+o.phone:'')],
+    ['ສະຖານະ', sl],
+    ['ວັນທີ', o.date||o.createdAt||'-'],
+    ['ການຕິດຕາມ', o.trackingNum||'(ບໍ່ມີ)'],
+  ].map(([k,v])=>`<div class="acsm-detail-row"><span style="color:var(--text2)">${k}</span><span style="text-align:right;max-width:60%">${v}</span></div>`).join('');
+
+  const sellerImgHtml = o.sellerImg
+    ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">📸 ຫຼັກຖານຈາກຜູ້ຂາຍ</div>
+       <img src="${o.sellerImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid rgba(201,168,76,.3)"
+            onerror="this.style.display='none'"></div>` : '';
+
+  const confirmBtnHtml = isReleased
+    ? `<div style="background:rgba(12,180,100,.12);border:1px solid rgba(12,180,100,.4);border-radius:12px;padding:14px;text-align:center;margin-top:14px">
+         <div style="font-size:22px;margin-bottom:4px">✅</div>
+         <div style="font-size:13px;font-weight:700;color:#0cb464">ຢືນຢັນ ແລະ ໂອນເງິນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ຜູ້ຂາຍແລ້ວ</div>
+         <div style="font-size:11px;color:var(--text2);margin-top:4px">ໂດຍ Admin — ${o.adminReleasedAt||'-'}</div>
+       </div>`
+    : `<button class="acsm-confirm-btn" onclick="acsmConfirmRelease('${o.id}')">
+         ✅ ຢືນຢັນ — ໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ຜູ້ຂາຍ
+       </button>`;
+
+  document.getElementById('acsmDetailContent').innerHTML = `
+    <div style="background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:14px;margin-bottom:14px">${rows}</div>
+    ${sellerImgHtml}
+    ${confirmBtnHtml}
+    <button onclick="closeModal('adminConfirmSaleDetailModal')" class="btn btn-outline" style="width:100%;margin-top:10px;font-size:13px">← ກັບ</button>
+  `;
+  openModal('adminConfirmSaleDetailModal');
+}
+
+// ── Admin ກົດຢືນຢັນ → ໂອນເງິນ ──
+async function acsmConfirmRelease(orderId){
+  const idx = orders.findIndex(x=>x.id===orderId);
+  if(idx<0){ showNotif('ບໍ່ພົບ Order'); return; }
+  const o = orders[idx];
+  if(o.adminReleased){ showNotif('ໂອນເງິນໃຫ້ຜູ້ຂາຍແລ້ວ'); return; }
+  if(!o.sellerId || o.sellerId==='admin'){ showNotif('Order ນີ້ບໍ່ມີຜູ້ຂາຍ'); return; }
+
+  const isGameProd = o.isGame || o.cat==='game' || o.gameType;
+  const commission  = isGameProd ? 0.05 : 0;
+  const sellerAmt   = Math.round((o.total||0)*(1-commission));
+  const db = getUsersDB();
+  const seller = db[o.sellerId];
+  const sellerName = seller?.name || o.sellerId;
+
+  if(!confirm(`✅ ຢືນຢັນໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ "${sellerName}"?
+
+ເງິນຈະເຂົ້າ Wallet ຜູ້ຂາຍທັນທີ`)) return;
+
+  // ── ໂອນເງິນ → seller wallet ──
+  if(seller){
+    const prev = seller.wallet || 0;
+    seller.wallet = prev + sellerAmt;
+    db[o.sellerId] = seller;
+    saveUsersDB(db);
+    // sync Supabase
+    supa.from('kd_users').update({wallet: seller.wallet}).eq('id', o.sellerId)
+      .then(()=>console.log('✅ seller wallet updated in supa'))
+      .catch(e=>console.warn('sbSellerWallet:', e));
+    // ถ้า seller login อยู่ตอนนี้ — update UI
+    if(currentUser && currentUser.id === o.sellerId){
+      currentUser.wallet = seller.wallet;
+      saveUser();
+      updateBalanceUI(seller.wallet);
+    }
+  }
+
+  // ── mark order adminReleased ──
+  const now = new Date().toLocaleString('lo-LA');
+  orders[idx].adminReleased = true;
+  orders[idx].adminReleasedAt = now;
+  orders[idx].adminReleasedBy = currentUser.id;
+  orders[idx].adminReleasedAmt = sellerAmt;
+  if(orders[idx].status !== 'done') orders[idx].status = 'done';
+  saveOrders();
+  sbSaveOrder(orders[idx]).catch(e=>console.warn('sbSaveOrder(release):', e));
+
+  // ── Notification ──
+  showNotif(`✅ ໂອນ ${Number(sellerAmt).toLocaleString()} ₭ ໃຫ້ "${sellerName}" ສຳເລັດ!`, 'success');
+
+  // ── refresh UI ──
+  closeModal('adminConfirmSaleDetailModal');
+  _acsmRenderList();
+  updateAdminConfirmSaleBtnVisibility();
+  renderSaleHistoryPage();
+  renderBillsPage();
+}
+
 </script>
 </body>
 </html>
