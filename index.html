@@ -998,7 +998,11 @@ async function sbLoadOrders(){
     sellerVideo:r.seller_video||null,
     sentAt:r.sent_at||null,
     autoDelivering:r.auto_delivering||false,
-    autoDone:r.auto_done||false
+    autoDone:r.auto_done||false,
+    adminReleased:r.admin_released||false,
+    adminReleasedAt:r.admin_released_at||null,
+    adminReleasedBy:r.admin_released_by||null,
+    adminReleasedAmt:r.admin_released_amt||null
   }));
 }
 async function sbSaveOrder(o){
@@ -1020,6 +1024,10 @@ async function sbSaveOrder(o){
     sent_at:o.sentAt||null,
     auto_delivering:o.autoDelivering||false,
     auto_done:o.autoDone||false,
+    admin_released:o.adminReleased||false,
+    admin_released_at:o.adminReleasedAt||null,
+    admin_released_by:o.adminReleasedBy||null,
+    admin_released_amt:o.adminReleasedAmt||null,
     created_at:o.createdAt||now,
     updated_at:now
   };
@@ -14989,11 +14997,18 @@ async function acsmConfirmRelease(orderId){
     seller.wallet = prev + sellerAmt;
     db[o.sellerId] = seller;
     saveUsersDB(db);
-    // sync Supabase
-    supa.from('kd_users').update({wallet: seller.wallet}).eq('id', o.sellerId)
-      .then(()=>console.log('✅ seller wallet updated in supa'))
-      .catch(e=>console.warn('sbSellerWallet:', e));
-    // ถ้า seller login อยู่ตอนนี้ — update UI
+    // sync Supabase ຜ່ານ sbSaveUser (upsert ທຸກ field ລວມ wallet)
+    sbSaveUser(seller)
+      .then(()=>console.log('✅ seller wallet updated via sbSaveUser'))
+      .catch(e=>{
+        console.warn('sbSaveUser failed, try direct wallet update:', e);
+        // fallback: ອັບເດດ wallet column ໂດຍກົງ
+        supa.from('kd_users').update({wallet: seller.wallet, updated_at: new Date().toISOString()})
+          .eq('id', o.sellerId)
+          .then(()=>console.log('✅ direct wallet update ok'))
+          .catch(e2=>console.warn('direct wallet update failed:', e2));
+      });
+    // ຖ້າ seller login ຢູ່ຕອນນີ້ — update UI ທັນທີ
     if(currentUser && currentUser.id === o.sellerId){
       currentUser.wallet = seller.wallet;
       saveUser();
