@@ -2718,7 +2718,7 @@ async function syncFromSupabase(){
         <button class="mp-ftab" id="mpft-low" onclick="setMpFilter('low',this)">⚠️ ຈວນໝົດ</button>
         <button class="mp-ftab" id="mpft-out" onclick="setMpFilter('out',this)">🔴 ໝົດ</button>
         <button class="mp-ftab" id="mpft-old" onclick="setMpFilter('old',this)">⏰ ຄ້າງດົນ</button>
-        <button class="mp-ftab" id="mpft-parts" onclick="setMpFilter('parts',this)" style="display:none">🔧 ອະໄຫຼ່</button>
+        <button class="mp-ftab" id="mpft-parts" onclick="setMpFilter('parts',this)">🔧 ອະໄຫຼ່</button>
       </div>
     </div>
     <!-- Product list -->
@@ -3153,6 +3153,7 @@ async function syncFromSupabase(){
         <option value="electronics_other">💻 ອຸປະກອນ ອິເລັກໂທຣນິກ</option>
         <option value="home">🏠 ເຄື່ອງໃຊ້ໃນບ້ານ</option>
         <option value="food">🍜 ອາຫານ & ເຄື່ອງດື່ມ</option>
+        <option value="phoneparts">🔧 ອາໄຫຼ່ໂທລະສັບ</option>
         <option value="other">📦 ອື່ນໆ</option>
       </select>
     </div>
@@ -8870,10 +8871,11 @@ function catToMain(cat){
   if(cat.startsWith('electronics')) return 'electronics';
   if(cat==='home') return 'home';
   if(cat==='food') return 'food';
+  if(cat==='phoneparts') return 'phoneparts';
   return 'other';
 }
 function catToEmoji(cat){
-  const m={clothes:'👗',shoes:'👟',bags:'👜',electronics_phone:'📱',electronics_used:'📲',electronics_other:'💻',home:'🏠',food:'🍜',other:'📦'};
+  const m={clothes:'👗',shoes:'👟',bags:'👜',electronics_phone:'📱',electronics_used:'📲',electronics_other:'💻',home:'🏠',food:'🍜',phoneparts:'🔧',other:'📦'};
   return m[cat]||'📦';
 }
 
