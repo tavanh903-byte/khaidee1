@@ -874,7 +874,21 @@ async function uploadFilesToStorage(files, folder, maxFiles){
       const url = await uploadImageToStorage(file, folder);
       if(url) results.push(url);
     } else if(file.type.startsWith('video/')){
-      // Videos: compress to base64 (small enough)
+      // ✅ ອັບໂຫລດ video ໄປ Supabase Storage ກ່ອນ
+      try {
+        const BUCKET = 'product-images';
+        const ext = (file.name.split('.').pop()||'mp4').toLowerCase();
+        const uid = Date.now() + '_' + Math.random().toString(36).slice(2,9);
+        const fileName = folder + '/vid_' + uid + '.' + ext;
+        const { error } = await supa.storage.from(BUCKET).upload(fileName, file, {
+          cacheControl: '31536000', upsert: true, contentType: file.type
+        });
+        if(!error){
+          const { data: urlData } = supa.storage.from(BUCKET).getPublicUrl(fileName);
+          if(urlData?.publicUrl){ results.push(urlData.publicUrl); continue; }
+        }
+      } catch(e){ console.warn('video upload:', e); }
+      // Fallback: base64
       const b64 = await new Promise(res=>{
         const r = new FileReader();
         r.onload = e => res(e.target.result);
@@ -937,7 +951,9 @@ async function sbSaveUser(user){
     wallet: user.wallet||0, is_seller: !!user.isSeller, is_admin: !!user.isAdmin,
     avatar_img: user.avatarImg||null, cover_img: user.coverImg||null,
     shop_name: user.shopName||null, shop_desc: user.shopDesc||null,
-    rank: user.rank||0, crown: user.crown||null, updated_at: new Date().toISOString()
+    rank: user.rank||0, crown: user.crown||null,
+    seller_wa: user.sellerWA||null,
+    updated_at: new Date().toISOString()
   };
   await supa.from('kd_users').upsert(row);
 }
@@ -952,7 +968,8 @@ function sbRowToUser(r){
     isSeller:r.is_seller, isAdmin:r.is_admin,
     avatarImg:r.avatar_img, coverImg:r.cover_img,
     shopName:r.shop_name, shopDesc:r.shop_desc,
-    rank:r.rank, crown:r.crown
+    rank:r.rank, crown:r.crown,
+    sellerWA:r.seller_wa||null
   };
 }
 
@@ -7755,10 +7772,25 @@ async function admDeletePart(id){
   renderAdmPartsList(_admPartsCat);
 }
 
-function previewAdmShopLogo(){
+async function previewAdmShopLogo(){
   const f = document.getElementById('admShopLogoInput').files[0];
   if(!f) return;
-  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  showNotif('⏳ ກຳລັງອັບໂຫລດຮູບ...');
+  // ✅ ອັບໂຫລດໄປ Supabase Storage
+  try {
+    const url = await uploadImageToStorage(f, 'shop-logos');
+    if(url){
+      const img   = document.getElementById('admShopLogoImg');
+      const emoji = document.getElementById('admShopLogoEmoji');
+      img.src=url; img.style.display='block'; emoji.style.display='none';
+      const info = loadAdmShopInfo(); info.logo = url; saveAdmShopInfoData(info);
+      sbSetSetting('shop_logo', url).catch(e=>console.warn('shop logo sync:', e));
+      updateAdminShopBannerProfile();
+      showNotif('✅ ບັນທຶກຮູບສຳເລັດ');
+      return;
+    }
+  } catch(e){ console.warn('shop logo upload:', e); }
+  // Fallback: base64
   smartCompressImage(f, 300, 300, (data)=>{
     if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
     const img   = document.getElementById('admShopLogoImg');
@@ -7780,15 +7812,28 @@ function saveAdmShopInfo(){
   showNotif('✅ ບັນທຶກຂໍ້ມູນຮ້ານສຳເລັດ');
 }
 
-function previewAdmProdImg(){
+async function previewAdmProdImg(){
   const f = document.getElementById('admProdImgInput').files[0];
   if(!f) return;
-  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
+  showNotif('⏳ ກຳລັງອັບໂຫລດຮູບ...');
+  // ✅ ອັບໂຫລດໄປ Supabase Storage ກ່ອນ
+  try {
+    const url = await uploadImageToStorage(f, 'products');
+    if(url){
+      const img = document.getElementById('admProdImgShow');
+      const ph  = document.getElementById('admProdImgPlaceholder');
+      img.src=url; img.style.display='block'; if(ph) ph.style.display='none';
+      document.getElementById('admProdImgInput').dataset.compressed = url;
+      showNotif('✅ ອັບໂຫລດຮູບສຳເລັດ');
+      return;
+    }
+  } catch(e){ console.warn('admProdImg upload:', e); }
+  // Fallback: base64
   smartCompressImage(f, 800, 800, (data)=>{
     if(!data){ showNotif('❌ ໂຫລດຮູບບໍ່ໄດ້'); return; }
     const img = document.getElementById('admProdImgShow');
     const ph  = document.getElementById('admProdImgPlaceholder');
-    img.src=data; img.style.display='block'; ph.style.display='none';
+    img.src=data; img.style.display='block'; if(ph) ph.style.display='none';
     document.getElementById('admProdImgInput').dataset.compressed = data;
   });
 }
@@ -11079,37 +11124,63 @@ function triggerAvatarUpload(){
   const input = document.getElementById('avatarFileInput');
   if(input) input.click(); 
 }
-function uploadAvatar(){
+async function uploadAvatar(){
   const f = document.getElementById('avatarFileInput').files[0];
   if(!f||!currentUser) return;
-  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
-  smartCompressImage(f, 400, 400, (data)=>{
-    if(!data){ showNotif('❌ ບໍ່ສາມາດໂຫລດຮູບໄດ້'); return; }
-    try {
-      currentUser.avatarImg = data;
+  showNotif('⏳ ກຳລັງອັບໂຫລດຮູບ...');
+  // ✅ ອັບໂຫລດໄປ Supabase Storage ກ່ອນ
+  try {
+    const url = await uploadImageToStorage(f, 'avatars');
+    if(url){
+      currentUser.avatarImg = url;
       saveUser();
+      // ✅ sync ໄປ Supabase DB
+      supa.from('kd_users').update({ avatar_img: url, updated_at: new Date().toISOString() }).eq('id', currentUser.id)
+        .catch(e=>console.warn('avatar sync:', e));
       updateProfileUI();
       showNotif('✅ ປ່ຽນຮູບໂປຣໄຟລສຳເລັດ');
-    } catch(e){
-      showNotif('❌ ພື້ນທີ່ບໍ່ພໍ ລອງຮູບນ້ອຍກວ່ານີ້');
+      return;
     }
+  } catch(e){ console.warn('avatar upload:', e); }
+  // Fallback: base64
+  smartCompressImage(f, 400, 400, (data)=>{
+    if(!data){ showNotif('❌ ບໍ່ສາມາດໂຫລດຮູບໄດ້'); return; }
+    currentUser.avatarImg = data;
+    saveUser();
+    supa.from('kd_users').update({ avatar_img: data, updated_at: new Date().toISOString() }).eq('id', currentUser.id)
+      .catch(e=>console.warn('avatar sync fallback:', e));
+    updateProfileUI();
+    showNotif('✅ ປ່ຽນຮູບໂປຣໄຟລສຳເລັດ');
   });
 }
 
-function uploadCover(){
+async function uploadCover(){
   const f = document.getElementById('coverFileInput').files[0];
   if(!f||!currentUser) return;
-  showNotif('⏳ ກຳລັງຈັດການຮູບ...');
-  smartCompressImage(f, 900, 400, (data)=>{
-    if(!data){ showNotif('❌ ບໍ່ສາມາດໂຫລດຮູບໄດ້'); return; }
-    try {
-      currentUser.coverImg = data;
+  showNotif('⏳ ກຳລັງອັບໂຫລດຮູບ...');
+  // ✅ ອັບໂຫລດໄປ Supabase Storage ກ່ອນ
+  try {
+    const url = await uploadImageToStorage(f, 'covers');
+    if(url){
+      currentUser.coverImg = url;
       saveUser();
+      // ✅ sync ໄປ Supabase DB
+      supa.from('kd_users').update({ cover_img: url, updated_at: new Date().toISOString() }).eq('id', currentUser.id)
+        .catch(e=>console.warn('cover sync:', e));
       updateProfileUI();
       showNotif('✅ ປ່ຽນຮູບພື້ນຫຼັງສຳເລັດ');
-    } catch(e){
-      showNotif('❌ ພື້ນທີ່ບໍ່ພໍ ລອງຮູບນ້ອຍກວ່ານີ້');
+      return;
     }
+  } catch(e){ console.warn('cover upload:', e); }
+  // Fallback: base64
+  smartCompressImage(f, 900, 400, (data)=>{
+    if(!data){ showNotif('❌ ບໍ່ສາມາດໂຫລດຮູບໄດ້'); return; }
+    currentUser.coverImg = data;
+    saveUser();
+    supa.from('kd_users').update({ cover_img: data, updated_at: new Date().toISOString() }).eq('id', currentUser.id)
+      .catch(e=>console.warn('cover sync fallback:', e));
+    updateProfileUI();
+    showNotif('✅ ປ່ຽນຮູບພື້ນຫຼັງສຳເລັດ');
   });
 }
 
@@ -14773,7 +14844,8 @@ async function sbSavePhonePart(p){
     await supa.from('kd_phone_parts').upsert({
       id:p.id, brand:p.brand, model:p.model, part:p.part,
       price:p.price, stock:p.stock||0, img:p.img||'', part_desc:p.desc||'', cat:p.cat||'screen',
-      updated_at:new Date().toISOString()
+      updated_at:new Date().toISOString(),
+      hidden: !!p.hidden
     });
   } catch(e){ console.warn('sbSavePhonePart:',e); }
 }
