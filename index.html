@@ -8038,50 +8038,94 @@ function clearAdmProdForm(){
   document.getElementById('admShopFormTitle').textContent='➕ ເພີ່ມສິນຄ້າໃໝ່';
 }
 
-function saveAdmShopProduct(){
-  const name  = (document.getElementById('admProdNameInput').value||'').trim();
-  const price = parseFloat(document.getElementById('admProdPriceInput').value||0);
-  const cat   = document.getElementById('admProdCatInput').value;
-  const desc  = (document.getElementById('admProdDescInput').value||'').trim();
+// ✅ CLOUD-FIRST: saveAdmShopProduct — async, UUID from crypto, Supabase upsert ก่อน
+async function saveAdmShopProduct(){
+  const name    = (document.getElementById('admProdNameInput').value||'').trim();
+  const price   = parseFloat(document.getElementById('admProdPriceInput').value||0);
+  const cat     = document.getElementById('admProdCatInput').value;
+  const desc    = (document.getElementById('admProdDescInput').value||'').trim();
   const imgData = document.getElementById('admProdImgInput').dataset.compressed || '';
   const editId  = document.getElementById('admProdEditId').value;
   if(!name){ showNotif('⚠️ ກະລຸນາໃສ່ຊື່ສິນຄ້າ'); return; }
   if(!price || price<=0){ showNotif('⚠️ ກະລຸນາໃສ່ລາຄາ'); return; }
-  const sellerId = currentUser.id;
-  let prods = [...products];
-  if(editId){
-    const idx = prods.findIndex(p=>p.id===editId);
-    if(idx>=0){
-      prods[idx].name=name; prods[idx].price=price;
-      prods[idx].category=cat; prods[idx].cat=cat;
-      prods[idx].desc=desc;
+
+  // ✅ Double-submit guard
+  if(window._admProdSaveLock) return;
+  window._admProdSaveLock = true;
+  const btn = document.querySelector('#admShopFormSection .btn-gold') ||
+              [...document.querySelectorAll('.btn-gold')].find(b=>b.textContent.includes('ບັນທຶກ'));
+  if(btn){ btn.disabled=true; btn.textContent='⏳ ກຳລັງບັນທຶກ...'; }
+
+  try {
+    const sellerId = currentUser.id;
+    let prod;
+
+    if(editId){
+      // แก้ไขสินค้าที่มีอยู่
+      prod = products.find(p=>p.id===editId);
+      if(!prod){ showNotif('❌ ບໍ່ພົບສິນຄ້າ'); return; }
+      prod = {
+        ...prod,
+        name, price,
+        cat: cat||prod.cat||'other',
+        category: cat||prod.category||'other',
+        desc,
+        updated_at: new Date().toISOString(),
+      };
       if(imgData){
-        prods[idx].img=imgData;
-        prods[idx].images=[imgData];
+        prod.img = imgData;
+        prod.images = [imgData, ...(prod.images||[]).filter(i=>i!==prod.img).slice(0,9)];
       }
+    } else {
+      // ✅ ใช้ crypto.randomUUID() แทน Date.now() เพื่อป้องกัน ID ซ้ำ
+      const newId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'PROD-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+      prod = {
+        id: newId,
+        sellerId,
+        seller: loadAdmShopInfo().name || 'Admin Official',
+        name, price,
+        cat: cat||'other',
+        category: cat||'other',
+        desc,
+        img: imgData||null,
+        images: imgData ? [imgData] : [],
+        emoji: '👑',
+        qty: 99, sold: 0, hidden: false,
+        createdAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
     }
-    showNotif('✅ ແກ້ໄຂສິນຄ້າສຳເລັດ');
-  } else {
-    const newProd = {
-      id:'PROD-'+Date.now(),
-      sellerId, seller: loadAdmShopInfo().name||'Admin Official',
-      name, price,
-      cat: cat||'other', category: cat||'other',
-      desc, img: imgData||null,
-      images: imgData ? [imgData] : [],
-      emoji: '👑',
-      qty: 99, sold: 0, hidden: false,
-      createdAt: new Date().toISOString(),
-    };
-    prods.unshift(newProd);
-    showNotif('✅ ເພີ່ມສິນຄ້າສຳເລັດ');
+
+    // ✅ บันทึก Supabase ก่อน (Cloud-First) แล้วค่อย update memory + localStorage
+    await sbSaveProduct(prod);
+
+    if(editId){
+      const idx = products.findIndex(p=>p.id===editId);
+      if(idx>=0) products[idx] = prod;
+      showNotif('✅ ແກ້ໄຂສິນຄ້າສຳເລັດ', 'success');
+    } else {
+      products.unshift(prod);
+      showNotif('✅ ເພີ່ມສິນຄ້າສຳເລັດ! ທຸກຄົນເຫັນແລ້ວ 🎉', 'success');
+    }
+
+    // update localStorage cache (ไม่ใช้ saveProducts() เต็ม — ไม่ต้อง re-sync ซ้ำ)
+    try { localStorage.setItem('kd_products', JSON.stringify(products)); } catch(e){}
+
+    renderProducts(products);
+    updateAdminShopBannerProfile();
+    renderAdmShopProdList();
+    clearAdmProdForm();
+    switchAdmShopTab('products');
+
+  } catch(e){
+    console.error('saveAdmShopProduct:', e);
+    showNotif('❌ ບັນທຶກລົ້ມເຫຼວ: ' + (e.message||e), 'error');
+  } finally {
+    window._admProdSaveLock = false;
+    if(btn){ btn.disabled=false; btn.textContent='💾 ບັນທຶກສິນຄ້າ'; }
   }
-  products=prods;
-  saveProducts();
-  renderProducts();
-  updateAdminShopBannerProfile();
-  clearAdmProdForm();
-  switchAdmShopTab('products');
 }
 
 function renderAdmShopProdList(){
@@ -8317,24 +8361,64 @@ function resetPINSection(){
   _pendingReg=null;
 }
 
-function finishRegister(verified){
+async function finishRegister(verified){
   if(!_pendingReg) return;
   const {uid,name,phone,email,pass,avatarImg} = _pendingReg;
-  const user = {id:uid,name,phone,email,pass,wallet:0,isSeller:false,orders:[],
-    registeredAt:new Date().toISOString(), verified: verified};
+
+  // ✅ ตรวจสอบ email/phone ซ้ำใน Supabase ก่อน (cross-device check)
+  try {
+    const orFilter = email ? `email.eq.${email}` : '';
+    const orPhone  = phone ? `phone.eq.${phone}` : '';
+    const orStr    = [orFilter, orPhone].filter(Boolean).join(',');
+    if(orStr){
+      const {data: existing} = await supa.from('kd_users').select('id').or(orStr).limit(1);
+      if(existing && existing.length){
+        showNotif('❌ ອີເມລ ຫຼື ເບີໂທຖືກໃຊ້ແລ້ວ (Supabase)', 'error');
+        _pendingReg = null;
+        resetPINSection();
+        return;
+      }
+    }
+  } catch(e){ /* ถ้า network ล้ม ให้ผ่านไปได้ */ }
+
+  const user = {
+    id:uid, name, phone, email, pass, wallet:0, isSeller:false, orders:[],
+    registeredAt: new Date().toISOString(),
+    verified: verified,
+    created_at: new Date().toISOString(),
+  };
   if(avatarImg) user.avatarImg = avatarImg;
   currentUser = user;
-  saveUser();
+
+  // ✅ บันทึก localStorage ก่อน (ทันที)
+  const db = getUsersDB();
+  db[uid] = user;
+  try { localStorage.setItem('kd_users_db', JSON.stringify(db)); } catch(e){}
+  localStorage.setItem('kd_user', JSON.stringify(user));
+  localStorage.setItem('kd_session', uid);
+
+  // ✅ Sync ไป Supabase ทันที (Cloud-First)
+  sbSaveUser(user).catch(e=>console.warn('finishRegister sbSaveUser:', e));
+
+  // ✅ ตั้ง RLS user context
+  setSupabaseUser(uid);
+
   closeModal('registerModal');
   resetPINSection();
   updateProfileUI();
+
   if(verified){
-    showNotif('\u2705 ສ້າງບັນຊີ + ຢືນຢັນສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name, 'success');
+    showNotif('✅ ສ້າງບັນຊີ + ຢືນຢັນສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name, 'success');
   } else {
-    showNotif('\u2705 ສ້າງບັນຊີສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name, 'success');
+    showNotif('✅ ສ້າງບັນຊີສຳເລັດ! ຍິນດີຕ້ອນຮັບ '+name, 'success');
   }
   waNewUser(currentUser);
-  _pendingReg=null;
+
+  // เริ่ม realtime สำหรับ user ใหม่
+  startWalletRealtime();
+  startOrdersRealtime();
+
+  _pendingReg = null;
 }
 
 // ─── Saved credentials helpers ───
@@ -8408,7 +8492,7 @@ async function doLogin(){
     closeModal('loginModal');
     updateProfileUI();
     showNotif('✅ ຍິນດີຕ້ອນຮັບ '+owner.crown+' '+owner.name);
-    // Sync avatar/cover from Supabase for this admin on this device
+    // ✅ Sync avatar/cover/wallet from Supabase + start Realtime
     supa.from('kd_users').select('avatar_img,cover_img,wallet').eq('id',owner.id).single()
       .then(({data})=>{
         if(!data) return;
@@ -8416,8 +8500,12 @@ async function doLogin(){
         if(data.avatar_img && currentUser.avatarImg !== data.avatar_img){ currentUser.avatarImg = data.avatar_img; changed=true; }
         if(data.cover_img  && currentUser.coverImg  !== data.cover_img ){ currentUser.coverImg  = data.cover_img;  changed=true; }
         if(data.wallet != null && currentUser.wallet !== data.wallet)   { currentUser.wallet    = data.wallet;     changed=true; }
-        if(changed){ saveUser(); updateProfileUI(); }
+        if(changed){ saveUser(); updateProfileUI(); updateBalanceUI(data.wallet||currentUser.wallet); }
       }).catch(()=>{});
+    // ✅ เริ่ม Realtime subscriptions สำหรับ admin
+    startWalletRealtime();
+    startOrdersRealtime();
+    startProductsRealtime();
     return;
   }
   // Regular users — ลองหาใน localStorage ก่อน
@@ -8440,6 +8528,8 @@ async function doLogin(){
         if(changed){ saveUser(); updateProfileUI(); }
       }).catch(()=>{});
     startWalletRealtime();
+    startOrdersRealtime();
+    startProductsRealtime();
   } else {
     // ✅ ไม่เจอใน localStorage → ดึงจาก Supabase โดยตรง
     showNotif('⏳ ກຳລັງກວດສອບ...');
@@ -9245,7 +9335,9 @@ function submitSellProduct(){
   const extra = getSellExtraData();
   const mainCat = catToMain(cat);
   const emoji = catToEmoji(cat);
-  const id = 'PRD-'+Date.now().toString().slice(-6);
+  const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : 'PRD-'+Date.now().toString().slice(-6)+'-'+Math.random().toString(36).slice(2,6);
   const imgFiles = document.getElementById('sellImgInput').files;
 
   const isGameCat = cat==='game'||cat==='game_id'||cat.startsWith('game');
