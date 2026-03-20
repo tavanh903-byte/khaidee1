@@ -982,6 +982,7 @@ async function sbSaveProduct(p){
   // Try with images_json column first
   const {error} = await supa.from('kd_products').upsert({
     id:p.id, name:p.name, price:p.price, category:p.cat,
+    subcat: p.subcat||p.cat||null,
     emoji:p.emoji, description:p.desc, qty:p.qty||0, sold:p.sold||0,
     seller_id:p.sellerId||'', seller_name:p.seller||'',
     image_img: firstImg,
@@ -992,6 +993,7 @@ async function sbSaveProduct(p){
   if(error && error.message && error.message.includes('images_json')){
     await supa.from('kd_products').upsert({
       id:p.id, name:p.name, price:p.price, category:p.cat,
+      subcat: p.subcat||p.cat||null,
       emoji:p.emoji, description:p.desc, qty:p.qty||0, sold:p.sold||0,
       seller_id:p.sellerId||'', seller_name:p.seller||'',
       image_img: firstImg,
@@ -4369,7 +4371,7 @@ function _sbRowToProduct(r){
   if(!imgs.length && r.img) imgs = [r.img];
   return {
     id: r.id, name: r.name, price: r.price,
-    cat: r.category, desc: r.description||'',
+    cat: r.category, subcat: r.subcat||r.category||null, desc: r.description||'',
     images: imgs, img: imgs[0]||null,
     sellerId: r.seller_id||null, sellerName: r.seller_name||'',
     qty: r.qty!=null ? r.qty : 99,
@@ -8928,8 +8930,13 @@ function submitSellProduct(){
     };
     try{
       products.push(p); saveProducts();
+      // ✅ Sync ໄປ Supabase ທັນທີ (ບໍ່ wait loop)
+      sbSaveProduct(p).catch(e=>console.warn('sbSaveProduct direct:', e));
       closeModal('sellProductModal');
       renderProducts(products);
+      // ✅ Refresh ຫຼັງບ້ານ admin ທັນທີ
+      if(typeof renderAdmShopProdList === 'function') renderAdmShopProdList();
+      if(typeof renderManagePage === 'function') renderManagePage();
       // reset
       sellSelectedColors=[]; sellSelectedSizes=[]; sellSelectedStorages=[]; sellCondition=''; sellCustomTags=[];
       document.getElementById('sellDynamicFields').innerHTML='';
