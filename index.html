@@ -2732,6 +2732,16 @@ async function syncFromSupabase(){
     <button onclick="refreshWalletNow()" style="width:100%;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--gold);border-radius:10px;padding:8px;font-size:12px;cursor:pointer;margin-bottom:8px;font-family:'Sarabun',sans-serif">🔄 ກົດເພື່ອໂຫລດຍອດໃໝ່</button>
   <div style="margin-bottom:16px" id="walletActionBtns">
       <button class="btn btn-gold" onclick="showDeposit()" style="width:100%;margin-bottom:8px">⬇️ ເຕີມເງິນ / ฝากเงิน</button>
+      <div id="withdrawableSummary" style="display:none;margin-bottom:8px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:10px;font-size:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="color:var(--text2)">✅ ຖອນໄດ້ດຽວນີ້</span>
+          <span id="withdrawableAmt" style="color:#4ade80;font-weight:700">0 ₭</span>
+        </div>
+        <div id="lockedAmtRow" style="display:none;justify-content:space-between">
+          <span style="color:var(--text2)">🔒 ລໍ 24h (ID ເກມ)</span>
+          <span id="lockedAmt" style="color:#fbbf24;font-weight:700">0 ₭</span>
+        </div>
+      </div>
       <button class="btn btn-outline" id="withdrawBtn" onclick="showWithdraw()" style="width:100%;display:none">⬆️ ຖອນເງິນ / ถอนเงิน</button>
     </div>
     <div style="font-size:12px;color:var(--text2);text-align:center;line-height:1.6">ຕິດຕໍ່ Admin: WhatsApp 020-549-66168<br>Line: @khaidee_lao<br>Facebook: P'Seng SaenDy</div>
@@ -6125,6 +6135,18 @@ function refreshWalletNow(){
 function showWallet(){
   openModal('walletModal');
   document.getElementById('walletBalance').textContent=Number(currentUser?.wallet||0).toLocaleString();
+  // ── ສະແດງຍອດທີ່ຖອນໄດ້ ──
+  if(currentUser?.isSeller){
+    const {withdrawable, locked} = calcWithdrawableAmt();
+    const summaryEl = document.getElementById('withdrawableSummary');
+    const amtEl = document.getElementById('withdrawableAmt');
+    const lockedRow = document.getElementById('lockedAmtRow');
+    const lockedEl = document.getElementById('lockedAmt');
+    if(summaryEl){ summaryEl.style.display='block'; }
+    if(amtEl){ amtEl.textContent = withdrawable.toLocaleString()+' ₭'; }
+    if(lockedRow){ lockedRow.style.display = locked>0?'flex':'none'; }
+    if(lockedEl){ lockedEl.textContent = locked.toLocaleString()+' ₭'; }
+  }
   // Show withdraw only for sellers
   const wb = document.getElementById('withdrawBtn');
   if(wb) wb.style.display = (currentUser?.isSeller) ? 'block' : 'none';
@@ -13422,18 +13444,79 @@ function doDeposit(){
   }
 }
 
+// ── คำนวณยอดที่ถอนได้จริง ──
+function calcWithdrawableAmt(){
+  if(!currentUser) return 0;
+  const total = currentUser.wallet || 0;
+  const now = Date.now();
+  const GAME_LOCK_MS = 24 * 60 * 60 * 1000; // ID ເກມລໍ 24h
+
+  // หา locked amount = เงินจาก game order ที่ยังไม่ครบ 24h
+  let locked = 0;
+  orders.forEach(o => {
+    if(o.sellerId !== currentUser.id) return;
+    if(o.status === 'cancelled') return;
+    const isGame = o.isGame || o.cat === 'game' || o.gameType;
+    if(!isGame) return; // ທົ່ວໄປ unlock ທັນທີ
+    // game: lock 24h จาก sentAt หรือ createdAt
+    const refMs = o.sentAt ? new Date(o.sentAt).getTime()
+                : o.createdAt ? new Date(o.createdAt).getTime()
+                : new Date(o.date||0).getTime();
+    if(now - refMs < GAME_LOCK_MS){
+      // ยังล็อก — หา sellerAmt
+      const sellerAmt = Math.round((o.total||0) * 0.95);
+      locked += sellerAmt;
+    }
+  });
+
+  const withdrawable = Math.max(0, total - locked);
+  return { total, locked, withdrawable };
+}
+
 function calcWithdrawFee(){
   const amt = parseInt(document.getElementById('withdrawAmt').value)||0;
   const prev = document.getElementById('withdrawFeePreview');
   if(!prev) return;
-  if(!amt){prev.style.display='none';return;}
+  const {total, locked, withdrawable} = calcWithdrawableAmt();
+  if(!amt){
+    // ສະແດງ summary ຢູ່ ຫວ່າງ
+    if(locked > 0){
+      prev.style.display='block';
+      prev.innerHTML=`<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">💼 ຍອດໃນ Wallet</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span style="color:var(--text2)">ຍອດທັງໝົດ</span>
+          <span style="color:var(--gold);font-weight:700">${total.toLocaleString()} ₭</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span style="color:var(--text2)">🔒 ລໍ 24h (ID ເກມ)</span>
+          <span style="color:#fbbf24;font-weight:700">${locked.toLocaleString()} ₭</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.08)">
+          <span style="color:#4ade80">✅ ຖອນໄດ້ດຽວນີ້</span>
+          <span style="color:#4ade80">${withdrawable.toLocaleString()} ₭</span>
+        </div>
+      </div>`;
+    } else {
+      prev.style.display='none';
+    }
+    return;
+  }
   if(amt < 50000){prev.style.display='block';prev.innerHTML='<span style="color:#f66">⚠️ ຂັ້ນຕ່ຳ 50,000 ກີບ</span>';return;}
+  if(amt > withdrawable){
+    prev.style.display='block';
+    prev.innerHTML=`<span style="color:#f66">❌ ຖອນໄດ້ສູງສຸດ ${withdrawable.toLocaleString()} ₭ (${locked>0?'ຍອດ '+locked.toLocaleString()+' ₭ ຍັງລໍ 24h':'ຍອດ Wallet ບໍ່ພໍ'})</span>`;
+    return;
+  }
   const feeRate = amt >= 500000 ? 0.05 : 0.10;
   const feeLabel = amt >= 500000 ? '5%' : '10%';
   const fee = Math.round(amt * feeRate);
   const net = amt - fee;
   prev.style.display='block';
-  prev.innerHTML=`💰 ຖອນ: <strong style="color:var(--gold)">${amt.toLocaleString()}</strong> ກີບ<br>📊 ຄ່າທຳນຽມ: <strong style="color:#f99">${feeLabel} = ${fee.toLocaleString()} ກີບ</strong><br>✅ ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ກີບ`;
+  prev.innerHTML=`${locked>0?`<div style="font-size:11px;color:var(--text2);margin-bottom:6px">ຖອນໄດ້: <span style="color:#4ade80;font-weight:700">${withdrawable.toLocaleString()} ₭</span> · ລໍ 24h: <span style="color:#fbbf24">${locked.toLocaleString()} ₭</span></div>`:''}
+    💰 ຖອນ: <strong style="color:var(--gold)">${amt.toLocaleString()}</strong> ₭<br>
+    📊 ຄ່າທຳນຽມ: <strong style="color:#f99">${feeLabel} = ${fee.toLocaleString()} ₭</strong><br>
+    ✅ ໄດ້ຮັບ: <strong style="color:#0c6">${net.toLocaleString()}</strong> ₭`;
 }
 
 function doWithdraw(){
@@ -13441,7 +13524,16 @@ function doWithdraw(){
   if(!amt||amt<50000){showNotif('ຂັ້ນຕ່ຳ 50,000 ກີບ');return;}
   const qr = document.getElementById('withdrawQRInput');
   if(!qr.files[0]){showNotif('ກະລຸນາອັດໂຫລດ QR code ກ່ອນ');return;}
-  if((currentUser.wallet||0) < amt){showNotif('ຍອດ Wallet ບໍ່ພໍ');return;}
+  const {withdrawable, locked} = calcWithdrawableAmt();
+  if(amt > withdrawable){
+    if(locked > 0){
+      showNotif(`❌ ຖອນໄດ້ສູງສຸດ ${withdrawable.toLocaleString()} ₭
+(${locked.toLocaleString()} ₭ ຍັງລໍ 24h ຈາກ ID ເກມ)`);
+    } else {
+      showNotif('ຍອດ Wallet ບໍ່ພໍ');
+    }
+    return;
+  }
   const feeRate = amt >= 500000 ? 0.05 : 0.10;
   const fee = Math.round(amt * feeRate);
   const net = amt - fee;
