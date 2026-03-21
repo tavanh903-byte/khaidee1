@@ -13990,11 +13990,16 @@ const SLIP_OWNER_NAME = 'SENGTAVANH BOUNXAISENG';
 // เรียก Edge Function (Gemini 2.0 Flash)
 // ══════════════════════════════════════════
 // ══════════════════════════════════════════════════════
-// ✅ Gemini 1.5 Flash — ອ່ານສລິບໂດຍກົງ (ບໍ່ຜ່ານ Edge Function)
+// ✅ Gemini Vision — ອ່ານສລິບ (Auto fallback ຫຼາຍ model)
 // ══════════════════════════════════════════════════════
 const _GEMINI_KEY = 'AIzaSyDEG1ZrxZ6DixnEB9zZrM-kgmA-bi-qZa0';
-// ✅ gemini-1.5-flash ต้องใช้ v1beta เท่านั้น (v1 ไม่รองรับ model นี้)
-const _GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + _GEMINI_KEY;
+// ລາຍຊື່ model ທີ່ support vision — ລອງຕາມລໍາດັບ
+const _GEMINI_MODELS = [
+  'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=',
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=',
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=',
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=',
+];
 
 const _SLIP_SYSTEM_PROMPT = `You are a bank slip OCR expert for Lao banking apps (JDB, BCEL, LDB, BCELONLINE, UNITEL, etc.).
 Analyze the bank transfer slip image and return ONLY a JSON object — no explanation, no markdown, no code fences.
@@ -14019,8 +14024,27 @@ Rules:
 - is_slip = false ONLY if the image is clearly NOT a bank slip (e.g. a photo, screenshot of something else).
 - Return ONLY the JSON object.`;
 
+// ── helper: ສົ່ງ request ໄປ Gemini model ດຽວ ──
+async function _callGeminiModel(url, base64Data, mimeType){
+  const res = await Promise.race([
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { text: _SLIP_SYSTEM_PROMPT },
+          { inline_data: { mime_type: mimeType, data: base64Data } }
+        ]}],
+        generationConfig: { temperature: 0, maxOutputTokens: 512 }
+      })
+    }),
+    new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 28000))
+  ]);
+  return res;
+}
+
 async function verifySlipOwnerName(dataUrl, expectedAmount) {
-  // ── แสดง loading state บน UI ──
+  // ── ແສດງ loading ──
   const validEl = document.getElementById('slipValidResult');
   if(validEl){
     validEl.style.display='block';
@@ -14034,61 +14058,62 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
     const base64Data = dataUrl.split(',')[1];
     const mimeType   = (dataUrl.split(';')[0].split(':')[1]) || 'image/jpeg';
 
-    // ── Step 1: Gemini 1.5 Flash → ອ່ານສລິບ ──
+    // ── Step 1: ລອງ model ຕາມລໍາດັບ ຈົນກວ່າຈະສຳເລັດ ──
     let geminiResult = null;
-    let geminiRes;
-    try {
-      geminiRes = await Promise.race([
-        fetch(_GEMINI_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: _SLIP_SYSTEM_PROMPT },
-                { inline_data: { mime_type: mimeType, data: base64Data } }
-              ]
-            }],
-            generationConfig: { temperature: 0, maxOutputTokens: 512 }
-          })
-        }),
-        new Promise((_,rej) => setTimeout(() => rej(new Error('Gemini timeout')), 28000))
-      ]);
-    } catch(fetchErr){
-      console.warn('Gemini fetch error:', fetchErr.message);
-      const isTimeout = fetchErr.message === 'Gemini timeout';
-      return {
-        verified: null,
-        reason: isTimeout ? 'network_error' : 'api_error',
-        networkFail: true,
-        errorMsg: isTimeout
-          ? 'ການເຊື່ອມຕໍ່ໃຊ້ເວລາດົນເກີນ — ກວດອິນເຕີເນັດ ແລ້ວລອງໃໝ່'
-          : 'ບໍ່ສາມາດຕິດຕໍ່ Gemini AI ໄດ້: ' + fetchErr.message
-      };
+    let lastErr = 'ບໍ່ສາມາດຕິດຕໍ່ Gemini AI';
+
+    for(const baseUrl of _GEMINI_MODELS){
+      const url = baseUrl + _GEMINI_KEY;
+      let geminiRes;
+      try {
+        geminiRes = await _callGeminiModel(url, base64Data, mimeType);
+      } catch(fetchErr){
+        lastErr = fetchErr.message === 'timeout'
+          ? 'ການເຊື່ອມຕໍ່ໃຊ້ເວລາດົນ — ກວດອິນເຕີເນັດ'
+          : 'ຕິດຕໍ່ Gemini ບໍ່ໄດ້: ' + fetchErr.message;
+        console.warn('Gemini fetch error (' + baseUrl + '):', fetchErr.message);
+        continue; // ລອງ model ຕໍ່ໄປ
+      }
+
+      if(!geminiRes.ok){
+        let errBody = {};
+        try{ errBody = await geminiRes.json(); }catch(_){}
+        const errMsg = errBody?.error?.message || ('HTTP ' + geminiRes.status);
+        console.warn('Gemini HTTP error (' + baseUrl + '):', errMsg);
+        lastErr = errMsg;
+        // 400/404 = model ບໍ່ support → ລອງ model ຕໍ່ໄປ
+        // 403/429 = key/quota ✕ → ຢຸດ
+        if(geminiRes.status === 403 || geminiRes.status === 429){
+          return {
+            verified: null, reason: 'api_key_error', networkFail: true,
+            errorMsg: geminiRes.status === 429
+              ? '⚠️ Gemini API ຮັບ request ໂດຍໄວ — ກາລຸນາລໍ 1 ນາທີ ແລ້ວລອງໃໝ່'
+              : '🔑 API Key ບໍ່ຖືກຕ້ອງ ຫຼື ໝົດສິດ: ' + errMsg
+          };
+        }
+        continue; // 400/404 ลอง model ต่อไป
+      }
+
+      // ── parse response ──
+      const geminiJson = await geminiRes.json();
+      const rawText = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleaned = rawText.replace(/```json|```/g,'').trim();
+      try {
+        geminiResult = JSON.parse(cleaned);
+        console.log('✅ Gemini OK with model:', baseUrl.split('/models/')[1]?.split(':')[0]);
+        break; // ສຳເລັດ — ອອກ loop
+      } catch(parseErr){
+        console.warn('Gemini JSON parse error, raw:', rawText);
+        lastErr = 'AI ສົ່ງຂໍ້ມູນຜິດຮູບແບບ';
+        continue;
+      }
     }
 
-    if(!geminiRes.ok){
-      let errMsg = 'Gemini API Error ' + geminiRes.status;
-      try{ const body = await geminiRes.json(); errMsg = body?.error?.message || errMsg; }catch(_){}
-      console.warn('Gemini HTTP error:', errMsg);
-      const isKeyErr = geminiRes.status === 400 || geminiRes.status === 403;
+    if(!geminiResult){
       return {
-        verified: null,
-        reason: isKeyErr ? 'api_key_error' : 'api_error',
-        networkFail: true,
-        errorMsg: isKeyErr ? 'API Key ບໍ່ຖືກຕ້ອງ ຫຼື ໝົດສິດ: ' + errMsg : errMsg
+        verified: null, reason: 'api_error', networkFail: true,
+        errorMsg: '🔧 ລະບົບ AI ຂັດຂ້ອງ: ' + lastErr + ' — ກາລຸນາລອງໃໝ່'
       };
-    }
-
-    const geminiJson = await geminiRes.json();
-    const rawText = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleaned = rawText.replace(/```json|```/g,'').trim();
-
-    try {
-      geminiResult = JSON.parse(cleaned);
-    } catch(parseErr){
-      console.warn('Gemini JSON parse error, raw:', rawText);
-      return { verified: null, reason: 'parse_error', networkFail: true, errorMsg: 'AI ສົ່ງຂໍ້ມູນຜິດຮູບແບບ — ລອງໃໝ່ອີກຄັ້ງ' };
     }
 
     // ── ກວດວ່າ AI ບອກວ່າເປັນສລິບຈິງໄຫມ ──
