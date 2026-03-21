@@ -13970,108 +13970,143 @@ const SLIP_OWNER_NAME = 'SENGTAVANH BOUNXAISENG';
 // 🛡️ SLIP VERIFICATION — 3 Layer System
 // เรียก Edge Function (Gemini 2.0 Flash)
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// ✅ Gemini 1.5 Flash — ອ່ານສລິບໂດຍກົງ (ບໍ່ຜ່ານ Edge Function)
+// ══════════════════════════════════════════════════════
+const _GEMINI_KEY = 'AIzaSyDEG1ZrxZ6DixnEB9zZrM-kgmA-bi-qZa0';
+const _GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + _GEMINI_KEY;
+
+const _SLIP_SYSTEM_PROMPT = `You are a bank slip OCR assistant. Analyze the provided bank transfer slip image and extract the following fields in JSON format only. Do NOT include any explanation or markdown.
+
+Required JSON fields:
+{
+  "reference_no": "transaction reference number or slip number (string)",
+  "amount": 123456 (number, in LAK/KIP - extract digits only, no commas),
+  "date": "YYYY-MM-DD or DD/MM/YYYY as shown",
+  "time": "HH:MM as shown",
+  "receiver": "recipient name or merchant name",
+  "sender": "sender name if available",
+  "bank": "bank name (JDB, BCEL, LDB, etc.)",
+  "is_slip": true or false (whether this looks like a genuine bank transfer slip)
+}
+
+Rules:
+- If a field is not found, use null.
+- amount must be a plain number (integer), not a string.
+- reference_no is the most important field — look for Ref No., Reference, Transaction ID, Slip No.
+- Return ONLY the JSON object, nothing else.`;
+
 async function verifySlipOwnerName(dataUrl, expectedAmount) {
   try {
     const base64Data = dataUrl.split(',')[1];
-    const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+    const mimeType   = (dataUrl.split(';')[0].split(':')[1]) || 'image/jpeg';
 
-    // สร้าง file hash เพื่อตรวจ duplicate
-    const hashBuffer = await crypto.subtle.digest('SHA-256', 
-      new TextEncoder().encode(base64Data.slice(0, 1000))
-    );
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
-
-    const userId = currentUser?.id || 'unknown';
-
-    let response;
+    // ── Step 1: Gemini 1.5 Flash → อ่านสลิป ──
+    let geminiResult = null;
     try {
-      response = await Promise.race([
-        fetch('https://homqmtkiziariocverjk.supabase.co/functions/v1/bright-endpoint', {
+      const geminiRes = await Promise.race([
+        fetch(_GEMINI_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + SUPA_KEY
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            image_base64: base64Data,
-            mime_type: mimeType,
-            user_id: userId,
-            expected_amount: expectedAmount || null,
-            file_hash: fileHash
+            contents: [{
+              parts: [
+                { text: _SLIP_SYSTEM_PROMPT },
+                { inline_data: { mime_type: mimeType, data: base64Data } }
+              ]
+            }],
+            generationConfig: { temperature: 0, maxOutputTokens: 512 }
           })
         }),
-        new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 30000))
+        new Promise((_,rej) => setTimeout(() => rej(new Error('Gemini timeout')), 25000))
       ]);
-    } catch(fetchErr) {
-      console.warn('Fetch error:', fetchErr.message);
+
+      if(!geminiRes.ok){
+        const errBody = await geminiRes.text().catch(()=>'');
+        console.warn('Gemini HTTP', geminiRes.status, errBody);
+        return { verified: null, reason: 'api_error', networkFail: true };
+      }
+
+      const geminiJson = await geminiRes.json();
+      const rawText = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      // parse JSON from Gemini response (strip code fences if any)
+      const cleaned = rawText.replace(/```json|```/g,'').trim();
+      geminiResult = JSON.parse(cleaned);
+
+    } catch(gErr){
+      console.warn('Gemini error:', gErr.message);
+      if(gErr.message === 'Gemini timeout')
+        return { verified: null, reason: 'network_error', networkFail: true };
+      if(gErr.message.includes('API key'))
+        return { verified: null, reason: 'api_key_error', networkFail: true };
       return { verified: null, reason: 'network_error', networkFail: true };
     }
 
-    if (!response.ok) {
-      console.warn('HTTP error:', response.status);
-      return { verified: null, reason: 'api_error', networkFail: true };
+    // ── ตรวจว่า AI บอกว่าเป็นสลิปจริงไหม ──
+    if(!geminiResult || geminiResult.is_slip === false){
+      return {
+        verified: false,
+        reason: 'not_real_slip',
+        errors: ['ຮູບທີ່ອັດໂຫລດບໍ່ແມ່ນສລິບໂອນເງິນ'],
+        notSlip: true
+      };
     }
 
-    const result = await response.json();
-    console.log('Slip verify result:', result.status);
+    const refNo  = (geminiResult.reference_no || '').toString().trim();
+    const amount = Number(geminiResult.amount) || 0;
+    const date   = geminiResult.date   || null;
+    const time   = geminiResult.time   || null;
+    const receiver = geminiResult.receiver || null;
 
-    // แปลง response จาก Edge Function เป็น format เดิม
-    switch(result.status) {
+    // ── Step 2: Supabase — ตรวจ reference_no ซ้ำ ──
+    if(refNo){
+      try {
+        const { data: existing, error: dupErr } = await supa
+          .from('kd_deposits')
+          .select('id')
+          .eq('ref', refNo)
+          .neq('status', 'rejected')
+          .limit(1);
 
-      case 'approved':
-        return {
-          verified: 'pending_admin',
-          reason: 'all_match',
-          recipientName: result.extracted?.receiver || '',
-          amount: result.extracted?.amount,
-          date: result.extracted?.date,
-          time: result.extracted?.time,
-          transactionRef: result.extracted?.ref || null,
-          newBalance: result.new_balance,
-          autoApproved: true
-        };
-
-      case 'pending_admin':
-        return {
-          verified: 'pending_admin',
-          reason: 'pending_admin_confirm',
-          recipientName: result.extracted?.receiver || '',
-          amount: result.extracted?.amount,
-          date: result.extracted?.date,
-          transactionRef: result.extracted?.ref || null,
-          slip_id: result.slip_id
-        };
-
-      case 'manual_check':
-        return {
-          verified: null,
-          reason: 'manual_check',
-          networkFail: true,
-          slip_id: result.slip_id
-        };
-
-      case 'rejected':
-        return {
-          verified: false,
-          reason: result.reason || 'rejected',
-          errors: [result.message || 'ສລິບຖືກປະຕິເສດ'],
-          isSuspicious: result.reason === 'duplicate_slip' || result.reason === 'duplicate_ref',
-          notSlip: result.reason === 'not_real_slip'
-        };
-
-      case 'blocked':
-        return {
-          verified: false,
-          reason: 'user_blocked',
-          errors: [result.message || 'ບັນຊີຖືກລະງັບ'],
-          isSuspicious: true,
-          isBlocked: true
-        };
-
-      default:
-        return { verified: null, reason: 'unknown_response', networkFail: true };
+        if(!dupErr && existing && existing.length > 0){
+          return {
+            verified: false,
+            reason: 'duplicate_slip',
+            errors: ['ສລິບ Ref: ' + refNo + ' ຖືກໃຊ້ງານໄປແລ້ວ'],
+            isSuspicious: true
+          };
+        }
+      } catch(dbErr){
+        console.warn('Supabase dup check error:', dbErr);
+        // ถ้า DB ล้มก็ยังดำเนินการต่อได้ (soft fail)
+      }
     }
+
+    // ── Step 3: ตรวจ amount ──
+    if(amount < 1000){
+      return {
+        verified: false,
+        reason: 'amount_too_low',
+        errors: ['ຈຳນວນເງິນໃນສລິບຕ່ຳເກີນໄປ (' + amount.toLocaleString() + ' ₭)'],
+        amount, date, time, transactionRef: refNo
+      };
+    }
+
+    // ── ✅ ສລິບຜ່ານ — ສົ່ງ pending_admin ──
+    const autoApprove = (amount > 0) && !!refNo && !!(receiver);
+    return {
+      verified: 'pending_admin',
+      reason:   autoApprove ? 'all_match' : 'no_name',
+      recipientName:  receiver || null,
+      amount,
+      date,
+      time,
+      transactionRef: refNo || null,
+      autoApproved:   autoApprove,
+      newBalance:     autoApprove && currentUser
+        ? (currentUser.wallet || 0) + amount
+        : null
+    };
 
   } catch(err) {
     console.warn('verifySlipOwnerName error:', err);
