@@ -14082,13 +14082,18 @@ async function verifySlipOwnerName(dataUrl, expectedAmount) {
         console.warn('Gemini HTTP error (' + baseUrl + '):', errMsg);
         lastErr = errMsg;
         // 400/404 = model ບໍ່ support → ລອງ model ຕໍ່ໄປ
-        // 403/429 = key/quota ✕ → ຢຸດ
-        if(geminiRes.status === 403 || geminiRes.status === 429){
+        // 429 = rate limit → ຢຸດ ແຈ້ງລໍ
+        // 403 = key ຜິດ → ຢຸດ ແຈ້ງ key
+        if(geminiRes.status === 429){
+          return {
+            verified: null, reason: 'rate_limit', networkFail: true,
+            errorMsg: '⚠️ ໃຊ້ງານໂດຍໄວ — ກາລຸນາລໍ 1-2 ນາທີ ແລ້ວລອງໃໝ່'
+          };
+        }
+        if(geminiRes.status === 403){
           return {
             verified: null, reason: 'api_key_error', networkFail: true,
-            errorMsg: geminiRes.status === 429
-              ? '⚠️ Gemini API ຮັບ request ໂດຍໄວ — ກາລຸນາລໍ 1 ນາທີ ແລ້ວລອງໃໝ່'
-              : '🔑 API Key ບໍ່ຖືກຕ້ອງ ຫຼື ໝົດສິດ: ' + errMsg
+            errorMsg: '🔑 API Key ຖືກລາຍງານວ່າ leaked — ກາລຸນາສ້າງ Key ໃໝ່ທີ່ aistudio.google.com/apikey'
           };
         }
         continue; // 400/404 ลอง model ต่อไป
@@ -14485,23 +14490,47 @@ function previewDepositSlip(){
         // Gemini/DB error — ແສດງສາເຫດຈາກ error
         const reason = nameCheck?.reason || 'unknown';
         const detailMsg = nameCheck?.errorMsg || '';
+        const isRateLimit = reason === 'rate_limit';
         const isNetworkError = reason === 'timeout' || reason === 'network_error' || reason === 'api_error' || reason === 'parse_error';
         const isKeyError = reason === 'api_key_error';
-        const reasonMsg = reason === 'timeout' ? '⏱️ ລະບົບໃຊ້ເວລາດົນ — ກາລຸນາລອງໃໝ່' :
-                          reason === 'api_key_error' ? '🔑 API Key ບໍ່ຖືກຕ້ອງ ຫຼື ໝົດສິດ' :
+        const reasonMsg = isRateLimit ? '⏳ ລໍຖ້າສັ້ນໆ — ໃຊ້ງານໂດຍໄວ' :
+                          reason === 'timeout' ? '⏱️ ລະບົບໃຊ້ເວລາດົນ — ກາລຸນາລອງໃໝ່' :
+                          reason === 'api_key_error' ? '🔑 API Key ຖືກລາຍງານ leaked — ສ້າງ Key ໃໝ່' :
                           reason === 'parse_error' ? '📄 AI ສົ່ງຂໍ້ມູນຜິດຮູບແບບ — ລອງໃໝ່ອີກຄັ້ງ' :
                           reason === 'api_error' ? '🔧 ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ — ກາລຸນາລອງໃໝ່ອີກຄັ້ງ' :
                           reason === 'network_error' ? '📡 ເຊື່ອມຕໍ່ລະບົບ AI ບໍ່ໄດ້ — ກວດສອບອິນເຕີເນັດ ແລ້ວລອງໃໝ່' :
                           reason === 'empty_response' ? '📷 AI ບໍ່ສາມາດອ່ານຮູບນີ້ໄດ້ — ກາລຸນາໃຊ້ຮູບທີ່ຊັດກວ່ານີ້' :
                           '❌ AI ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່';
-        validEl.style.background= (isNetworkError||isKeyError) ? 'rgba(234,179,8,0.12)' : 'rgba(220,38,38,0.12)';
-        validEl.style.border= (isNetworkError||isKeyError) ? '1px solid rgba(234,179,8,0.4)' : '1px solid rgba(220,38,38,0.4)';
-        validEl.style.color= (isNetworkError||isKeyError) ? '#fbbf24' : '#f87171';
+        validEl.style.background= (isRateLimit||isNetworkError||isKeyError) ? 'rgba(234,179,8,0.12)' : 'rgba(220,38,38,0.12)';
+        validEl.style.border= (isRateLimit||isNetworkError||isKeyError) ? '1px solid rgba(234,179,8,0.4)' : '1px solid rgba(220,38,38,0.4)';
+        validEl.style.color= (isRateLimit||isNetworkError||isKeyError) ? '#fbbf24' : '#f87171';
+
+        // ── Rate limit: ນັບຖອຍຫຼັງ 60 ວິ ──
+        let rlCountdownHtml = '';
+        if(isRateLimit){
+          const rlEnd = Date.now() + 60000;
+          setTimeout(()=>{
+            const rlTick = setInterval(()=>{
+              const left = Math.max(0, Math.ceil((rlEnd - Date.now())/1000));
+              const el2 = document.getElementById('rl_countdown');
+              if(el2) el2.textContent = left + ' ວິນາທີ';
+              if(left <= 0){ clearInterval(rlTick); if(el2) el2.closest('.rl-wrap').innerHTML='<span style="color:#4ade80">✅ ພ້ອມລອງໃໝ່ແລ້ວ — ກົດ "ລອງກວດໃໝ່"</span>'; }
+            }, 1000);
+          }, 100);
+          rlCountdownHtml = `<div class="rl-wrap" style="margin-top:8px;font-size:12px;background:rgba(234,179,8,0.1);padding:8px;border-radius:8px;text-align:center">
+            ⏳ ລໍອີກ <span id="rl_countdown" style="font-weight:700;color:var(--gold)">60 ວິນາທີ</span> ແລ້ວລອງໃໝ່
+          </div>`;
+        }
+
         validEl.innerHTML=`${reasonMsg}
-          ${detailMsg ? `<div style="font-size:11px;color:#f87171;margin-top:4px;opacity:.9">${detailMsg}</div>` : ''}
+          ${detailMsg ? `<div style="font-size:11px;color:#fbbf24;margin-top:4px;opacity:.9">${detailMsg}</div>` : ''}
+          ${rlCountdownHtml}
           <div style="margin-top:8px;font-size:11px;line-height:1.9;opacity:0.9;background:rgba(0,0,0,0.15);padding:10px;border-radius:8px">
-            ${isKeyError
-              ? `ກວດສອບ Gemini API Key ໃນ Settings ຂອງ Developer`
+            ${isRateLimit
+              ? `Gemini Free ຈຳກັດ 15 request/ນາທີ<br>
+                 &nbsp;⏳ ລໍ 1-2 ນາທີ ແລ້ວລອງໃໝ່`
+              : isKeyError
+              ? `ໄປສ້າງ Key ໃໝ່ທີ່:<br>&nbsp;🔗 aistudio.google.com/apikey`
               : isNetworkError
               ? `ລະບົບ AI ຂັດຂ້ອງ — ກາລຸນາ:<br>
                  &nbsp;🔄 ລໍຖ້າ 10-20 ວິນາທີ ແລ້ວລອງໃໝ່<br>
