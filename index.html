@@ -1426,6 +1426,7 @@ async function syncFromSupabase(){
   }
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
 <div class="notif-container" id="notifContainer"></div>
@@ -3060,16 +3061,86 @@ async function syncFromSupabase(){
           </div>
         </div>
 
-        <!-- Upload Slip -->
+
+        <!-- Scanner UI — ສະແກນ QR / ເລືອກຮູບ -->
         <div style="margin-bottom:4px">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">ອັດໂຫລດສລິບການໂອນ *</div>
-          <div class="upload-box" id="slipUploadBox" onclick="document.getElementById('depositSlipInput').click()" style="min-height:70px;border-style:dashed">
-            📎 ກົດເພື່ອເລືອກຮູບສລິບ
-            <div id="depositSlipPreview" style="margin-top:8px"></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">📷 ສະແກນ QR ໃນສລິບ *</div>
+
+          <!-- Camera preview area -->
+          <div id="slipScannerWrap" style="position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;display:none">
+            <video id="slipCamVideo" autoplay playsinline muted style="width:100%;display:block;border-radius:14px"></video>
+            <!-- QR frame overlay -->
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <div style="position:relative;width:65%;aspect-ratio:1">
+                <div style="position:absolute;top:0;left:0;width:22px;height:22px;border-top:3px solid var(--gold);border-left:3px solid var(--gold);border-radius:3px 0 0 0"></div>
+                <div style="position:absolute;top:0;right:0;width:22px;height:22px;border-top:3px solid var(--gold);border-right:3px solid var(--gold);border-radius:0 3px 0 0"></div>
+                <div style="position:absolute;bottom:0;left:0;width:22px;height:22px;border-bottom:3px solid var(--gold);border-left:3px solid var(--gold);border-radius:0 0 0 3px"></div>
+                <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-bottom:3px solid var(--gold);border-right:3px solid var(--gold);border-radius:0 0 3px 0"></div>
+                <div id="slipScanLine" style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scanLine 1.8s linear infinite"></div>
+              </div>
+            </div>
+            <!-- Status bar -->
+            <div id="slipCamStatus" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);padding:6px 10px;font-size:12px;color:#fff;text-align:center;backdrop-filter:blur(4px)">
+              🟢 ສະແກນໄດ້ — ຊີ້ QR ໃສ່ກ່ອງ
+            </div>
+            <canvas id="slipCamCanvas" style="display:none"></canvas>
           </div>
+
+          <!-- Default: show buttons -->
+          <div id="slipScanBtns" style="display:flex;gap:8px;margin-bottom:8px">
+            <button onclick="startSlipCamera()" style="flex:1;background:linear-gradient(135deg,rgba(201,168,76,.25),rgba(201,168,76,.1));border:1px solid rgba(201,168,76,.5);color:var(--gold);border-radius:12px;padding:14px 8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
+              📷 ເລີ່ມສະແກນ
+            </button>
+            <button onclick="document.getElementById('depositSlipInput').click()" style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:var(--text);border-radius:12px;padding:14px 8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
+              🖼 ເລືອກຮູບ
+            </button>
+          </div>
+
+          <!-- Camera control buttons (shown when camera active) -->
+          <div id="slipCamControls" style="display:none;gap:8px;margin-bottom:8px">
+            <button onclick="document.getElementById('depositSlipInput').click()" style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:var(--text);border-radius:12px;padding:10px 8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">
+              🖼 ເລືອກຮູບແທນ
+            </button>
+            <button onclick="stopSlipCamera()" style="flex:1;background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.4);color:#f87171;border-radius:12px;padding:10px 8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">
+              ■ ຢຸດ
+            </button>
+          </div>
+          <div id="slipCamControls" style="display:none"></div>
+
           <input type="file" id="depositSlipInput" accept="image/*" style="display:none" onchange="previewDepositSlip()">
-          <!-- Slip validation result -->
+          <div id="depositSlipPreview" style="margin-top:6px;text-align:center"></div>
           <div id="slipValidResult" style="margin-top:8px;font-size:12px;border-radius:8px;padding:8px 12px;display:none"></div>
+        </div>
+
+        <style>
+          @keyframes scanLine { 0%{top:0} 50%{top:calc(100% - 2px)} 100%{top:0} }
+        </style>
+
+        <!-- Auto-fill fields from QR scan -->
+        <div id="slipAutoFields" style="display:none;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:#4ade80;margin-bottom:8px;letter-spacing:0.5px">✅ ສະແກນ QR ສຳເລັດ — ຂໍ້ມູນຈາກສລິບ</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">👤 ຊື່ຜູ້ຮັບ</div>
+              <input class="form-input" type="text" id="depReceiverName" readonly
+                style="font-size:13px;font-weight:700;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.3);color:#4ade80;cursor:not-allowed">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">📅 ວັນເວລາໂອນ</div>
+              <input class="form-input" type="text" id="depSlipTime" readonly
+                style="font-size:13px;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.3);cursor:not-allowed">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">🔢 ເລກອ້າງອີງ (Reference)</div>
+              <input class="form-input" type="text" id="depSlipRef" readonly
+                style="font-size:13px;letter-spacing:0.5px;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.3);cursor:not-allowed">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:3px">💰 ຈຳນວນເງິນໃນສລິບ</div>
+              <input class="form-input" type="text" id="depSlipAmount" readonly
+                style="font-size:13px;font-weight:700;background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.3);color:var(--gold);cursor:not-allowed">
+            </div>
+          </div>
         </div>
 
         <button class="btn btn-gold" id="depConfirmBtn" onclick="doDeposit()" style="margin-bottom:8px;opacity:0.4;pointer-events:none">
@@ -13909,738 +13980,650 @@ function goDepStep1(){
 function getSlipHashes(){
   try{return JSON.parse(localStorage.getItem('kd_slip_hashes')||'[]');}catch(e){return[];}
 }
+
+// ── Countdown Timer ──
+let _slipCountdownTimer = null;
+let _slipCountdownEnd   = null;
+function startSlipCountdown(){
+  stopSlipCountdown();
+  const TOTAL = 10 * 60 * 1000;
+  _slipCountdownEnd = Date.now() + TOTAL;
+  const wrap = document.getElementById('slipCountdownWrap');
+  const disp = document.getElementById('slipCountdownDisplay');
+  const bar  = document.getElementById('slipCountdownBar');
+  if(wrap) wrap.style.display='block';
+  if(bar)  bar.style.width='100%';
+  function tick(){
+    const rem = _slipCountdownEnd - Date.now();
+    if(rem <= 0){ stopSlipCountdown(); resetSlipSession(); return; }
+    const m=Math.floor(rem/60000), s=Math.floor((rem%60000)/1000);
+    if(disp) disp.textContent=m+':'+String(s).padStart(2,'0');
+    if(bar)  bar.style.width=(rem/TOTAL*100).toFixed(1)+'%';
+  }
+  tick();
+  _slipCountdownTimer = setInterval(tick, 1000);
+}
+function stopSlipCountdown(){
+  if(_slipCountdownTimer){ clearInterval(_slipCountdownTimer); _slipCountdownTimer=null; }
+  _slipCountdownEnd=null;
+  const wrap=document.getElementById('slipCountdownWrap');
+  if(wrap) wrap.style.display='none';
+}
+
 function saveSlipHash(h){
   const hashes = getSlipHashes();
   hashes.push({hash:h, date:new Date().toISOString()});
   if(hashes.length>500) hashes.splice(0, hashes.length-500);
   localStorage.setItem('kd_slip_hashes', JSON.stringify(hashes));
 }
+function getUsedRefs(){
+  try{
+    const deps=JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+    return deps.filter(d=>d.ref&&d.status!=='rejected').map(d=>d.ref.toUpperCase());
+  }catch(e){return[];}
+}
 
-// ✅ ตรวจ QR/Transaction Ref ซ้ำจาก Supabase (ป้องกันข้ามเครื่อง)
+// ── ຕັ້ງຄ່າຊື່ເຈົ້າຂອງບັນຊີ ──
+const SLIP_OWNER_NAME    = 'SENGTAVANH BOUNXAISENG';
+const SLIP_OWNER_ALIASES = ['SENGTAVANH','BOUNXAISENG'];
+
+// ── ກວດ Supabase ວ່າ ref/hash ຊ້ຳ ──
 async function checkQRDuplicate(qrData, transactionRef, slipHash){
   try{
     const checks = [];
-    // ตรวจ slip_hash ซ้ำ
-    if(slipHash){
-      checks.push(
-        supa.from('kd_deposits')
-          .select('id,user_name,amount,date_str,status')
-          .eq('slip_hash', slipHash)
-          .neq('status','rejected')
-          .limit(1)
-      );
-    }
-    // ตรวจ qr_data ซ้ำ
-    if(qrData){
-      checks.push(
-        supa.from('kd_deposits')
-          .select('id,user_name,amount,date_str,status')
-          .eq('qr_data', qrData)
-          .neq('status','rejected')
-          .limit(1)
-      );
-    }
-    // ตรวจ transaction_ref ซ้ำ
-    if(transactionRef){
-      checks.push(
-        supa.from('kd_deposits')
-          .select('id,user_name,amount,date_str,status')
-          .eq('transaction_ref', transactionRef)
-          .neq('status','rejected')
-          .limit(1)
-      );
-    }
-    if(!checks.length) return {isDuplicate: false};
+    if(slipHash) checks.push(supa.from('kd_deposits').select('id,user_name').eq('slip_hash',slipHash).neq('status','rejected').limit(1));
+    if(qrData)   checks.push(supa.from('kd_deposits').select('id,user_name').eq('qr_data',qrData).neq('status','rejected').limit(1));
+    if(transactionRef) checks.push(supa.from('kd_deposits').select('id,user_name').eq('transaction_ref',transactionRef).neq('status','rejected').limit(1));
+    if(!checks.length) return {isDuplicate:false};
     const results = await Promise.all(checks);
     for(const r of results){
-      if(r.data && r.data.length > 0){
-        const dup = r.data[0];
-        return {
-          isDuplicate: true,
-          dupId: dup.id,
-          dupUser: dup.user_name,
-          dupAmount: dup.amount,
-          dupDate: dup.date_str
-        };
-      }
+      if(r.data && r.data.length>0) return {isDuplicate:true, dupUser:r.data[0].user_name};
     }
-    return {isDuplicate: false};
-  } catch(e){
-    console.warn('checkQRDuplicate error:', e);
-    return {isDuplicate: false}; // ถ้า network fail → ไม่บล็อก
-  }
+    return {isDuplicate:false};
+  }catch(e){ console.warn('checkQRDuplicate:',e); return {isDuplicate:false}; }
 }
+
 async function hashImage(dataUrl){
-  // Simple hash จาก pixel sampling — ป้องกัน duplicate ได้ดี
-  const str = dataUrl.slice(0,2000) + dataUrl.slice(-500) + dataUrl.length;
-  let hash = 0;
+  const str = dataUrl.slice(0,2000)+dataUrl.slice(-500)+dataUrl.length;
+  let hash=0;
   for(let i=0;i<str.length;i++){hash=((hash<<5)-hash)+str.charCodeAt(i);hash|=0;}
   return 'H'+Math.abs(hash).toString(36).toUpperCase();
 }
 
-
-// ══════════════════════════════════════════
-// SLIP FULL VERIFICATION (Claude OCR)
-// ตรวจ: ชื่อผู้รับ + จำนวนเงิน + วันที่ + เวลา
-// ══════════════════════════════════════════
-const SLIP_OWNER_NAME = 'SENGTAVANH BOUNXAISENG';
-
-// ══════════════════════════════════════════
-// 🛡️ SLIP VERIFICATION — 3 Layer System
-// เรียก Edge Function (Gemini 2.0 Flash)
-// ══════════════════════════════════════════
 // ══════════════════════════════════════════════════════
-// ✅ Gemini Vision — ອ່ານສລິບ (Auto fallback ຫຼາຍ model)
+// ✅ QR SCAN + SLIP VERIFY — ຫຼັກ (ບໍ່ໃຊ້ AI)
 // ══════════════════════════════════════════════════════
-const _GEMINI_KEY = 'AIzaSyCB9sVoarZKHtniBrk-qLwQNaQW50emB-w';
-// ລາຍຊື່ model ທີ່ support vision — ລອງຕາມລໍາດັບ
-const _GEMINI_MODELS = [
-  'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=',
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=',
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=',
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=',
-];
 
-const _SLIP_SYSTEM_PROMPT = `You are a bank slip OCR expert for Lao banking apps (JDB, BCEL, LDB, BCELONLINE, UNITEL, etc.).
-Analyze the bank transfer slip image and return ONLY a JSON object — no explanation, no markdown, no code fences.
-
-JSON fields required:
-{
-  "reference_no": "Reference 1 or Ref No. or Transaction ID or Slip No. — the unique transaction code (string, required)",
-  "amount": 10000,
-  "transfer_date": "DD/MM/YY or YYYY-MM-DD as shown on slip",
-  "time": "HH:MM as shown",
-  "receiver": "Merchant or recipient name (e.g. SENGTAVANH BOUNXAISENG)",
-  "sender": "sender name if visible",
-  "bank": "bank name (JDB, BCEL, LDB, etc.)",
-  "status": "Payment Completed or Transferred or as shown",
-  "is_slip": true
+// ── ສະແກນ QR ຈາກຮູບ canvas ──
+function _scanQRFromCanvas(canvas){
+  if(typeof jsQR === 'undefined') return null;
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const result = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: 'dontInvert'
+  });
+  return result ? result.data : null;
 }
 
-Rules:
-- reference_no: look for 'Reference 1', 'Reference 2', 'Ref No.', 'Transaction ID', 'Slip No.' — pick the FIRST one that looks like a unique code (e.g. BONECLW9K30NXD4M).
-- amount must be a plain INTEGER (no commas, no currency symbol).
-- If a field is missing, use null.
-- is_slip = false ONLY if the image is clearly NOT a bank slip (e.g. a photo, screenshot of something else).
-- Return ONLY the JSON object.`;
-
-// ── helper: ສົ່ງ request ໄປ Gemini model ດຽວ ──
-async function _callGeminiModel(url, base64Data, mimeType){
-  const res = await Promise.race([
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { text: _SLIP_SYSTEM_PROMPT },
-          { inline_data: { mime_type: mimeType, data: base64Data } }
-        ]}],
-        generationConfig: { temperature: 0, maxOutputTokens: 512 }
-      })
-    }),
-    new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 28000))
-  ]);
-  return res;
-}
-
-async function verifySlipOwnerName(dataUrl, expectedAmount) {
-  // ── ແສດງ loading ──
-  const validEl = document.getElementById('slipValidResult');
-  if(validEl){
-    validEl.style.display='block';
-    validEl.style.background='rgba(234,179,8,0.08)';
-    validEl.style.border='1px solid rgba(234,179,8,0.3)';
-    validEl.style.color='#fbbf24';
-    validEl.innerHTML='⏳ <strong>Gemini AI ກຳລັງອ່ານສລິບ...</strong><br><span style="font-size:11px;opacity:.8">ກາລຸນາລໍ 10-20 ວິນາທີ</span>';
+// ── ກວດວ່າຮູບເປັນສລິບ JDB ຫຼື BCEL ──
+function _detectSlipType(ctx, W, H){
+  // ກວດ banner ສີ ດ້ານເທິງ 25%
+  const topH = Math.floor(H * 0.25);
+  const topData = ctx.getImageData(0, 0, W, topH).data;
+  let redPx=0, bluePx=0, totalPx=W*topH;
+  for(let i=0;i<topData.length;i+=4){
+    const r=topData[i], g=topData[i+1], b=topData[i+2];
+    if(r>150 && r>g*1.5 && r>b*1.5) redPx++;   // สีแดง = BCEL
+    if(b>150 && b>r*1.5 && b>g*1.2) bluePx++;  // สีฟ้า = JDB
   }
+  const redPct  = redPx/totalPx;
+  const bluePct = bluePx/totalPx;
+  if(redPct > 0.15) return 'BCEL';
+  if(bluePct > 0.12) return 'JDB';
+  return 'OTHER';
+}
+
+// ── ກວດຄວາມຊັດຂອງຮູບ (Laplacian variance) ──
+function _checkImageSharpness(ctx, W, H){
+  const data = ctx.getImageData(0, 0, W, H).data;
+  let variance = 0, count = 0;
+  for(let y=1;y<H-1;y++){
+    for(let x=1;x<W-1;x++){
+      const i=(y*W+x)*4;
+      const gray = (data[i]+data[i+1]+data[i+2])/3;
+      const grayT= (data[((y-1)*W+x)*4]+data[((y-1)*W+x)*4+1]+data[((y-1)*W+x)*4+2])/3;
+      const grayB= (data[((y+1)*W+x)*4]+data[((y+1)*W+x)*4+1]+data[((y+1)*W+x)*4+2])/3;
+      const lap = Math.abs(gray*2 - grayT - grayB);
+      variance += lap; count++;
+    }
+  }
+  return count>0 ? variance/count : 0;
+}
+
+// ── parse ວັນເວລາຈາກ QR text ──
+function _parseSlipDateTime(text){
+  if(!text) return null;
+  // ຮູບແບບ: DD/MM/YY HH:MM, DD/MM/YYYY HH:MM:SS, YYYY-MM-DD HH:MM
+  const patterns = [
+    /(\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?/,
+    /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/,
+    /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/,
+  ];
+  for(const pat of patterns){
+    const m = text.match(pat);
+    if(m){
+      try{
+        let d;
+        if(pat.source.startsWith('(\\d{2})\\\/')){
+          const yr = m[3].length===2 ? '20'+m[3] : m[3];
+          d = new Date(parseInt(yr), parseInt(m[2])-1, parseInt(m[1]), parseInt(m[4]), parseInt(m[5]), m[6]?parseInt(m[6]):0);
+        } else {
+          d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]), parseInt(m[4]), parseInt(m[5]));
+        }
+        if(!isNaN(d.getTime())) return d;
+      }catch(_){}
+    }
+  }
+  return null;
+}
+
+// ── parse ຈຳນວນເງິນຈາກ QR text ──
+function _parseSlipAmount(text){
+  if(!text) return null;
+  // ຊອກຫາຕົວເລກທີ່ຕາມດ້ວຍ LAK ຫຼື KIP
+  const m = text.match(/(\d[\d,\.]+)\s*(?:LAK|KIP|₭)/i);
+  if(m) return parseInt(m[1].replace(/[,\.]/g,''));
+  // ຫຼືຕົວເລກໃຫຍ່ (>=1000)
+  const nums = text.match(/\b(\d{4,})\b/g);
+  if(nums) return parseInt(nums[0].replace(/,/g,''));
+  return null;
+}
+
+// ── parse reference ຈາກ QR text ──
+function _parseSlipRef(text){
+  if(!text) return null;
+  // ຊອກ pattern ເຊັ່ນ BONECLW9K30NXD4M, 001LNQO517534635543
+  const m = text.match(/\b([A-Z0-9]{8,})\b/g);
+  if(m && m.length>0) return m[0];
+  return null;
+}
+
+// ── parse ຊື່ຈາກ QR text ──
+function _parseSlipReceiver(text){
+  if(!text) return null;
+  const upperText = text.toUpperCase();
+  // ຊອກ SENGTAVANH ຫຼື BOUNXAISENG ໃນຂໍ້ຄວາມ
+  if(upperText.includes('SENGTAVANH') || upperText.includes('BOUNXAISENG'))
+    return 'SENGTAVANH BOUNXAISENG';
+  // pattern: ຊື່ຕົວອັກສອນໃຫຍ່ 2+ ຄຳ
+  const m = text.match(/([A-Z][A-Z]+\s+[A-Z][A-Z]+(?:\s+[A-Z]+)?)/g);
+  if(m && m.length>0) return m[0].trim();
+  return null;
+}
+
+// ══════════════════════════════════════════════════════
+// 📷 CAMERA QR SCANNER — ສະແກນ QR ຈາກກ້ອງສົດ
+// ══════════════════════════════════════════════════════
+let _slipCamStream    = null;
+let _slipCamInterval  = null;
+
+async function startSlipCamera(){
+  if(_slipCamStream) return;
+  const wrap     = document.getElementById('slipScannerWrap');
+  const btns     = document.getElementById('slipScanBtns');
+  const controls = document.getElementById('slipCamControls');
+  const video    = document.getElementById('slipCamVideo');
+  const status   = document.getElementById('slipCamStatus');
+
+  // ສະແດງ camera wrap + ປຸ່ມ control
+  if(wrap)     { wrap.style.display='block'; }
+  if(btns)     { btns.style.display='none'; }
+  if(controls) { controls.style.display='flex'; }
 
   try {
-    const base64Data = dataUrl.split(',')[1];
-    const mimeType   = (dataUrl.split(';')[0].split(':')[1]) || 'image/jpeg';
+    _slipCamStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+    });
+    video.srcObject = _slipCamStream;
+    await video.play();
+    if(status) status.textContent = '🟢 ສະແກນໄດ້ — ຊີ້ QR ໃສ່ກ່ອງ';
 
-    // ── Step 1: ລອງ model ຕາມລໍາດັບ ຈົນກວ່າຈະສຳເລັດ ──
-    let geminiResult = null;
-    let lastErr = 'ບໍ່ສາມາດຕິດຕໍ່ Gemini AI';
-
-    for(const baseUrl of _GEMINI_MODELS){
-      const url = baseUrl + _GEMINI_KEY;
-      let geminiRes;
-      try {
-        geminiRes = await _callGeminiModel(url, base64Data, mimeType);
-      } catch(fetchErr){
-        lastErr = fetchErr.message === 'timeout'
-          ? 'ການເຊື່ອມຕໍ່ໃຊ້ເວລາດົນ — ກວດອິນເຕີເນັດ'
-          : 'ຕິດຕໍ່ Gemini ບໍ່ໄດ້: ' + fetchErr.message;
-        console.warn('Gemini fetch error (' + baseUrl + '):', fetchErr.message);
-        continue; // ລອງ model ຕໍ່ໄປ
+    // ── scan loop ──
+    const canvas = document.getElementById('slipCamCanvas');
+    const ctx    = canvas.getContext('2d');
+    _slipCamInterval = setInterval(()=>{
+      if(!video.videoWidth) return;
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const qrText = _scanQRFromCanvas(canvas);
+      if(qrText){
+        stopSlipCamera();
+        if(status) status.textContent = '✅ ສະແກນ QR ສຳເລັດ!';
+        _processScannedQR(qrText, canvas.toDataURL('image/jpeg', 0.8));
       }
+    }, 350);
 
-      if(!geminiRes.ok){
-        let errBody = {};
-        try{ errBody = await geminiRes.json(); }catch(_){}
-        const errMsg = errBody?.error?.message || ('HTTP ' + geminiRes.status);
-        console.warn('Gemini HTTP error (' + baseUrl + '):', errMsg);
-        lastErr = errMsg;
-        // 400/404 = model ບໍ່ support → ລອງ model ຕໍ່ໄປ
-        // 429 = rate limit → ຢຸດ ແຈ້ງລໍ
-        // 403 = key ຜິດ → ຢຸດ ແຈ້ງ key
-        if(geminiRes.status === 429){
-          return {
-            verified: null, reason: 'rate_limit', networkFail: true,
-            errorMsg: '⚠️ ໃຊ້ງານໂດຍໄວ — ກາລຸນາລໍ 1-2 ນາທີ ແລ້ວລອງໃໝ່'
-          };
-        }
-        if(geminiRes.status === 403){
-          return {
-            verified: null, reason: 'api_key_error', networkFail: true,
-            errorMsg: '🔑 API Key ຖືກລາຍງານວ່າ leaked — ກາລຸນາສ້າງ Key ໃໝ່ທີ່ aistudio.google.com/apikey'
-          };
-        }
-        continue; // 400/404 ลอง model ต่อไป
-      }
-
-      // ── parse response ──
-      const geminiJson = await geminiRes.json();
-      const rawText = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const cleaned = rawText.replace(/```json|```/g,'').trim();
-      try {
-        geminiResult = JSON.parse(cleaned);
-        console.log('✅ Gemini OK with model:', baseUrl.split('/models/')[1]?.split(':')[0]);
-        break; // ສຳເລັດ — ອອກ loop
-      } catch(parseErr){
-        console.warn('Gemini JSON parse error, raw:', rawText);
-        lastErr = 'AI ສົ່ງຂໍ້ມູນຜິດຮູບແບບ';
-        continue;
-      }
+  } catch(err){
+    stopSlipCamera();
+    if(err.name === 'NotAllowedError'){
+      showNotif('❌ ກາລຸນາອະນຸຍາດການໃຊ້ກ້ອງ');
+    } else {
+      showNotif('❌ ກ້ອງໃຊ້ງານບໍ່ໄດ້ — ກາລຸນາເລືອກຮູບແທນ');
     }
-
-    if(!geminiResult){
-      return {
-        verified: null, reason: 'api_error', networkFail: true,
-        errorMsg: '🔧 ລະບົບ AI ຂັດຂ້ອງ: ' + lastErr + ' — ກາລຸນາລອງໃໝ່'
-      };
-    }
-
-    // ── ກວດວ່າ AI ບອກວ່າເປັນສລິບຈິງໄຫມ ──
-    if(!geminiResult || geminiResult.is_slip === false){
-      return {
-        verified: false,
-        reason: 'not_real_slip',
-        errors: ['ຮູບທີ່ອັດໂຫລດບໍ່ແມ່ນສລິບໂອນເງິນ — ກາລຸນາຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ'],
-        notSlip: true
-      };
-    }
-
-    const refNo    = ((geminiResult.reference_no || '')).toString().trim();
-    const amount   = Number(geminiResult.amount) || 0;
-    const date     = geminiResult.transfer_date || geminiResult.date || null;
-    const time     = geminiResult.time     || null;
-    const receiver = geminiResult.receiver || null;
-    const status   = geminiResult.status   || null;
-
-    // ── Step 2: Supabase — ກວດ reference_no ຊ້ຳ (async/await, ບໍ່ .catch) ──
-    if(refNo){
-      const { data: existing, error: dupErr } = await supa
-        .from('kd_deposits')
-        .select('id')
-        .eq('ref', refNo)
-        .neq('status', 'rejected')
-        .limit(1);
-
-      if(dupErr){
-        console.warn('Supabase dup check error:', dupErr.message);
-        // soft fail — ດຳເນີນຕໍ່ (ໃຫ້ admin ກວດ)
-      } else if(existing && existing.length > 0){
-        return {
-          verified: false,
-          reason: 'duplicate_slip',
-          errors: ['❌ ສລິບ Ref: ' + refNo + ' ຖືກໃຊ້ງານໄປແລ້ວ — ຫ້າມໃຊ້ສລິບຊ້ຳ'],
-          isSuspicious: true
-        };
-      }
-    }
-
-    // ── Step 3: ກວດ amount ──
-    if(amount < 1000){
-      return {
-        verified: false,
-        reason: 'amount_too_low',
-        errors: ['ຈຳນວນເງິນໃນສລິບຕ່ຳເກີນໄປ (' + amount.toLocaleString() + ' ₭) — ຂັ້ນຕ່ຳ 1,000 ₭'],
-        amount, date, time, transactionRef: refNo
-      };
-    }
-
-    // ── ✅ ສລິບຜ່ານ ──
-    const hasAllFields = !!(receiver && refNo && amount);
-    const newBalance = hasAllFields && currentUser
-      ? (Number(currentUser.wallet) || 0) + amount
-      : null;
-
-    return {
-      verified: 'pending_admin',
-      reason:   hasAllFields ? 'all_match' : 'no_name',
-      recipientName:  receiver || null,
-      amount,
-      date,
-      time,
-      status,
-      transactionRef: refNo || null,
-      autoApproved:   hasAllFields,
-      newBalance
-    };
-
-  } catch(err) {
-    console.warn('verifySlipOwnerName unexpected error:', err);
-    return {
-      verified: null,
-      reason: 'network_error',
-      networkFail: true,
-      errorMsg: 'ເກີດຂໍ້ຜິດພາດ: ' + (err.message || 'unknown')
-    };
   }
 }
 
-async function analyzeSlipImage(dataUrl){
-  return new Promise(resolve=>{
-    const img = new Image();
-    img.onload = function(){
-      const canvas = document.createElement('canvas');
-      const W=120, H=180;
-      canvas.width=W; canvas.height=H;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img,0,0,W,H);
-      const data = ctx.getImageData(0,0,W,H).data;
-      const total = W*H;
-
-      let whitePx=0, darkPx=0, colorPx=0, totalBright=0;
-      // ตรวจแถบสีแดง/น้ำเงินที่ด้านบน (JDB slip มีแถบ banner)
-      const topData = ctx.getImageData(0,0,W,30).data;
-      let topColorful=0;
-      for(let i=0;i<topData.length;i+=4){
-        const r=topData[i],g=topData[i+1],b=topData[i+2];
-        const sat=Math.max(r,g,b)-Math.min(r,g,b);
-        if(sat>60) topColorful++;
-      }
-      const topColorPct = topColorful/(W*30);
-
-      for(let i=0;i<data.length;i+=4){
-        const r=data[i],g=data[i+1],b=data[i+2];
-        const bright=(r+g+b)/3;
-        totalBright+=bright;
-        if(bright>210) whitePx++;
-        if(bright<80) darkPx++;
-        const sat=Math.max(r,g,b)-Math.min(r,g,b);
-        if(sat>50) colorPx++;
-      }
-
-      const avgBright=totalBright/total;
-      const whitePct=whitePx/total;
-      const darkPct=darkPx/total;
-      const colorPct=colorPx/total;
-
-      // ── ปฏิเสธรูปที่ไม่เหมือนสลิปทันที ──
-      let rejectReason = null;
-      // ✅ ສລິບ JDB/BCEL ລາວ ມີແຖບສີແດງ/ສີເຂັ້ມ → colorPct ສູງ ແຕ່ມີພື້ນຂາວກາງ
-      // ຖ້າ topColorPct ສູງ (ມີ banner ສີ) = ໜ້າຈໍ app ທະນາຄານ → ຜ່ານ
-      const hasColorBanner = topColorPct > 0.15;
-      const isNaturalPhoto = (colorPct > 0.65 && whitePct < 0.15 && !hasColorBanner);
-      const isTooDark = (avgBright < 60 && whitePct < 0.08);
-      const isColorful = (colorPct > 0.80 && whitePct < 0.10);
-      if(isNaturalPhoto) rejectReason = 'natural_photo';
-      else if(isTooDark) rejectReason = 'too_dark';
-      else if(isColorful) rejectReason = 'too_colorful';
-      if(rejectReason){
-        resolve({likelySlip:false, score:0, rejectReason, whitePct, darkPct, avgBright, colorPct, topColorPct});
-        return;
-      }
-      // คะแนนสลิป
-      let score = 0;
-      if(whitePct>0.35) score+=30;
-      else if(whitePct>0.22) score+=20;
-      else if(whitePct>0.12) score+=8;
-      if(darkPct>0.06) score+=20;
-      else if(darkPct>0.03) score+=12;
-      if(avgBright>150) score+=20;
-      else if(avgBright>120) score+=12;
-      else if(avgBright>90) score+=5;
-      if(topColorPct>0.15) score+=25;   // ✅ JDB/BCEL banner ສີ
-      else if(topColorPct>0.08) score+=12;
-      if(colorPct<0.30) score+=10;
-      else if(colorPct<0.50 && topColorPct>0.15) score+=8; // ✅ ສລິບ app ທີ່ມີສີ
-      const likelySlip = score >= 40;  // ✅ ຫຼຸດ threshold ຈາກ 50 → 40
-      resolve({likelySlip, score, rejectReason:null, whitePct, darkPct, avgBright, colorPct, topColorPct});
-    };
-    img.onerror=()=>resolve({likelySlip:false,score:0});
-    img.src=dataUrl;
-  });
+function stopSlipCamera(){
+  if(_slipCamInterval){ clearInterval(_slipCamInterval); _slipCamInterval=null; }
+  if(_slipCamStream){
+    _slipCamStream.getTracks().forEach(t=>t.stop());
+    _slipCamStream = null;
+  }
+  const video    = document.getElementById('slipCamVideo');
+  const wrap     = document.getElementById('slipScannerWrap');
+  const btns     = document.getElementById('slipScanBtns');
+  const controls = document.getElementById('slipCamControls');
+  if(video)    video.srcObject = null;
+  if(wrap)     wrap.style.display  = 'none';
+  if(btns)     btns.style.display  = 'flex';
+  if(controls) controls.style.display = 'none';
 }
 
-function extractSlipDateTime(dataUrl){
-  // ดึงเวลาจาก metadata ของรูป (EXIF) ถ้ามี
-  // หรือใช้เวลา file.lastModified แทน
-  return null; // จะรับจาก file object โดยตรง
+// ── ປະມວນຜົນ QR ທີ່ສະແກນໄດ້ (ຈາກກ້ອງ ຫຼື ຮູບ) ──
+async function _processScannedQR(qrText, dataUrl){
+  const validEl    = document.getElementById('slipValidResult');
+  const confirmBtn = document.getElementById('depConfirmBtn');
+  const autoFields = document.getElementById('slipAutoFields');
+  const prev       = document.getElementById('depositSlipPreview');
+
+  if(validEl){ validEl.style.display='block'; validEl.style.background='rgba(234,179,8,0.08)'; validEl.style.border='1px solid rgba(234,179,8,0.25)'; validEl.style.color='#fbbf24'; validEl.innerHTML='⏳ ກຳລັງກວດສອບ...'; }
+
+  if(prev && dataUrl) prev.innerHTML=`<img src="${dataUrl}" style="max-width:130px;border-radius:8px;border:2px solid var(--gold);cursor:pointer" onclick="adminViewImg('${dataUrl}')">`;
+
+  const hash = await hashImage(dataUrl||qrText);
+
+  // ກວດ hash ຊ້ຳ local
+  if(getSlipHashes().some(x=>x.hash===hash)){
+    if(validEl){ validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171'; validEl.innerHTML='❌ ສລິບນີ້ຖືກໃຊ້ງານໄປແລ້ວ'; }
+    return;
+  }
+
+  // ກວດ QR ຊ້ຳ Supabase
+  const qrRef    = _parseSlipRef(qrText);
+  const dupCheck = await checkQRDuplicate(qrText, qrRef, hash);
+  if(dupCheck.isDuplicate){
+    if(validEl){ validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171'; validEl.innerHTML='❌ QR Code ນີ້ຖືກໃຊ້ງານໄປແລ້ວ'; }
+    return;
+  }
+
+  // parse fields
+  const qrDateTime = _parseSlipDateTime(qrText);
+  const qrAmount   = _parseSlipAmount(qrText);
+  const qrReceiver = _parseSlipReceiver(qrText);
+
+  // ກວດວັນເວລາ ≤10 ນາທີ
+  let timeOk=false, timeDiffMin=null, timeDisplay='';
+  if(qrDateTime){
+    timeDiffMin = (Date.now()-qrDateTime.getTime())/60000;
+    timeOk = timeDiffMin>=0 && timeDiffMin<=10;
+    timeDisplay = qrDateTime.toLocaleString('lo-LA');
+  }
+  if(!timeOk && timeDiffMin!==null && timeDiffMin>10){
+    if(validEl){ validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171';
+      validEl.innerHTML=`❌ ສລິບໝົດອາຍຸ — ໂອນໄປ ${Math.round(timeDiffMin)} ນາທີແລ້ວ (ຮັບສູງສຸດ 10 ນາທີ)`; }
+    return;
+  }
+
+  // autofill
+  const allPass = !!qrRef && timeOk;
+  const rnEl=document.getElementById('depReceiverName');
+  const stEl=document.getElementById('depSlipTime');
+  const srEl=document.getElementById('depSlipRef');
+  const saEl=document.getElementById('depSlipAmount');
+  if(rnEl) rnEl.value = qrReceiver||'ຈາກ QR';
+  if(stEl) stEl.value = timeDisplay||(timeDiffMin!==null?'ໂອນ '+Math.round(timeDiffMin||0)+' ນາທີທີ່ຜ່ານມາ':'ບໍ່ຮູ້');
+  if(srEl) srEl.value = qrRef||'';
+  if(saEl) saEl.value = qrAmount?Number(qrAmount).toLocaleString()+' ₭':'-';
+  if(autoFields) autoFields.style.display='block';
+
+  if(validEl){
+    validEl.style.background = allPass?'rgba(34,197,94,0.12)':'rgba(234,179,8,0.10)';
+    validEl.style.border     = allPass?'1px solid rgba(34,197,94,0.5)':'1px solid rgba(234,179,8,0.4)';
+    validEl.style.color      = allPass?'#4ade80':'#fbbf24';
+    validEl.innerHTML        = allPass
+      ? `✅ <strong>ສະແກນ QR ສຳເລັດ!</strong><br><span style="font-size:11px">Ref: ${qrRef} · ໂອນ ${Math.round(timeDiffMin||0)} ນາທີທີ່ຜ່ານມາ</span>`
+      : `⚠️ ສະແກນໄດ້ — ຂໍ້ມູນບາງຢ່າງບໍ່ຄົບ Admin ຈະກວດສອບ`;
+  }
+
+  if(confirmBtn){
+    confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+    confirmBtn.dataset.slipHash = hash;
+    confirmBtn.dataset.slipData = dataUrl||'';
+    confirmBtn.dataset.qrData   = qrText;
+    confirmBtn.dataset.qrRef    = qrRef||'';
+    confirmBtn.dataset.slipType = 'QR_SCAN';
+    confirmBtn.dataset.allPass  = allPass?'1':'0';
+    confirmBtn.dataset.qrAmount = qrAmount||'';
+    confirmBtn.dataset.timeDiff = timeDiffMin!==null?Math.round(timeDiffMin).toString():'';
+    confirmBtn.dataset.slipTime = qrDateTime?qrDateTime.getTime().toString():Date.now().toString();
+  }
 }
 
 function resetSlipInput(){
-  const input = document.getElementById('depositSlipInput');
-  const prev = document.getElementById('depositSlipPreview');
-  const validEl = document.getElementById('slipValidResult');
+  stopSlipCamera();
+  const input      = document.getElementById('depositSlipInput');
+  const prevDiv    = document.getElementById('depositSlipPreview');
+  const validEl    = document.getElementById('slipValidResult');
   const confirmBtn = document.getElementById('depConfirmBtn');
+  const autoFields = document.getElementById('slipAutoFields');
   if(input) input.value='';
-  if(prev) prev.innerHTML='';
-  if(validEl) validEl.style.display='none';
-  if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
+  if(prevDiv){ prevDiv.innerHTML=''; }
+  if(validEl){ validEl.style.display='none'; validEl.innerHTML=''; }
+  if(autoFields) autoFields.style.display='none';
+  if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
+}
+function _slipRejectBadge(msg){
+  const b=document.getElementById('slipScanBadge');
+  if(b){ b.style.display='block'; b.style.background='rgba(220,38,38,0.9)'; b.style.color='#fff'; b.textContent='❌ '+msg; }
+  const sl=document.getElementById('slipScanLine'); if(sl) sl.style.display='none';
 }
 
+// ── ຟັງຊັນຫຼັກ: ເລືອກຮູບ → ສະແກນ QR → validate → autofill ──
 function previewDepositSlip(){
   const input = document.getElementById('depositSlipInput');
-  const prev = document.getElementById('depositSlipPreview');
+  const prev  = document.getElementById('depositSlipPreview');
   const validEl = document.getElementById('slipValidResult');
   const confirmBtn = document.getElementById('depConfirmBtn');
-
+  const autoFields = document.getElementById('slipAutoFields');
   if(!input.files[0]) return;
+
   const file = input.files[0];
-  const fileModifiedTime = file.lastModified; // เวลาที่รูปถ่าย/แก้ไขล่าสุด
-  const uploadTime = Date.now();
+  const fileModifiedTime = file.lastModified;
 
-  // ตรวจเวลา: ถ้ารูปถ่ายก่อนหน้านี้เกิน 30 นาที = อาจเป็นรูปเก่า
-  const timeDiffMs = uploadTime - fileModifiedTime;
-  const timeDiffMin = timeDiffMs / 60000;
-
-  prev.innerHTML='<div style="color:var(--text2);font-size:12px">⏳ ກຳລັງກວດສອບ...</div>';
-  if(validEl) validEl.style.display='none';
-  if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';}
+  prev.innerHTML='<div style="color:var(--text2);font-size:12px">⏳ ກຳລັງສະແກນ QR...</div>';
+  if(validEl){ validEl.style.display='block'; validEl.style.background='rgba(234,179,8,0.08)'; validEl.style.border='1px solid rgba(234,179,8,0.25)'; validEl.style.color='#fbbf24'; validEl.innerHTML='🔍 ກຳລັງກວດຮູບ ແລະ ສະແກນ QR Code...'; }
+  if(autoFields) autoFields.style.display='none';
+  if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
 
   const reader = new FileReader();
   reader.onload = async function(e){
     const dataUrl = e.target.result;
-
-    // Compress ให้เล็กมาก เพื่อให้ Edge Function ไม่ timeout
     const imgEl = new Image();
     imgEl.onload = async function(){
-      const canvas = document.createElement('canvas');
-      const MAX=500; let w=imgEl.width,h=imgEl.height;
+      // ── Render ຮູບ preview ──
+      const MAX=700; let w=imgEl.width, h=imgEl.height;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-      if(h>800){w=Math.round(w*800/h);h=800;}
+      if(h>1000){w=Math.round(w*1000/h);h=1000;}
+      const canvas = document.createElement('canvas');
       canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(imgEl,0,0,w,h);
-      const compressed=canvas.toDataURL('image/jpeg',0.6);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgEl,0,0,w,h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      prev.innerHTML=`<img src="${compressed}" style="max-width:140px;border-radius:8px;border:2px solid var(--gold);cursor:pointer" onclick="adminViewImg('${compressed}')">`;
 
-      // Preview
-      prev.innerHTML=`<img src="${compressed}" style="max-width:130px;border-radius:6px;border:2px solid var(--gold)">`;
-
-      if(validEl) validEl.style.display='block';
-
-      // ── 1. ตรวจ Duplicate Hash ──
+      // ── ກວດ Hash ຊ້ຳ local ──
       const hash = await hashImage(compressed);
-      const existing = getSlipHashes();
-      const isDuplicate = existing.some(e=>e.hash===hash);
-      if(isDuplicate){
-        validEl.style.background='rgba(220,38,38,0.15)';
-        validEl.style.border='1px solid rgba(220,38,38,0.4)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML='❌ ສລິບນີ້ຖືກໃຊ້ແລ້ວ! ບໍ່ສາມາດໃຊ້ສລິບເດີມຊ້ຳ';
-        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; }
+      if(getSlipHashes().some(x=>x.hash===hash)){
+        validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171';
+        validEl.innerHTML='❌ ສລິບນີ້ຖືກໃຊ້ງານໄປແລ້ວ — ຫ້າມໃຊ້ສລິບຊ້ຳ';
         return;
       }
 
-      // ── 2. LOCAL CHECK ชั้นที่ 1 — ตรวจว่าเป็นสลิปไหม ก่อนส่ง AI ──
-      validEl.style.background='rgba(234,179,8,0.08)';
-      validEl.style.border='1px solid rgba(234,179,8,0.2)';
-      validEl.style.color='#fbbf24';
-      validEl.innerHTML='🔍 ກຳລັງກວດຮູບພາບ...';
-
-      const localCheck = await analyzeSlipImage(compressed);
-      if(!localCheck.likelySlip){
-        validEl.style.background='rgba(220,38,38,0.15)';
-        validEl.style.border='2px solid rgba(220,38,38,0.6)';
-        validEl.style.color='#f87171';
-        validEl.innerHTML = '<div style="font-size:15px;font-weight:700;margin-bottom:8px">❌ AI ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່</div>' +
-          '<div style="font-size:12px;line-height:1.9;background:rgba(239,68,68,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
-          'ສລິບຕ້ອງມີຄົບ 4 ລາຍການ:<br>' +
-          '1. ຊື່ຜູ້ຮັບ (Merchant Name)<br>' +
-          '2. ຈຳນວນເງິນ (Amount)<br>' +
-          '3. ວັນທີ/ເວລາທີ່ໂອນ (ບໍ່ເກີນ 10 ນາທີ)<br>' +
-          '4. ເລກອ້າງອີງ (Reference)<br>' +
-          '📸 ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ' +
-          '</div><button onclick="resetSlipInput()" style="width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px;font-size:13px;cursor:pointer">🔄 ລອງໃໝ່ອີກຄັ້ງ</button>';
-        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
+      // ── ກວດຄວາມຊັດ ──
+      const sharpness = _checkImageSharpness(ctx, w, h);
+      if(sharpness < 1.2){
+        validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='2px solid rgba(220,38,38,0.5)'; validEl.style.color='#f87171';
+        validEl.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">🚫 ຮູບເບົາ/ເບຼີ — ອ່ານ QR ບໍ່ໄດ້</div>
+          <div style="font-size:11px;line-height:1.8">ກາລຸນາໃຊ້ຮູບທີ່ຊັດ — Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ<br>
+          (JDB / BCEL One)</div>
+          <button onclick="resetSlipInput()" style="margin-top:8px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:7px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🔄 ເລືອກຮູບໃໝ່</button>`;
         return;
       }
 
-      // ── 3. ผ่านชั้นที่ 1 → ส่ง AI ──
-      const fileDate = new Date(fileModifiedTime);
-      const isValidDate = fileModifiedTime > 1000000000000;
-      validEl.style.background='rgba(234,179,8,0.08)';
-      validEl.style.border='1px solid rgba(234,179,8,0.25)';
-      validEl.style.color='#fbbf24';
-      validEl.innerHTML='⏳ Gemini AI ກຳລັງກວດສລິບ 4 ລາຍການ...';
-
-      const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
-      const nameCheck = await verifySlipOwnerName(compressed, expectedAmt||null);
-      const timeInfo = isValidDate ? `<br><span style="font-size:11px;opacity:0.7">📅 ຖ່າຍ: ${fileDate.toLocaleTimeString('lo-LA')}</span>` : '';
-
-      if(nameCheck.verified === 'pending_admin'){
-        const isAutoApproved = nameCheck.autoApproved === true;
-
-        validEl.style.background = isAutoApproved ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.10)';
-        validEl.style.border = isAutoApproved ? '1px solid rgba(34,197,94,0.5)' : '1px solid rgba(234,179,8,0.4)';
-        validEl.style.color = isAutoApproved ? '#4ade80' : '#fbbf24';
-
-        if(isAutoApproved){
-          // ✅ Edge Function Approved + Wallet อัพเดตแล้ว
-          validEl.innerHTML = '<div style="font-size:14px;font-weight:700;margin-bottom:8px">✅ ກວດສລິບຜ່ານ — ເຕີມເງິນສຳເລັດ!</div>' +
-            '<div style="font-size:11px;line-height:2;background:rgba(34,197,94,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
-            '✅ ຊື່ຜູ້ຮັບ: <strong>' + (nameCheck.recipientName||'-') + '</strong><br>' +
-            '✅ ຈຳນວນ: <strong>' + (nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?') + ' ກີບ</strong><br>' +
-            '✅ ວັນທີ: <strong>' + (nameCheck.date||'-') + '</strong><br>' +
-            '✅ Ref: <strong>' + (nameCheck.transactionRef||'-') + '</strong></div>' +
-            '<div style="font-size:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:8px;text-align:center;color:#4ade80">' +
-            '💰 ຍອດ Wallet ໃໝ່: <strong>' + (nameCheck.newBalance?nameCheck.newBalance.toLocaleString():'?') + ' ກີບ</strong></div>';
-          // อัพเดต Wallet UI ทันที
-          if(nameCheck.newBalance != null) updateBalanceUI(nameCheck.newBalance);
-          if(confirmBtn){ confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.autoApproved='1';
-            confirmBtn.dataset.slipData=compressed; confirmBtn.dataset.slipTime=fileModifiedTime;
-            if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
-          }
-        } else {
-          // ⏳ Pending Admin
-          validEl.innerHTML = '<div style="font-size:14px;font-weight:700;margin-bottom:8px">⏳ ສລິບຖືກສົ່ງໃຫ້ Admin ກວດສອບ</div>' +
-            '<div style="font-size:11px;line-height:2;background:rgba(234,179,8,0.08);padding:10px;border-radius:8px;margin-bottom:10px">' +
-            '✅ ຈຳນວນ: <strong>' + (nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?') + ' ກີບ</strong><br>' +
-            '✅ Ref: <strong>' + (nameCheck.transactionRef||'-') + '</strong></div>' +
-            '<div style="font-size:12px;color:#fbbf24;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:8px;text-align:center">' +
-            'ລໍຖ້າ Admin ກວດສອບ — ຈະໄດ້ຮັບເງິນໃນໄວໆນີ້ 🙏</div>';
-          if(confirmBtn){ confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-            confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.pendingAdmin='1';
-            confirmBtn.dataset.slipData=compressed; confirmBtn.dataset.slipTime=fileModifiedTime;
-            if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
-            const _refInput = document.getElementById('depositRef');
-            if(_refInput && nameCheck.transactionRef){
-              _refInput.value=nameCheck.transactionRef; _refInput.readOnly=true;
-              _refInput.style.borderColor='var(--gold)'; _refInput.style.background='rgba(201,168,76,0.08)';
-              _refInput.style.color='var(--gold)'; _refInput.style.cursor='not-allowed';
-            }
-          }
-          addAdminNotification('deposit_pending',{user:currentUser?.name||'?', amount:expectedAmt, ref:nameCheck.transactionRef||''});
+      // ── ກວດປະເພດສລິບ (JDB/BCEL/OTHER) ──
+      const slipType = _detectSlipType(ctx, w, h);
+      if(slipType === 'OTHER'){
+        // ກວດ pixel ທົ່ວໄປວ່າເປັນ screenshot ຈາກໂທລະສັບ
+        const fullData = ctx.getImageData(0,0,w,h).data;
+        let whitePx=0, totalPx=w*h;
+        for(let i=0;i<fullData.length;i+=4){ if((fullData[i]+fullData[i+1]+fullData[i+2])/3 > 200) whitePx++; }
+        const whitePct = whitePx/totalPx;
+        if(whitePct < 0.1){
+          validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='2px solid rgba(220,38,38,0.5)'; validEl.style.color='#f87171';
+          validEl.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">🚫 ຮູບນີ້ບໍ່ໃຊ່ສລິບທະນາຄານ</div>
+            <div style="font-size:11px;line-height:1.8">ລະບົບຮອງຮັບສລິບ: <strong>JDB</strong> ແລະ <strong>BCEL One</strong> ເທົ່ານັ້ນ<br>
+            ກາລຸນາ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ</div>
+            <button onclick="resetSlipInput()" style="margin-top:8px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:7px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🔄 ເລືອກຮູບໃໝ່</button>`;
+          return;
         }
-      } else if(nameCheck.reason === 'no_name'){
-        // ⚠️ ไม่มีชื่อ — ส่ง Admin แต่ยังกด confirm ได้
-        validEl.style.background='rgba(234,179,8,0.12)';
-        validEl.style.border='1px solid rgba(234,179,8,0.4)';
-        validEl.style.color='#fbbf24';
-        validEl.innerHTML=`⚠️ ສລິບຂອງທ່ານບໍ່ມີຊື່ຜູ້ຮັບປາຍທາງ
-          <div style="margin-top:8px;font-size:11px;line-height:2;opacity:0.9;background:rgba(234,179,8,0.08);padding:8px;border-radius:8px">
-            ⚠️ ຊື່ຜູ້ຮັບ: <strong>ບໍ່ພົບໃນສລິບ</strong> — Admin ຈະກວດສອບ<br>
-            ✅ ຈຳນວນ: <strong>${nameCheck.amount?parseInt(nameCheck.amount).toLocaleString():'?'} ກີບ</strong><br>
-            ✅ ວັນທີ/ເວລາ: <strong>${nameCheck.date||'-'} ${nameCheck.time||''}</strong><br>
-            ✅ ເລກ Ref: <strong>${nameCheck.transactionRef||'-'}</strong><br>
-            <span style="color:#fbbf24;font-size:10px">ຈະສົ່ງຕໍ່ໃຫ້ Admin ດຳເນີນການຕໍ່</span>
-          </div>`;
-        if(confirmBtn){
-          confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
-          confirmBtn.dataset.slipHash=hash; confirmBtn.dataset.slipScore='60';
-          confirmBtn.dataset.slipWarning='1'; confirmBtn.dataset.slipData=compressed;
-          confirmBtn.dataset.slipTime=fileModifiedTime;
-          if(nameCheck.transactionRef) confirmBtn.dataset.transactionRef=nameCheck.transactionRef;
-          const _refInputNoName = document.getElementById('depositRef');
-          if(_refInputNoName && nameCheck.transactionRef){
-            _refInputNoName.value=nameCheck.transactionRef;
-            _refInputNoName.readOnly=true;
-            _refInputNoName.style.borderColor='#fbbf24';
-            _refInputNoName.style.background='rgba(251,191,36,0.08)';
-            _refInputNoName.style.color='#fbbf24';
-            _refInputNoName.style.cursor='not-allowed';
-          }
-        }
-        addAdminNotification('deposit_no_name',{user:currentUser?.name||'?', amount:expectedAmt, ref:nameCheck.transactionRef||''});
-      } else if(nameCheck.verified === false){
-        const errList = (nameCheck.errors||[]).join('<br>');
-        const isSuspicious = nameCheck.isSuspicious || nameCheck.reason === 'multiple_errors';
-        const isNotSlip = nameCheck.reason === 'not_real_slip';
-        const bgColor = isSuspicious ? 'rgba(239,68,68,0.2)' : 'rgba(220,38,38,0.12)';
-        const borderColor = isSuspicious ? '2px solid rgba(239,68,68,0.8)' : '1px solid rgba(220,38,38,0.5)';
-        validEl.style.background=bgColor;
-        validEl.style.border=borderColor;
-        validEl.style.color='#f87171';
-        if(isNotSlip){
-          validEl.innerHTML=`<div style="font-size:15px;font-weight:700;margin-bottom:8px">🚫 ບໍ່ແມ່ນສລິບໂອນເງິນ</div>
-            <div style="font-size:12px;line-height:1.9;background:rgba(239,68,68,0.08);padding:10px;border-radius:8px">
-              ຮູບທີ່ທ່ານອັບໂຫລດ <strong>ບໍ່ແມ່ນສລິບໂອນເງິນຈາກທະນາຄານ</strong><br>
-              ກາລຸນາດຳເນີນການດັ່ງນີ້:<br>
-              &nbsp;📱 ເປີດແອັບທະນາຄານຂອງທ່ານ<br>
-              &nbsp;🔍 ຊອກຫາລາຍການໂອນເງິນຫຼ້າສຸດ<br>
-              &nbsp;📸 ຖ່າຍ Screenshot ສລິບໂອນເງິນ<br>
-              &nbsp;⬆️ ອັບໂຫລດສລິບນັ້ນໃສ່ໃໝ່
-            </div>
-            <button onclick="document.getElementById('depositSlipInput').value='';document.getElementById('depositSlipPreview').innerHTML='';document.getElementById('slipValidResult').style.display='none';" style="margin-top:10px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);color:#f87171;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
-              🔄 ເລືອກຮູບໃໝ່
-            </button>`;
-        } else {
-          validEl.innerHTML=`${isSuspicious ? '🚫 ສລິບຖືກບລັອກ — ພົບຫຼາຍລາຍການຜິດປົກກະຕິ' : '❌ ສລິບບໍ່ຜ່ານ — ພົບຂໍ້ຜິດພາດ'}
-            <div style="margin-top:8px;font-size:11px;line-height:2;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
-              ${errList}
-            </div>
-            ${isSuspicious ? '<div style="margin-top:6px;font-size:11px;color:#fca5a5;font-weight:700">⛔ ບໍ່ສາມາດສົ່ງໄດ້ — Admin ໄດ້ຮັບແຈ້ງເຕືອນແລ້ວ</div>' : ''}`;
-        }
-        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
-        if(isSuspicious) addAdminNotification('suspicious_slip',{user:currentUser?.name||'?', amount:expectedAmt, reason:nameCheck.reason});
-      } else {
-        // Gemini/DB error — ແສດງສາເຫດຈາກ error
-        const reason = nameCheck?.reason || 'unknown';
-        const detailMsg = nameCheck?.errorMsg || '';
-        const isRateLimit = reason === 'rate_limit';
-        const isNetworkError = reason === 'timeout' || reason === 'network_error' || reason === 'api_error' || reason === 'parse_error';
-        const isKeyError = reason === 'api_key_error';
-        const reasonMsg = isRateLimit ? '⏳ ລໍຖ້າສັ້ນໆ — ໃຊ້ງານໂດຍໄວ' :
-                          reason === 'timeout' ? '⏱️ ລະບົບໃຊ້ເວລາດົນ — ກາລຸນາລອງໃໝ່' :
-                          reason === 'api_key_error' ? '🔑 API Key ຖືກລາຍງານ leaked — ສ້າງ Key ໃໝ່' :
-                          reason === 'parse_error' ? '📄 AI ສົ່ງຂໍ້ມູນຜິດຮູບແບບ — ລອງໃໝ່ອີກຄັ້ງ' :
-                          reason === 'api_error' ? '🔧 ລະບົບ AI ຂັດຂ້ອງຊົ່ວຄາວ — ກາລຸນາລອງໃໝ່ອີກຄັ້ງ' :
-                          reason === 'network_error' ? '📡 ເຊື່ອມຕໍ່ລະບົບ AI ບໍ່ໄດ້ — ກວດສອບອິນເຕີເນັດ ແລ້ວລອງໃໝ່' :
-                          reason === 'empty_response' ? '📷 AI ບໍ່ສາມາດອ່ານຮູບນີ້ໄດ້ — ກາລຸນາໃຊ້ຮູບທີ່ຊັດກວ່ານີ້' :
-                          '❌ AI ກວດສລິບບໍ່ສຳເລັດ — ກາລຸນາລອງໃໝ່';
-        validEl.style.background= (isRateLimit||isNetworkError||isKeyError) ? 'rgba(234,179,8,0.12)' : 'rgba(220,38,38,0.12)';
-        validEl.style.border= (isRateLimit||isNetworkError||isKeyError) ? '1px solid rgba(234,179,8,0.4)' : '1px solid rgba(220,38,38,0.4)';
-        validEl.style.color= (isRateLimit||isNetworkError||isKeyError) ? '#fbbf24' : '#f87171';
+      }
 
-        // ── Rate limit: ນັບຖອຍຫຼັງ 60 ວິ ──
-        let rlCountdownHtml = '';
-        if(isRateLimit){
-          const rlEnd = Date.now() + 60000;
-          setTimeout(()=>{
-            const rlTick = setInterval(()=>{
-              const left = Math.max(0, Math.ceil((rlEnd - Date.now())/1000));
-              const el2 = document.getElementById('rl_countdown');
-              if(el2) el2.textContent = left + ' ວິນາທີ';
-              if(left <= 0){ clearInterval(rlTick); if(el2) el2.closest('.rl-wrap').innerHTML='<span style="color:#4ade80">✅ ພ້ອມລອງໃໝ່ແລ້ວ — ກົດ "ລອງກວດໃໝ່"</span>'; }
-            }, 1000);
-          }, 100);
-          rlCountdownHtml = `<div class="rl-wrap" style="margin-top:8px;font-size:12px;background:rgba(234,179,8,0.1);padding:8px;border-radius:8px;text-align:center">
-            ⏳ ລໍອີກ <span id="rl_countdown" style="font-weight:700;color:var(--gold)">60 ວິນາທີ</span> ແລ້ວລອງໃໝ່
-          </div>`;
-        }
+      // ── ສະແກນ QR Code ──
+      validEl.innerHTML='⏳ ກຳລັງສະແກນ QR Code...';
+      let qrText = null;
 
-        validEl.innerHTML=`${reasonMsg}
-          ${detailMsg ? `<div style="font-size:11px;color:#fbbf24;margin-top:4px;opacity:.9">${detailMsg}</div>` : ''}
-          ${rlCountdownHtml}
-          <div style="margin-top:8px;font-size:11px;line-height:1.9;opacity:0.9;background:rgba(0,0,0,0.15);padding:10px;border-radius:8px">
-            ${isRateLimit
-              ? `Gemini Free ຈຳກັດ 15 request/ນາທີ<br>
-                 &nbsp;⏳ ລໍ 1-2 ນາທີ ແລ້ວລອງໃໝ່`
-              : isKeyError
-              ? `ໄປສ້າງ Key ໃໝ່ທີ່:<br>&nbsp;🔗 aistudio.google.com/apikey`
-              : isNetworkError
-              ? `ລະບົບ AI ຂັດຂ້ອງ — ກາລຸນາ:<br>
-                 &nbsp;🔄 ລໍຖ້າ 10-20 ວິນາທີ ແລ້ວລອງໃໝ່<br>
-                 &nbsp;📡 ກວດສອບອິນເຕີເນັດຂອງທ່ານ`
-              : `ສລິບຕ້ອງມີຄົບ 4 ລາຍການ:<br>
-                 &nbsp;1. ຊື່ຜູ້ຮັບ (Merchant Name)<br>
-                 &nbsp;2. ຈຳນວນເງິນ (Amount)<br>
-                 &nbsp;3. ວັນທີ/ເວລາທີ່ໂອນ<br>
-                 &nbsp;4. ເລກອ້າງອີງ (Reference)<br>
-                 📸 ຖ່າຍ Screenshot ຈາກແອັບທະນາຄານໂດຍກົງ`
-            }
+      // ລອງ full size ກ່ອນ
+      qrText = _scanQRFromCanvas(canvas);
+
+      // ຖ້າບໍ່ໄດ້ ລອງ crop ສ່ວນ QR (ມຸມຂວາລຸ່ມ ~30%)
+      if(!qrText){
+        const qrCanvas = document.createElement('canvas');
+        const qx = Math.floor(w*0.55), qy = Math.floor(h*0.65);
+        const qw = w-qx, qh = h-qy;
+        qrCanvas.width=qw; qrCanvas.height=qh;
+        qrCanvas.getContext('2d').drawImage(canvas, qx, qy, qw, qh, 0, 0, qw, qh);
+        qrText = _scanQRFromCanvas(qrCanvas);
+      }
+
+      // ຖ້າຍັງບໍ່ໄດ້ — ຮູບເບຼີ ຫຼື QR ບໍ່ຊັດ
+      if(!qrText){
+        validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='2px solid rgba(220,38,38,0.5)'; validEl.style.color='#f87171';
+        validEl.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">🚫 ສະແກນ QR ບໍ່ສຳເລັດ</div>
+          <div style="font-size:11px;line-height:1.8;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
+            ສາເຫດ: QR Code ໃນຮູບບໍ່ຊັດ ຫຼື ຖືກຕັດ<br>
+            ✅ ໃຊ້ Screenshot ຈາກແອັບໂດຍກົງ<br>
+            ✅ ໃຫ້ເຫັນ QR Code ຄົບໃນຮູບ<br>
+            ✅ ຢ່າ crop ຫຼື ດັດແປງຮູບ
           </div>
-          <button onclick="previewDepositSlip()" style="margin-top:10px;width:100%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
-            🔄 ລອງກວດໃໝ່ອີກຄັ້ງ
-          </button>`;
-        if(confirmBtn){ confirmBtn.style.opacity='0.3'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; }
+          <button onclick="resetSlipInput()" style="margin-top:8px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:7px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🔄 ເລືອກຮູບໃໝ່</button>`;
+        return;
+      }
+
+      console.log('QR scanned:', qrText.slice(0,80));
+
+      // ── Parse ຂໍ້ມູນຈາກ QR text ──
+      const qrDateTime = _parseSlipDateTime(qrText);
+      const qrAmount   = _parseSlipAmount(qrText);
+      const qrRef      = _parseSlipRef(qrText);
+      const qrReceiver = _parseSlipReceiver(qrText);
+
+      // ── ກວດ QR ຊ້ຳ Supabase ──
+      const dupCheck = await checkQRDuplicate(qrText, qrRef, hash);
+      if(dupCheck.isDuplicate){
+        validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171';
+        validEl.innerHTML=`❌ QR Code ນີ້ຖືກໃຊ້ງານໄປແລ້ວ — ຫ້າມໃຊ້ສລິບຊ້ຳ`;
+        return;
+      }
+
+      // ── ກວດວັນເວລາ ≤10 ນາທີ ──
+      let timeOk = false;
+      let timeDiffMin = null;
+      let timeDisplay = '';
+      if(qrDateTime){
+        timeDiffMin = (Date.now() - qrDateTime.getTime()) / 60000;
+        timeOk = timeDiffMin >= 0 && timeDiffMin <= 10;
+        timeDisplay = qrDateTime.toLocaleString('lo-LA');
+      } else {
+        // fallback: ໃຊ້ file modified time
+        const fDiff = (Date.now() - fileModifiedTime) / 60000;
+        if(fDiff >= 0 && fDiff <= 10){
+          timeOk = true;
+          timeDiffMin = fDiff;
+          timeDisplay = new Date(fileModifiedTime).toLocaleString('lo-LA');
+        }
+      }
+      if(!timeOk && timeDiffMin !== null && timeDiffMin > 10){
+        validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171';
+        validEl.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">❌ ສລິບໝົດອາຍຸ</div>
+          <div style="font-size:11px;line-height:1.8">ສລິບນີ້ໂອນໄປ <strong>${Math.round(timeDiffMin)} ນາທີ</strong> ແລ້ວ<br>
+          ລະບົບຮັບສລິບທີ່ໂອນ <strong>ພາຍໃນ 10 ນາທີ</strong> ເທົ່ານັ້ນ<br>
+          ກາລຸນາໂອນໃໝ່ ແລ້ວ Screenshot ທັນທີ</div>
+          <button onclick="resetSlipInput()" style="margin-top:8px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:7px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🔄 ເລືອກຮູບໃໝ່</button>`;
+        return;
+      }
+
+      // ── ກວດຊື່ JDB ເທົ່ານັ້ນ ──
+      let nameOk = true; // BCEL ບໍ່ກວດຊື່
+      if(slipType === 'JDB'){
+        const rcvUp = (qrReceiver||'').toUpperCase();
+        nameOk = rcvUp.includes('SENGTAVANH') || rcvUp.includes('BOUNXAISENG');
+        if(!nameOk){
+          validEl.style.background='rgba(220,38,38,0.15)'; validEl.style.border='1px solid rgba(220,38,38,0.4)'; validEl.style.color='#f87171';
+          validEl.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:6px">❌ ຊື່ຜູ້ຮັບບໍ່ຖືກຕ້ອງ</div>
+            <div style="font-size:11px;line-height:1.8">ຊື່ທີ່ຮັບ: <strong>${qrReceiver||'ບໍ່ພົບ'}</strong><br>
+            ຊື່ທີ່ຕ້ອງການ: <strong style="color:var(--gold)">SENGTAVANH BOUNXAISENG</strong><br>
+            ກາລຸນາໂອນໄປຫາບັນຊີທີ່ຖືກຕ້ອງ</div>`;
+          return;
+        }
+      }
+
+      // ── ✅ ຜ່ານທັງໝົດ — autofill fields ──
+      const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
+      const allPass = nameOk && !!qrRef && timeOk;
+      const isOtherBank = slipType === 'OTHER';
+
+      // autofill
+      const rnEl = document.getElementById('depReceiverName');
+      const stEl = document.getElementById('depSlipTime');
+      const srEl = document.getElementById('depSlipRef');
+      const saEl = document.getElementById('depSlipAmount');
+      if(rnEl) rnEl.value = qrReceiver || (slipType==='BCEL' ? 'BCEL Payment' : 'ຊື່ຈາກ QR');
+      if(stEl) stEl.value = timeDisplay || (timeDiffMin!==null ? 'ໂອນ '+Math.round(timeDiffMin)+' ນາທີທີ່ຜ່ານມາ' : 'ບໍ່ຮູ້');
+      if(srEl) srEl.value = qrRef || '';
+      if(saEl) saEl.value = qrAmount ? Number(qrAmount).toLocaleString()+' ₭' : '-';
+      if(autoFields) autoFields.style.display='block';
+
+      // ── ສ່ງ result UI ──
+      const bankBadge = slipType==='JDB'
+        ? '<span style="background:rgba(30,80,200,.2);color:#6af;border:1px solid rgba(30,80,200,.4);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">🏦 JDB</span>'
+        : slipType==='BCEL'
+        ? '<span style="background:rgba(192,32,42,.2);color:#f87;border:1px solid rgba(192,32,42,.4);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">🏦 BCEL</span>'
+        : '<span style="background:rgba(234,179,8,.2);color:#fbbf24;border:1px solid rgba(234,179,8,.4);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">🏦 ທະນາຄານອື່ນ</span>';
+
+      if(isOtherBank || !allPass){
+        validEl.style.background='rgba(234,179,8,0.10)'; validEl.style.border='1px solid rgba(234,179,8,0.4)'; validEl.style.color='#fbbf24';
+        validEl.innerHTML=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">${bankBadge} <strong>ສລິບຕ້ອງໃຫ້ Admin ກວດ</strong></div>
+          <div style="font-size:11px;line-height:1.8;opacity:.9">
+            ${isOtherBank ? '⚠️ ທະນາຄານນີ້ຕ້ອງໃຫ້ Admin ກວດສອບດ້ວຍຕົນເອງ<br>' : ''}
+            ${!qrRef ? '⚠️ ບໍ່ພົບ Reference ໃນ QR<br>' : ''}
+            ${!timeOk && timeDiffMin===null ? '⚠️ ບໍ່ຮູ້ວັນເວລາໂອນ<br>' : ''}
+            ⏳ Admin ຈະກວດ ແລ້ວຢືນຢັນດ້ວຍຕົນເອງ
+          </div>`;
+      } else {
+        validEl.style.background='rgba(34,197,94,0.12)'; validEl.style.border='1px solid rgba(34,197,94,0.5)'; validEl.style.color='#4ade80';
+        validEl.innerHTML=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">${bankBadge} <strong>✅ ສະແກນ QR ສຳເລັດ!</strong></div>
+          <div style="font-size:11px;line-height:1.8">
+            ✅ QR Code ອ່ານໄດ້ຊັດ<br>
+            ✅ ວັນເວລາໂອນ: ໂອນ ${Math.round(timeDiffMin||0)} ນາທີທີ່ຜ່ານມາ<br>
+            ✅ Reference: ${qrRef}<br>
+            ⏳ ກົດ "ຢືນຢັນ" — Admin ຈະຮັບ <strong>1 ນາທີ</strong>
+          </div>`;
+      }
+
+      // ── enable confirm ──
+      // ── update scan badge ──
+      const scanBadge = document.getElementById('slipScanBadge');
+      if(scanBadge){
+        if(allPass){
+          scanBadge.style.display='block';
+          scanBadge.style.background='rgba(34,197,94,0.9)';
+          scanBadge.style.color='#fff';
+          scanBadge.textContent='✅ QR ສຳເລັດ — ກົດຢືນຢັນ';
+        } else {
+          scanBadge.style.display='block';
+          scanBadge.style.background='rgba(234,179,8,0.9)';
+          scanBadge.style.color='#000';
+          scanBadge.textContent='⚠️ ສົ່ງ Admin ກວດ';
+        }
+        // stop scan animation
+        const sl=document.getElementById('slipScanLine');
+        if(sl) sl.style.animationPlayState='paused';
+      }
+
+      if(confirmBtn){
+        confirmBtn.style.opacity='1'; confirmBtn.style.pointerEvents='auto';
+        confirmBtn.dataset.slipHash = hash;
+        confirmBtn.dataset.slipData = compressed;
+        confirmBtn.dataset.slipTime = fileModifiedTime;
+        confirmBtn.dataset.qrData   = qrText;
+        confirmBtn.dataset.qrRef    = qrRef||'';
+        confirmBtn.dataset.slipType = slipType;
+        confirmBtn.dataset.allPass  = allPass ? '1' : '0';
+        confirmBtn.dataset.qrAmount = qrAmount||'';
+        confirmBtn.dataset.timeDiff = timeDiffMin!==null ? Math.round(timeDiffMin).toString() : '';
       }
     };
-    imgEl.src=dataUrl;
+    imgEl.src = dataUrl;
   };
   reader.readAsDataURL(file);
 }
 
-
-// ══════════════════════════════════════════
-// SLIP COUNTDOWN TIMER (10 minutes)
-// ══════════════════════════════════════════
-let _slipCountdownTimer = null;
-let _slipCountdownEnd = null;
-
-function startSlipCountdown() {
-  stopSlipCountdown();
-  _slipCountdownEnd = Date.now() + 10 * 60 * 1000; // 10 นาที
-
-  const wrap = document.getElementById('slipCountdownWrap');
-  const display = document.getElementById('slipCountdownDisplay');
-  const bar = document.getElementById('slipCountdownBar');
-  if(wrap) wrap.style.display = 'block';
-
-  function tick() {
-    const remaining = _slipCountdownEnd - Date.now();
-    if(remaining <= 0) {
-      // หมดเวลา — รีเซ็ตทุกอย่าง
-      stopSlipCountdown();
-      resetSlipSession();
-      return;
+// ── Admin auto-approve timer ──
+const _adminAutoApproveTimers = {};
+function _startAdminAutoApprove(depId, userId, amount){
+  if(_adminAutoApproveTimers[depId]) return;
+  const endAt = Date.now() + 60000; // 1 ນາທີ
+  _adminAutoApproveTimers[depId] = setInterval(async()=>{
+    const remaining = endAt - Date.now();
+    const cdEl = document.getElementById('adep_cd_'+depId);
+    if(cdEl){ const s=Math.max(0,Math.ceil(remaining/1000)); cdEl.textContent='0:'+String(s).padStart(2,'0'); }
+    if(remaining <= 0){
+      clearInterval(_adminAutoApproveTimers[depId]);
+      delete _adminAutoApproveTimers[depId];
+      const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+      const idx = deps.findIndex(d=>d.id===depId && d.status==='pending');
+      if(idx >= 0) await _doAdminApproveDeposit(depId, userId, amount);
     }
-
-    const mins = Math.floor(remaining / 60000);
-    const secs = Math.floor((remaining % 60000) / 1000);
-    const pct = (remaining / (10 * 60 * 1000)) * 100;
-
-    if(display) display.textContent = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
-    if(bar) bar.style.width = pct + '%';
-
-    // เปลี่ยนสีเมื่อเหลือน้อย
-    if(remaining < 60000) {
-      if(display) display.style.color = '#f87171';
-      if(bar) bar.style.background = '#f87171';
-    } else if(remaining < 3 * 60000) {
-      if(display) display.style.color = '#fbbf24';
-      if(bar) bar.style.background = 'linear-gradient(90deg,#fbbf24,#f97316)';
-    }
-  }
-
-  tick();
-  _slipCountdownTimer = setInterval(tick, 1000);
+  }, 1000);
 }
 
-function stopSlipCountdown() {
-  if(_slipCountdownTimer) {
-    clearInterval(_slipCountdownTimer);
-    _slipCountdownTimer = null;
+async function _doAdminApproveDeposit(depId, userId, amount){
+  const { error } = await supa.from('kd_deposits').update({status:'approved'}).eq('id',depId);
+  if(!error){
+    const { data: ud } = await supa.from('kd_users').select('wallet').eq('id',userId).single();
+    const newWallet = (Number(ud?.wallet)||0) + Number(amount);
+    await supa.from('kd_users').update({wallet:newWallet, updated_at:new Date().toISOString()}).eq('id',userId);
+    if(currentUser && currentUser.id===userId){ currentUser.wallet=newWallet; saveUser(); updateBalanceUI(newWallet); }
+    const deps=JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+    const idx=deps.findIndex(d=>d.id===depId);
+    if(idx>=0){deps[idx].status='approved';deps[idx].approvedAt=new Date().toLocaleString('lo-LA');localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));}
+    showNotif('✅ ຢືນຢັນຝາກ +'+Number(amount).toLocaleString()+' ₭ ສຳເລັດ','success');
+    try{ renderAdminTab('finance'); }catch(_){}
+  } else {
+    showNotif('❌ ຢືນຢັນຜິດພາດ: '+(error.message||''),'error');
   }
-  _slipCountdownEnd = null;
-  const wrap = document.getElementById('slipCountdownWrap');
-  if(wrap) wrap.style.display = 'none';
-  const display = document.getElementById('slipCountdownDisplay');
-  if(display) { display.textContent = '10:00'; display.style.color = 'var(--gold)'; }
-  const bar = document.getElementById('slipCountdownBar');
-  if(bar) { bar.style.width = '100%'; bar.style.background = 'linear-gradient(90deg,var(--gold),#f0d080)'; }
 }
 
-function resetSlipSession() {
-  // รีเซ็ต UI ทั้งหมด + แจ้งเตือน
-  document.getElementById('depositSlipPreview').innerHTML = '';
-  document.getElementById('depositSlipInput').value = '';
-  const validEl = document.getElementById('slipValidResult');
-  if(validEl) { validEl.style.display = 'none'; validEl.innerHTML = ''; }
-  const confirmBtn = document.getElementById('depConfirmBtn');
-  if(confirmBtn) {
-    confirmBtn.style.opacity = '0.4';
-    confirmBtn.style.pointerEvents = 'none';
-    delete confirmBtn.dataset.slipData;
-    delete confirmBtn.dataset.slipHash;
-  }
+function resetSlipSession(){
+  const prevDiv=document.getElementById('depositSlipPreview');
+  const placeholder=document.getElementById('slipScanPlaceholder');
+  const scanLine=document.getElementById('slipScanLine');
+  const badge=document.getElementById('slipScanBadge');
+  const input=document.getElementById('depositSlipInput');
+  const validEl=document.getElementById('slipValidResult');
+  const confirmBtn=document.getElementById('depConfirmBtn');
+  const autoFields=document.getElementById('slipAutoFields');
+  if(prevDiv){ prevDiv.style.display='none'; prevDiv.innerHTML=''; }
+  if(placeholder) placeholder.style.display='block';
+  if(scanLine) scanLine.style.display='none';
+  if(badge) badge.style.display='none';
+  if(input) input.value='';
+  if(validEl){ validEl.style.display='none'; validEl.innerHTML=''; }
+  if(autoFields) autoFields.style.display='none';
+  if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; delete confirmBtn.dataset.slipHash; }
   stopSlipCountdown();
-
-  showNotif('❌ ເຕີມເງິນລົ້ມເຫຼວ — ໝົດເວລາ 10 ນາທີ ກາລຸນາໂອນເງິນໃໝ່', 'error');
-
-  // แสดง popup แจ้งเตือนชัดเจน
-  const validElNew = document.getElementById('slipValidResult');
-  if(validElNew) {
-    validElNew.style.display = 'block';
-    validElNew.style.background = 'rgba(220,38,38,0.15)';
-    validElNew.style.border = '1px solid rgba(220,38,38,0.4)';
-    validElNew.style.color = '#f87171';
-    validElNew.innerHTML = `❌ <strong>ເຕີມເງິນລົ້ມເຫຼວ</strong><br>
-      <span style="font-size:11px;opacity:0.85">ໝົດເວລາ 10 ນາທີ — ກາລຸນາໂອນເງິນໃໝ່ ແລ້ວ ອັດໂຫລດສລິບໃໝ່ອີກຄັ້ງ</span>`;
-  }
+  showNotif('❌ ໝົດເວລາ 10 ນາທີ — ກາລຸນາໂອນໃໝ່ ແລ້ວອັດໂຫລດສລິບໃໝ່','error');
 }
 
 async function doDeposit(){
@@ -14648,137 +14631,132 @@ async function doDeposit(){
   window._depositLock = true;
   const depBtn = document.getElementById('depConfirmBtn');
   if(depBtn){ depBtn.disabled=true; depBtn.textContent='⏳ ກຳລັງດຳເນີນການ...'; }
-  try {
-  const amt = parseInt(document.getElementById('depositAmt').value)||0;
-  if(!amt||amt<1000){showNotif('ໃສ່ຈຳນວນທີ່ຖືກຕ້ອງ (ຢ່າງໜ້ອຍ 1,000 ກີບ)');return;}
-  if(!currentUser){showNotif('ເຂົ້າລະບົບກ່ອນ');return;}
-
-  const refInput = document.getElementById('depositRef');
-  const ref = refInput ? refInput.value.trim() : '';
-
-  const confirmBtn = document.getElementById('depConfirmBtn');
-  const slipData = confirmBtn?.dataset?.slipData;
-  const slipHash = confirmBtn?.dataset?.slipHash;
-  const slipScore = parseInt(confirmBtn?.dataset?.slipScore||'0');
-  const slipWarning = confirmBtn?.dataset?.slipWarning==='1';
-
-  if(!slipData){showNotif('ກາລຸນາອັດໂຫລດສລິບກ່ອນ');return;}
-
-  // ตรวจ ref ซ้ำ
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-  const refDup = ref ? deps.find(d=>d.ref&&d.ref.toUpperCase()===ref.toUpperCase()&&d.status!=='rejected') : false;
-  if(refDup){showNotif('❌ ເລກ Reference ນີ້ຖືກໃຊ້ແລ້ວ!');return;}
-
   try{
-    const slipTime = parseInt(confirmBtn?.dataset?.slipTime||'0');
-    const uploadNow = Date.now();
+    const amt = parseInt(document.getElementById('depositAmt').value)||0;
+    if(!amt||amt<1000){ showNotif('ໃສ່ຈຳນວນຢ່າງໜ້ອຍ 1,000 ₭'); return; }
+    if(!currentUser){ showNotif('ເຂົ້າລະບົບກ່ອນ'); return; }
+
+    const confirmBtn = document.getElementById('depConfirmBtn');
+    const slipData  = confirmBtn?.dataset?.slipData;
+    const slipHash  = confirmBtn?.dataset?.slipHash;
+    const qrData    = confirmBtn?.dataset?.qrData || '';
+    const qrRef     = confirmBtn?.dataset?.qrRef  || '';
+    const slipType  = confirmBtn?.dataset?.slipType || 'OTHER';
+    const allPass   = confirmBtn?.dataset?.allPass === '1';
+    const qrAmount  = parseInt(confirmBtn?.dataset?.qrAmount||'0')||0;
+    const slipTime  = parseInt(confirmBtn?.dataset?.slipTime||'0');
+
+    if(!slipData){ showNotif('ກາລຸນາອັດໂຫລດສລິບກ່ອນ'); return; }
+
+    // ກວດ ref ຊ້ຳ local
+    if(qrRef && getUsedRefs().includes(qrRef.toUpperCase())){ showNotif('❌ Reference ນີ້ຖືກໃຊ້ແລ້ວ!'); return; }
+
+    // ກວດ ref ຊ້ຳ Supabase
+    if(qrRef){
+      const { data: dupD, error: dupE } = await supa.from('kd_deposits').select('id').eq('transaction_ref',qrRef).neq('status','rejected').limit(1);
+      if(!dupE && dupD && dupD.length>0){ showNotif('❌ Reference ຊ້ຳ — ສລິບນີ້ຖືກໃຊ້ແລ້ວ'); return; }
+    }
+
+    const receiverName = document.getElementById('depReceiverName')?.value||'';
+    const slipTimeStr  = document.getElementById('depSlipTime')?.value||'';
+
     const newDep = {
-      id:'DEP-'+Date.now(),
-      userId:currentUser.id,
-      userName:currentUser.name||currentUser.user,
-      amount:amt,
-      slipImg:slipData,
-      slipHash:slipHash||'',
-      slipScore:slipScore,
-      slipWarning:slipWarning,
-      ref:ref.toUpperCase(),
-      date:new Date().toLocaleString(),
+      id: 'DEP-'+Date.now(),
+      userId: currentUser.id,
+      userName: currentUser.name||currentUser.user,
+      amount: amt,
+      slipImg: slipData,
+      slipHash: slipHash||'',
+      slipScore: allPass ? 100 : 60,
+      slipWarning: !allPass,
+      ref: qrRef||'',
+      date: new Date().toLocaleString(),
       slipFileTime: slipTime>0 ? new Date(slipTime).toLocaleString('lo-LA') : '-',
-      uploadTime: new Date(uploadNow).toLocaleString('lo-LA'),
-      timeDiffMin: slipTime>0 ? Math.round((uploadNow-slipTime)/60000) : null,
-      // ✅ บันทึก QR และ Ref เพื่อตรวจซ้ำในครั้งหน้า
-      qrData: confirmBtn?.dataset?.qrData || null,
-      qrFingerprint: confirmBtn?.dataset?.qrFingerprint || null,
-      transactionRef: confirmBtn?.dataset?.transactionRef || null,
-      status:'pending'
+      uploadTime: new Date().toLocaleString('lo-LA'),
+      transactionRef: qrRef||null,
+      qrData: qrData||null,
+      receiverName: receiverName||null,
+      slipType,
+      allPass,
+      status: 'pending'
     };
+
+    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
     deps.push(newDep);
     localStorage.setItem('kd_deposit_requests', JSON.stringify(deps));
-
-    // บันทึก hash เพื่อตรวจ duplicate ครั้งหน้า
     if(slipHash) saveSlipHash(slipHash);
 
-    // ✅ Upload slip image to Supabase Storage (not base64 in DB column)
-    (async ()=>{
+    // upload slip + save Supabase background
+    (async()=>{
       try{
         if(newDep.slipImg && newDep.slipImg.startsWith('data:')){
-          const mimeType = newDep.slipImg.split(';')[0].split(':')[1]||'image/jpeg';
-          const ext = mimeType.split('/')[1]||'jpg';
-          const byteString = atob(newDep.slipImg.split(',')[1]);
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for(let i=0;i<byteString.length;i++) ia[i]=byteString.charCodeAt(i);
-          const slipFile = new File([ab], 'slip_'+newDep.id+'.'+ext, {type:mimeType});
-          const slipUrl = await uploadImageToStorage(slipFile, 'slips');
+          const mimeType=newDep.slipImg.split(';')[0].split(':')[1]||'image/jpeg';
+          const ext=mimeType.split('/')[1]||'jpg';
+          const bs=atob(newDep.slipImg.split(',')[1]);
+          const ab=new ArrayBuffer(bs.length); const ia=new Uint8Array(ab);
+          for(let i=0;i<bs.length;i++) ia[i]=bs.charCodeAt(i);
+          const slipFile=new File([ab],'slip_'+newDep.id+'.'+ext,{type:mimeType});
+          const slipUrl=await uploadImageToStorage(slipFile,'slips');
           if(slipUrl && !slipUrl.startsWith('data:')){
-            newDep.slipImg = slipUrl;
-            // Update localStorage with URL
-            const deps2 = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-            const di = deps2.findIndex(d=>d.id===newDep.id);
-            if(di>=0){ deps2[di].slipImg=slipUrl; localStorage.setItem('kd_deposit_requests',JSON.stringify(deps2)); }
+            newDep.slipImg=slipUrl;
+            const d2=JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+            const di=d2.findIndex(d=>d.id===newDep.id);
+            if(di>=0){d2[di].slipImg=slipUrl;localStorage.setItem('kd_deposit_requests',JSON.stringify(d2));}
           }
         }
         await sbSaveDeposit(newDep);
-        console.log('✅ Deposit saved to Supabase:', newDep.id);
-      } catch(e){ console.warn('❌ sbSaveDeposit failed:', e); }
+      }catch(e){ console.warn('sbSaveDeposit failed:',e); }
     })();
-    addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt, ref, warning:slipWarning});
+
+    addAdminNotification('deposit',{user:currentUser.name||currentUser.user, amount:amt, ref:qrRef, warning:!allPass, allPass, receiverName, slipType});
     waDeposit(currentUser, amt);
 
+    // ── ປິດ UI ──
     stopSlipCountdown();
     closeModal('depositModal');
     document.getElementById('depositAmt').value='';
     document.getElementById('depositSlipPreview').innerHTML='';
     document.getElementById('depositSlipInput').value='';
-    if(refInput){ refInput.value=''; refInput.readOnly=false; refInput.style.borderColor=''; refInput.style.background=''; refInput.style.color=''; refInput.style.cursor=''; }
-    if(confirmBtn){confirmBtn.style.opacity='0.4';confirmBtn.style.pointerEvents='none';delete confirmBtn.dataset.slipData;}
+    const autoFields=document.getElementById('slipAutoFields');
+    if(autoFields) autoFields.style.display='none';
+    ['depReceiverName','depSlipTime','depSlipRef','depSlipAmount'].forEach(id=>{
+      const el=document.getElementById(id); if(el){el.value='';el.style.borderColor='';}
+    });
+    const validEl=document.getElementById('slipValidResult');
+    if(validEl) validEl.style.display='none';
+    if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; delete confirmBtn.dataset.slipHash; }
     document.getElementById('dep-step2').style.display='none';
     document.getElementById('dep-step1').style.display='block';
-    stopSlipCountdown();
 
-    // ══════════════════════════════════════════════
-    // ✅ AUTO-APPROVE: ຖ້າສລິບຜ່ານທຸກເງື່ອນໄຂ
-    // ══════════════════════════════════════════════
-    if(!slipWarning){
-      // ✅ Gemini ຢືນຢັນຄົບ — Auto approve ທັນທີ
-      const newWallet = (currentUser.wallet||0) + amt;
-      updateBalanceUI(newWallet);
-      // ✅ async/await — ບໍ່ໃຊ້ .then().catch()
-      try {
-        await sbUpdateDepositStatus(newDep.id, 'approved', currentUser.id, amt);
-        // ອັບເດດ local deposit status
-        const deps2 = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-        const idx2 = deps2.findIndex(d=>d.id===newDep.id);
-        if(idx2>=0){
-          deps2[idx2].status='approved';
-          deps2[idx2].autoApproved=true;
-          deps2[idx2].approvedAt=new Date().toLocaleString('lo-LA');
+    if(allPass){
+      // ✅ ຂໍ້ມູນຄົບ — auto approve ຫຼັງ 1 ນາທີ
+      showNotif('✅ ສົ່ງສລິບສຳເລັດ — Admin ຈະຢືນຢັນພາຍໃນ 1 ນາທີ ເງິນຈະເຂົ້າ Wallet ອັດຕະໂນມັດ','success');
+      const autoTimer = setTimeout(async()=>{
+        const d3=JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+        const dep3=d3.find(d=>d.id===newDep.id);
+        if(dep3 && dep3.status==='pending'){
+          const newWallet=(currentUser.wallet||0)+amt;
+          updateBalanceUI(newWallet);
+          try{
+            await sbUpdateDepositStatus(newDep.id,'approved',currentUser.id,amt);
+            const d4=JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+            const i4=d4.findIndex(d=>d.id===newDep.id);
+            if(i4>=0){d4[i4].status='approved';d4[i4].autoApproved=true;d4[i4].approvedAt=new Date().toLocaleString('lo-LA');localStorage.setItem('kd_deposit_requests',JSON.stringify(d4));}
+          }catch(e){console.warn('auto-approve:',e);}
+          showNotif('✅ ເຕີມເງິນ +'+Number(amt).toLocaleString()+' ₭ ສຳເລັດ (Auto 1 ນ.)','success');
         }
-        localStorage.setItem('kd_deposit_requests', JSON.stringify(deps2));
-      } catch(autoErr){
-        console.warn('Auto-approve error:', autoErr);
-      }
-      showNotif('✅ ຝາກເງິນ +'+Number(amt).toLocaleString()+' ກີບ ສຳເລັດ! ຍອດເງິນໄດ້ຮັບການອັບເດດ', 'success');
-    } else if(slipWarning){
-      // สลิปน่าสงสัย — ส่งให้ Admin ตรวจก่อน
-      showNotif('⚠️ ສລິບໜ້າສົງໄສ — Admin ຈະກວດສອບ ແລ້ວເຕີມເງິນໃຫ້ໃນໄວໆ', 'warning');
+      }, 60000); // 1 ນາທີ
+      window['_autoDepTimer_'+newDep.id] = autoTimer;
     } else {
-      // ส่ง pending ปกติ
-      showNotif('✅ ສົ່ງຄຳຂໍຝາກ '+Number(amt).toLocaleString()+' ກີບ — ລໍຖ້າ Admin ຢືນຢັນ', 'success');
+      showNotif('⚠️ ສົ່ງສລິບໃຫ້ Admin ກວດສອບ — ຮໍຖ້າ Admin ຢືນຢັນ','warning');
     }
-  } catch(innerErr){
-    console.warn('doDeposit inner:', innerErr);
-    showNotif('⚠️ ບັນທຶກ offline — sync ໃໝ່ທີຫຼັງ', 'warning');
-  }
-  } catch(err){
-    if(err.name==='QuotaExceededError'){
-      showNotif('❌ ຫນ່ວຍຄວາມຈຳເຕັມ ກາລຸນາລຶບຂໍ້ມູນເກົ່າ');
-    } else {
-      showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+err.message);
-    }
-  } finally {
-    window._depositLock = false;
-    if(depBtn){ depBtn.disabled=false; depBtn.textContent='✅ ຢືນຢັນການຝາກ'; }
+
+  }catch(err){
+    if(err.name==='QuotaExceededError') showNotif('❌ ຫນ່ວຍຄວາມຈຳເຕັມ');
+    else showNotif('❌ ເກີດຂໍ້ຜິດພາດ: '+err.message);
+  }finally{
+    window._depositLock=false;
+    if(depBtn){depBtn.disabled=false;depBtn.textContent='✅ ຢືນຢັນສົ່ງສລິບ';}
   }
 }
 
