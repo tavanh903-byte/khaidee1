@@ -13282,6 +13282,15 @@ function adminOpenEditUser(uid){
         <input class="form-input" id="adminEditPhone" value="${u.phone||''}" placeholder="ເບີໂທ">
       </div>
       <div class="form-group">
+        <label class="form-label">🔓 ລະຫັດຜ່ານປັດຈຸບັນ <span style="font-size:10px;color:var(--text2)">(ສຳລັບ Admin ເທົ່ານັ້ນ)</span></label>
+        <div style="position:relative">
+          <input class="form-input" id="adminCurrentPass" type="text" value="${u.pass||u.password||''}" readonly
+            style="background:rgba(201,168,76,0.06);border-color:rgba(201,168,76,0.3);color:var(--gold);font-weight:700;letter-spacing:1px;padding-right:44px;cursor:default">
+          <button onclick="(function(){const el=document.getElementById('adminCurrentPass');el.type=el.type==='text'?'password':'text';this.textContent=el.type==='text'?'🙈':'👁'}).call(this)"
+            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">🙈</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="form-label">🔑 ລະຫັດຜ່ານໃໝ່ <span style="font-size:10px;color:var(--text2)">(ຫວ່າງໄວ້ = ບໍ່ປ່ຽນ)</span></label>
         <input class="form-input" id="adminEditPass" type="password" placeholder="ລະຫັດຜ່ານໃໝ່">
       </div>
