@@ -13997,22 +13997,25 @@ function resetSlipInput(){
 async function analyzeSlipWithGemini(base64Image, mimeType){
   const key = getGeminiKey();
   if(!key) return null;
-  const prompt = `You are analyzing a bank transfer slip/receipt image.
+  const prompt = `You are analyzing a payment slip image from Laos.
+This could be a BCEL One app slip, JDB bank slip, or any Lao bank transfer receipt.
+It may be a screenshot of a mobile phone screen showing a payment confirmation.
+
 Extract EXACTLY these fields in JSON format only (no markdown, no explanation):
 {
-  "receiver_name": "name of money recipient",
-  "amount": 12345,
+  "receiver_name": "name of money recipient e.g. SENGTAVANH BOUNXAISENG",
+  "amount": 10000,
   "currency": "LAK",
-  "datetime": "DD/MM/YYYY HH:MM:SS",
-  "reference": "reference number or transaction ID",
-  "bank": "bank name e.g. BCEL or JDB",
-  "is_slip": true or false
+  "datetime": "21/03/2026 12:24:06",
+  "reference": "reference number or transaction ID e.g. BONECLW9K30NXD4M",
+  "bank": "BCEL or JDB or other bank name",
+  "is_slip": true
 }
 Rules:
-- amount must be integer (no comma/dot)
-- datetime format: DD/MM/YYYY HH:MM:SS
+- amount must be integer (Payment Amount only, not Fee)
 - if field not found set null
-- is_slip: true only if this looks like a bank payment receipt`;
+- is_slip: set true if image shows ANY payment receipt, bank transfer confirmation, or transaction summary screen — even if it is a photo of a phone screen showing a slip
+- is_slip: set false ONLY if the image is clearly NOT related to banking (e.g. nature photo, selfie, food photo)`;
 
   const models = [
     'gemini-2.0-flash',
@@ -14038,10 +14041,17 @@ Rules:
       const data = await res.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
       const clean = text.replace(/```json|```/g,'').trim();
-      return JSON.parse(clean);
+      const parsed = JSON.parse(clean);
+      // ✅ ຖ້າ Gemini ບໍ່ແນ່ໃຈ (is_slip=false ຫຼື null) → ຍັງ fallback ໃຫ້ Admin ກວດ
+      if(parsed && parsed.is_slip === false){
+        // ລອງ model ຕໍ່ໄປກ່ອນ
+        continue;
+      }
+      return parsed;
     }catch(e){ console.warn('Gemini model',model,'failed:',e.message); }
   }
-  return null;
+  // ✅ ທຸກ model fail ຫຼື is_slip=false ທຸກ model → fallback ໃຫ້ Admin ກວດ
+  return { is_slip: null, _fallback: true };
 }
 
 // ── previewDepositSlip: อ่านรูป → Gemini → ตรวจสอบ ──
@@ -14111,7 +14121,15 @@ function previewDepositSlip(){
       if(validEl) validEl.innerHTML='🤖 Layer 2/3: AI ກຳລັງອ່ານສລິບ...';
       const slipData = await analyzeSlipWithGemini(compBase64, mimeType);
 
-      if(!slipData || !slipData.is_slip){
+      // ✅ ຖ້າ Gemini ບໍ່ສາມາດອ່ານໄດ້ → fallback ໃຫ້ Admin ກວດ
+      if(!slipData || slipData._fallback){
+        if(validEl){ validEl.style.background='rgba(234,179,8,0.1)';validEl.style.border='1px solid rgba(234,179,8,0.3)';validEl.style.color='#fbbf24';
+          validEl.innerHTML='⚠️ AI ບໍ່ສາມາດອ່ານສລິບໄດ້ — ສົ່ງ Admin ກວດດ້ວຍຕົນເອງ'; }
+        _enableConfirmBtn(confirmBtn, compressed, hash, null, file.lastModified);
+        return;
+      }
+
+      if(slipData.is_slip === false){
         validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='2px solid rgba(220,38,38,0.5)';validEl.style.color='#f87171';
         validEl.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:6px">🚫 ຮູບນີ້ບໍ່ໃຊ່ສລິບທະນາຄານ</div>
           <div style="font-size:11px;line-height:1.9;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
