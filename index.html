@@ -2961,13 +2961,13 @@ async function syncFromSupabase(){
       </div>
 
       <!-- QR Code -->
-      <div style="background:#fff;border-radius:14px;padding:16px;text-align:center;margin-bottom:12px">
-        <div style="font-size:12px;font-weight:700;color:#c0202a;margin-bottom:8px">JDB Bank · ສະແກນເພື່ອຈ່າຍ</div>
-        <img id="qrCodeImg" alt="QR Code" style="width:200px;max-width:100%;height:auto;display:block;margin:0 auto;border-radius:6px">
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;text-align:left">
-          <div style="font-size:11px;color:#888;margin-bottom:2px">ຊື່ບັນຊີ</div>
-          <div style="font-size:14px;font-weight:700;color:#1a1a1a">SENGTAVANH BOUNXAISENG</div>
-          <div style="font-size:11px;color:#0066cc;font-weight:600;margin-top:4px">JDB Bank · LAK</div>
+      <div style="background:#fff;border-radius:14px;padding:20px 16px;text-align:center;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.15)">
+        <div style="font-size:13px;font-weight:700;color:#c0202a;margin-bottom:10px;letter-spacing:0.5px">🏦 JDB Bank · ສະແກນເພື່ອຈ່າຍ</div>
+        <img id="qrCodeImg" alt="QR Code" style="width:260px;max-width:90%;height:auto;display:block;margin:0 auto;border-radius:8px;border:3px solid #f0f0f0">
+        <div style="margin-top:14px;padding-top:12px;border-top:1.5px solid #eee;text-align:left">
+          <div style="font-size:11px;color:#999;margin-bottom:3px">ຊື່ບັນຊີ</div>
+          <div style="font-size:16px;font-weight:800;color:#1a1a1a;letter-spacing:0.3px">SENGTAVANH BOUNXAISENG</div>
+          <div style="font-size:12px;color:#0066cc;font-weight:700;margin-top:5px">JDB Bank · LAK</div>
         </div>
       </div>
 
@@ -13927,29 +13927,6 @@ function syncDepositQuick(){
     b.classList.toggle('dep-active', parseInt(b.textContent.replace(/,/g,''))===val);
   });
 }
-function goDepStep2(){
-  const amt = parseInt(document.getElementById('depositAmt').value)||0;
-  if(!amt||amt<1000){showNotif('ໃສ່ຈຳນວນຢ່າງໜ້ອຍ 1,000 ກີບ');return;}
-  const fmt = amt.toLocaleString('en-US');
-  document.getElementById('dep-amt-display').textContent = fmt;
-  document.getElementById('dep-hint-amt').textContent = fmt;
-  document.getElementById('dep-step1').style.display='none';
-  document.getElementById('dep-step2').style.display='block';
-  // Set QR image
-  const img = document.getElementById('qrCodeImg');
-  if(img && !img.src.startsWith('data:')) img.src = QR_B64;
-  // เริ่มนับถอยหลัง 10 นาที
-  startSlipCountdown();
-}
-function goDepStep1(){
-  document.getElementById('dep-step2').style.display='none';
-  document.getElementById('dep-step1').style.display='block';
-  // หยุดนับถอยหลังเมื่อกลับ
-  stopSlipCountdown();
-  resetSlipSession();
-}
-
-
 // ══════════════════════════════════════════════════════
 // 💰 WALLET / DEPOSIT SYSTEM — Gemini AI Vision
 // ══════════════════════════════════════════════════════
