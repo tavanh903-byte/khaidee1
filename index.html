@@ -2961,10 +2961,16 @@ async function syncFromSupabase(){
       </div>
 
       <!-- QR Code -->
-      <div style="background:#fff;border-radius:14px;padding:20px 16px;text-align:center;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.15)">
+      <div style="background:#fff;border-radius:14px;padding:16px;text-align:center;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.15)">
         <div style="font-size:13px;font-weight:700;color:#c0202a;margin-bottom:10px;letter-spacing:0.5px">🏦 JDB Bank · ສະແກນເພື່ອຈ່າຍ</div>
-        <img id="qrCodeImg" alt="QR Code" style="width:260px;max-width:90%;height:auto;display:block;margin:0 auto;border-radius:8px;border:3px solid #f0f0f0">
-        <div style="margin-top:14px;padding-top:12px;border-top:1.5px solid #eee;text-align:left">
+        <img id="qrCodeImg" alt="QR Code"
+          style="max-width:100%;height:auto;display:block;margin:0 auto;border-radius:8px;border:3px solid #f0f0f0;cursor:zoom-in"
+          onclick="if(this.src&&this.src.length>10)adminViewImg(this.src)">
+        <div style="margin-top:10px;background:rgba(192,32,42,0.06);border:1px solid rgba(192,32,42,0.2);border-radius:8px;padding:10px 12px;text-align:center">
+          <div style="font-size:12px;font-weight:700;color:#c0202a;margin-bottom:3px">👆 ກົດທີ່ຮູບ QR Code ເພື່ອຂະຫຍາຍ</div>
+          <div style="font-size:11px;color:#888;line-height:1.7">ເມື່ອສະແກນໂອນເງິນສຳເລັດແລ້ວ<br>ໃຫ້ Screenshot ສລິບ ແລ້ວ <strong style="color:#c0202a">ສົ່ງສລິບດ້ານລຸ່ມ</strong></div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1.5px solid #eee;text-align:left">
           <div style="font-size:11px;color:#999;margin-bottom:3px">ຊື່ບັນຊີ</div>
           <div style="font-size:16px;font-weight:800;color:#1a1a1a;letter-spacing:0.3px">SENGTAVANH BOUNXAISENG</div>
           <div style="font-size:12px;color:#0066cc;font-weight:700;margin-top:5px">JDB Bank · LAK</div>
@@ -13671,6 +13677,7 @@ function renderAdminFinance(){
   <button class="btn btn-outline" style="width:100%;margin-bottom:12px;font-size:13px" onclick="switchAdminTab('history')">📋 ດູປະຫວັດທັງໝົດ →</button>
 
   ${renderAdminOTPRequests()}
+  ${renderQRSettings()}
   ${renderGeminiKeySettings()}
   <div style="font-size:13px;font-weight:700;color:#f90;margin-bottom:8px">⏳ ລໍຖ້າຢືນຢັນ — ຝາກ (${pendDeps.length})</div>
   ${pendDeps.length?pendDeps.slice().reverse().map(r=>`
@@ -14294,6 +14301,66 @@ function renderGeminiKeySettings(){
       </div>
       <div style="font-size:10px;color:var(--text2);margin-top:6px">📌 ຮັບ Key ຟຣີໄດ້ທີ່: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#4ade80">aistudio.google.com</a></div>
     </div>`;
+}
+
+// ✅ QR Code ສຳລັບຮັບເງິນ — Admin ອັດໂຫລດຮູບ QR ທີ່ນີ້
+function renderQRSettings(){
+  const stored = localStorage.getItem('kd_payment_qr')||'';
+  return `
+    <div style="background:rgba(201,168,76,0.06);border:1.5px solid rgba(201,168,76,0.3);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">📱 QR Code ຮັບເງິນ (ສະແດງໃນໜ້າຝາກເງິນ)</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">ອັດໂຫລດຮູບ QR ຈາກແອັບທະນາຄານ — ລູກຄ້າຈະເຫັນ QR ນີ້ໃນໜ້າ ຝາກເງິນ</div>
+
+      ${stored ? `
+      <div style="background:#fff;border-radius:10px;padding:12px;text-align:center;margin-bottom:10px">
+        <div style="font-size:11px;color:#888;margin-bottom:6px">QR ປັດຈຸບັນ:</div>
+        <img src="${stored}" style="max-width:180px;max-height:180px;object-fit:contain;border-radius:6px;display:block;margin:0 auto">
+      </div>` : `
+      <div style="background:rgba(255,255,255,0.04);border:1px dashed rgba(201,168,76,0.3);border-radius:10px;padding:20px;text-align:center;margin-bottom:10px;color:var(--text2);font-size:12px">
+        📷 ຍັງບໍ່ໄດ້ອັດໂຫລດ QR Code
+      </div>`}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(201,168,76,.1));border:1px solid rgba(201,168,76,.5);color:var(--gold);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;font-family:'Sarabun',sans-serif">
+          📁 ເລືອກຮູບ QR
+          <input type="file" accept="image/*" style="display:none" onchange="adminUploadPaymentQR(this)">
+        </label>
+        ${stored ? `<button onclick="adminDeletePaymentQR()" style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#f87171;border-radius:8px;padding:9px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🗑 ລຶບ QR</button>` : '<div></div>'}
+      </div>
+    </div>`;
+}
+
+function adminUploadPaymentQR(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // compress ກ່ອນ save
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 600;
+      let w = img.width, h = img.height;
+      if(w > MAX){ h = Math.round(h*MAX/w); w = MAX; }
+      if(h > MAX){ w = Math.round(w*MAX/h); h = MAX; }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const data = c.toDataURL('image/png', 0.95);
+      localStorage.setItem('kd_payment_qr', data);
+      showNotif('✅ ບັນທຶກ QR Code ສຳເລັດ!', 'success');
+      // refresh finance tab
+      renderAdminTab('finance');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function adminDeletePaymentQR(){
+  if(!confirm('ລຶບ QR Code ອອກ?')) return;
+  localStorage.removeItem('kd_payment_qr');
+  showNotif('🗑 ລຶບ QR Code ແລ້ວ');
+  renderAdminTab('finance');
 }
 
 
