@@ -14007,6 +14007,10 @@ async function analyzeSlipWithGemini(base64Image, mimeType){
   const key = getGeminiKey();
   if(!key) return null;
 
+  // ✅ Claude ຮອງຮັບສະເພາະ: image/jpeg, image/png, image/gif, image/webp
+  const validMime = ['image/jpeg','image/png','image/gif','image/webp'];
+  const safeMime = validMime.includes(mimeType) ? mimeType : 'image/jpeg';
+
   const prompt = `You are analyzing a payment slip image from Laos.
 This could be a BCEL One app slip, JDB bank slip, or any Lao bank transfer receipt.
 It may be a screenshot of a mobile phone screen showing a payment confirmation.
@@ -14028,6 +14032,7 @@ Rules:
 - set null for any field not found`;
 
   try{
+    console.log('[Claude] Analyzing slip, mime:', safeMime, 'key prefix:', key.slice(0,12)+'...');
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -14042,25 +14047,28 @@ Rules:
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Image }},
+            { type: 'image', source: { type: 'base64', media_type: safeMime, data: base64Image }},
             { type: 'text', text: prompt }
           ]
         }]
       })
     });
+    console.log('[Claude] Response status:', res.status);
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
-      console.warn('Claude API error:', res.status, err?.error?.message||'');
+      console.warn('[Claude] API error:', res.status, err?.error?.message||JSON.stringify(err));
       return { is_slip: null, _fallback: true };
     }
     const data = await res.json();
     const text = data?.content?.[0]?.text||'';
+    console.log('[Claude] Raw response:', text.slice(0,200));
     const clean = text.replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(clean);
+    console.log('[Claude] Parsed:', parsed);
     if(parsed && parsed.is_slip === false) return { is_slip: null, _fallback: true };
     return parsed;
   }catch(e){
-    console.warn('Claude slip analysis failed:', e.message);
+    console.warn('[Claude] Failed:', e.message);
     return { is_slip: null, _fallback: true };
   }
 }
