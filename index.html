@@ -13939,11 +13939,13 @@ function syncDepositQuick(){
 // ══════════════════════════════════════════════════════
 
 // ── Gemini API Key (Admin ใส่เองใน Settings) ──
+// ── Claude API Key (Admin ໃສ່ເອງ — ບໍ່ຢູ່ໃນໂຄ້ດ) ──
 function getGeminiKey(){
-  return localStorage.getItem('kd_gemini_key')||'';
+  return localStorage.getItem('kd_claude_key')||localStorage.getItem('kd_gemini_key')||'';
 }
 function setGeminiKey(k){
-  localStorage.setItem('kd_gemini_key', k.trim());
+  localStorage.setItem('kd_claude_key', k.trim());
+  localStorage.removeItem('kd_gemini_key'); // migrate old key
 }
 
 // ── Hash ภาพ (ป้องกันสลิปซ้ำ) ──
@@ -14000,15 +14002,16 @@ function resetSlipInput(){
     delete confirmBtn.dataset.slipData; delete confirmBtn.dataset.slipHash; }
 }
 
-// ── Gemini Vision: อ่านสลิป ──
+// ── Claude Vision API: ອ່ານສລິບ (ບໍ່ຕິດ CORS) ──
 async function analyzeSlipWithGemini(base64Image, mimeType){
   const key = getGeminiKey();
   if(!key) return null;
+
   const prompt = `You are analyzing a payment slip image from Laos.
 This could be a BCEL One app slip, JDB bank slip, or any Lao bank transfer receipt.
 It may be a screenshot of a mobile phone screen showing a payment confirmation.
 
-Extract EXACTLY these fields in JSON format only (no markdown, no explanation):
+Reply with JSON only (no markdown, no explanation):
 {
   "receiver_name": "name of money recipient e.g. SENGTAVANH BOUNXAISENG",
   "amount": 10000,
@@ -14019,46 +14022,47 @@ Extract EXACTLY these fields in JSON format only (no markdown, no explanation):
   "is_slip": true
 }
 Rules:
-- amount must be integer (Payment Amount only, not Fee)
-- if field not found set null
-- is_slip: set true if image shows ANY payment receipt, bank transfer confirmation, or transaction summary screen — even if it is a photo of a phone screen showing a slip
-- is_slip: set false ONLY if the image is clearly NOT related to banking (e.g. nature photo, selfie, food photo)`;
+- amount = integer, Payment Amount only (not Fee)
+- is_slip = true if image shows any bank payment receipt or transfer confirmation
+- is_slip = false ONLY if clearly not a banking image (nature/selfie/food)
+- set null for any field not found`;
 
-  const models = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-pro-latest',
-  ];
-
-  for(const model of models){
-    try{
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-        { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            contents:[{parts:[
-              {text: prompt},
-              {inline_data:{ mime_type: mimeType, data: base64Image }}
-            ]}],
-            generationConfig:{ temperature:0, maxOutputTokens:512 }
-          })
-        }
-      );
-      if(!res.ok) continue;
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text||'';
-      const clean = text.replace(/```json|```/g,'').trim();
-      const parsed = JSON.parse(clean);
-      // ✅ ຖ້າ Gemini ບໍ່ແນ່ໃຈ (is_slip=false ຫຼື null) → ຍັງ fallback ໃຫ້ Admin ກວດ
-      if(parsed && parsed.is_slip === false){
-        // ລອງ model ຕໍ່ໄປກ່ອນ
-        continue;
-      }
-      return parsed;
-    }catch(e){ console.warn('Gemini model',model,'failed:',e.message); }
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Image }},
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      console.warn('Claude API error:', res.status, err?.error?.message||'');
+      return { is_slip: null, _fallback: true };
+    }
+    const data = await res.json();
+    const text = data?.content?.[0]?.text||'';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    if(parsed && parsed.is_slip === false) return { is_slip: null, _fallback: true };
+    return parsed;
+  }catch(e){
+    console.warn('Claude slip analysis failed:', e.message);
+    return { is_slip: null, _fallback: true };
   }
-  // ✅ ທຸກ model fail ຫຼື is_slip=false ທຸກ model → fallback ໃຫ້ Admin ກວດ
-  return { is_slip: null, _fallback: true };
 }
 
 // ── previewDepositSlip: อ่านรูป → Gemini → ตรวจสอบ ──
@@ -14292,14 +14296,14 @@ function renderGeminiKeySettings(){
   const key = getGeminiKey();
   return `
     <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.25);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:#4ade80;margin-bottom:10px">🤖 Gemini AI API Key</div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">ໃຊ້ສຳລັບອ່ານສລິບໂອນເງິນ — Key ບໍ່ຖືກບັນທຶກໃນໂຄ້ດ</div>
-      <input class="form-input" type="password" id="geminiKeyInput" value="${key}" placeholder="AIzaSy...">
+      <div style="font-size:13px;font-weight:700;color:#4ade80;margin-bottom:10px">🤖 Claude AI API Key (ອ່ານສລິບ)</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">ໃຊ້ Claude Vision ອ່ານສລິບໂອນເງິນ — Key ບໍ່ຖືກບັນທຶກໃນໂຄ້ດ</div>
+      <input class="form-input" type="password" id="geminiKeyInput" value="${key}" placeholder="sk-ant-api03-...">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
         <button onclick="(function(){const k=document.getElementById('geminiKeyInput').value.trim();if(!k){showNotif('ໃສ່ Key ກ່ອນ');return;}setGeminiKey(k);showNotif('✅ ບັນທຶກ Key ສຳເລັດ');})()" style="background:linear-gradient(135deg,rgba(74,222,128,.2),rgba(34,197,94,.1));border:1px solid rgba(74,222,128,.4);color:#4ade80;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">💾 ບັນທຶກ Key</button>
         <button onclick="(function(){setGeminiKey('');document.getElementById('geminiKeyInput').value='';showNotif('🗑 ລຶບ Key ແລ້ວ');})()" style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#f87171;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🗑 ລຶບ Key</button>
       </div>
-      <div style="font-size:10px;color:var(--text2);margin-top:6px">📌 ຮັບ Key ຟຣີໄດ້ທີ່: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#4ade80">aistudio.google.com</a></div>
+      <div style="font-size:10px;color:var(--text2);margin-top:6px">📌 ຮັບ Key ຟຣີໄດ້ທີ່: <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#4ade80">console.anthropic.com</a></div>
     </div>`;
 }
 
