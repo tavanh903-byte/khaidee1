@@ -2772,6 +2772,23 @@ async function syncFromSupabase(){
     <div style="padding:12px;overflow-y:auto;flex:1" id="ppPageGrid"></div>
   </div>
 
+  <!-- ══════ PHONE PARTS ADMIN FULL PAGE ══════ -->
+  <div class="page" id="page-parts-admin" style="padding-top:0;flex-direction:column">
+    <!-- Header sticky -->
+    <div style="background:linear-gradient(135deg,#0a0a0a,#141420);border-bottom:1px solid rgba(100,130,255,.3);padding:14px 16px;position:sticky;top:0;z-index:50;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="switchPage('profile')" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">← ກັບ</button>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;color:#7ba4ff">⚙️ ຈັດການອາໄຫຼ່ໂທລະສັບ</div>
+          <div style="font-size:11px;color:var(--text2)" id="ppAdminSubtitle">ເພີ່ມ / ແກ້ໄຂ / ລຶບ</div>
+        </div>
+        <button onclick="ppAdminClearForm()" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">➕ ໃໝ່</button>
+      </div>
+    </div>
+    <!-- Content -->
+    <div id="ppAdminPageContent" style="padding:14px 16px 80px;overflow-y:auto;flex:1"></div>
+  </div>
+
   <!-- ══════ MANAGE PRODUCTS PAGE ══════ -->
   
   <!-- SALE HISTORY FULL PAGE -->
@@ -15926,78 +15943,127 @@ async function openPhonePartsAdmin(mode){
   const parts = sbData || getPhoneParts();
   if(sbData) savePhoneParts(sbData);
   window._ppAdminParts = JSON.parse(JSON.stringify(parts));
-
+  switchPage('parts-admin');
   renderPhonePartsAdminPanel(mode);
-  openModal('phonePartsAdminModal');
 }
 
 function renderPhonePartsAdminPanel(mode){
   const parts = window._ppAdminParts || [];
-  const isAdd = mode==='add';
-  const el = document.getElementById('phonePartsAdminContent');
+  const el = document.getElementById('ppAdminPageContent');
+  if(!el) return;
+
+  // update subtitle count
+  const sub = document.getElementById('ppAdminSubtitle');
+  if(sub) sub.textContent = `ທັງໝົດ ${parts.length} ລາຍການ`;
 
   el.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-size:16px;font-weight:700">⚙️ ຈັດການອາໄຫຼ່</div>
-      <button onclick="closeModal('phonePartsAdminModal')" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
-    </div>
-    <!-- Add new part form -->
-    <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px">➕ ເພີ່ມ / ແກ້ໄຂອາໄຫຼ່</div>
+    <!-- ── Form ເພີ່ມ/ແກ້ໄຂ ── -->
+    <div id="ppAdminForm" style="background:rgba(201,168,76,.06);border:1.5px solid rgba(201,168,76,.25);border-radius:14px;padding:16px;margin-bottom:18px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px" id="ppFormTitle">➕ ເພີ່ມ / ແກ້ໄຂອາໄຫຼ່</div>
       <input type="hidden" id="ppEditId" value="">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <input class="form-input" id="ppEditBrand" placeholder="ຍີ່ຫໍ້ (Samsung, Apple...)">
-        <input class="form-input" id="ppEditModel" placeholder="ລຸ່ນ (S24 Ultra...)">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ຍີ່ຫໍ້ (Samsung, Apple...)</div>
+          <input class="form-input" id="ppEditBrand" placeholder="ຍີ່ຫໍ້">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ລຸ່ນ (S24 Ultra...)</div>
+          <input class="form-input" id="ppEditModel" placeholder="ລຸ່ນ">
+        </div>
       </div>
-      <input class="form-input" id="ppEditPart" placeholder="ຊື່ອາໄຫຼ່ (ໜ້າຈໍ AMOLED...)" style="margin-bottom:8px">
-      <textarea class="form-input" id="ppEditDesc" placeholder="ລາຍລະອຽດ" rows="2" style="margin-bottom:8px;resize:none"></textarea>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <input class="form-input" type="number" id="ppEditPrice" placeholder="ລາຄາ (ກີບ)">
-        <input class="form-input" type="number" id="ppEditStock" placeholder="ຈຳນວນສິນຄ້າ">
+
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ຊື່ອາໄຫຼ່ (ໜ້າຈໍ AMOLED...)</div>
+        <input class="form-input" id="ppEditPart" placeholder="ຊື່ອາໄຫຼ່">
       </div>
-      <select class="form-input" id="ppEditCat" style="margin-bottom:8px">
-        <option value="screen">📱 ໜ້າຈໍ</option>
-        <option value="battery">🔋 ແບດເຕີລີ</option>
-        <option value="back_glass">🪟 ກະຈົກຫຼັງ</option>
-        <option value="tempered">🛡️ ກັນແຕກ</option>
-        <option value="port">🔌 ຊ່ອງສາກ</option>
-        <option value="camera">📷 ກ້ອງ</option>
-      </select>
-      <div style="margin-bottom:8px">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">🖼️ ຮູບພາບ (URL ຫຼື ອັດໂຫລດ)</div>
-        <input class="form-input" id="ppEditImg" placeholder="https://images.google.com/..." oninput="previewPPImg(this.value)" style="margin-bottom:6px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="font-size:10px;color:var(--text2)">ຫຼື</div>
-          <div class="upload-box" onclick="document.getElementById('ppImgFile').click()" style="flex:1;padding:8px;font-size:11px">
+
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ລາຍລະອຽດ</div>
+        <textarea class="form-input" id="ppEditDesc" placeholder="ລາຍລະອຽດ" rows="2" style="resize:none"></textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ລາຄາ (ກີບ)</div>
+          <input class="form-input" type="number" id="ppEditPrice" placeholder="0">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ຈຳນວນສິນຄ້າ</div>
+          <input class="form-input" type="number" id="ppEditStock" placeholder="0">
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">ໝວດໝູ່</div>
+        <select class="form-input" id="ppEditCat">
+          <option value="screen">📱 ໜ້າຈໍ</option>
+          <option value="battery">🔋 ແບດເຕີລີ</option>
+          <option value="back_glass">🪟 ກະຈົກຫຼັງ</option>
+          <option value="tempered">🛡️ ກັນແຕກ</option>
+          <option value="port">🔌 ຊ່ອງສາກ</option>
+          <option value="camera">📷 ກ້ອງ</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">🖼️ ຮູບພາບ</div>
+        <input class="form-input" id="ppEditImg" placeholder="https://images.google.com/..." oninput="previewPPImg(this.value)" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--text2)">ຫຼື</span>
+          <div class="upload-box" onclick="document.getElementById('ppImgFile').click()" style="flex:1;padding:10px;font-size:12px;text-align:center">
             📁 ເລືອກຮູບຈາກເຄື່ອງ
           </div>
           <input type="file" id="ppImgFile" accept="image/*" style="display:none" onchange="uploadPPImg(this)">
         </div>
-        <div id="ppImgPreview" style="margin-top:4px"></div>
+        <div id="ppImgPreview" style="margin-top:8px"></div>
       </div>
-      <button onclick="savePPItem()" style="width:100%;background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));color:#000;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
-        💾 ບັນທຶກ
-      </button>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="savePPItem()" style="background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));color:#000;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+          💾 ບັນທຶກ
+        </button>
+        <button onclick="ppAdminClearForm()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text2);border-radius:12px;padding:13px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
+          🔄 ລ້າງຟອມ
+        </button>
+      </div>
     </div>
-    <!-- List to manage -->
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">📋 ລາຍການທັງໝົດ (${parts.length})</div>
+
+    <!-- ── ລາຍການອາໄຫຼ່ ── -->
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px">📋 ລາຍການທັງໝົດ (${parts.length})</div>
     <div id="ppAdminList">
-      ${parts.map(p=>`
-        <div style="background:var(--dark3);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center">
-          <img src="${p.img}" onerror="this.style.display='none'" style="width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--dark2);flex-shrink:0">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;color:var(--accent)">${p.brand} ${p.model}</div>
-            <div style="font-size:13px;font-weight:600">${p.part}</div>
-            <div style="font-size:12px;color:var(--gold)">${Number(p.price).toLocaleString()} ກີບ · stock: ${p.stock}</div>
+      ${parts.length ? parts.map(p=>`
+        <div style="background:var(--dark3);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px;margin-bottom:10px">
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+            <img src="${p.img||''}" onerror="this.style.display='none'" style="width:60px;height:60px;border-radius:10px;object-fit:cover;background:var(--dark2);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11px;color:#7ba4ff;margin-bottom:2px">${p.brand||'-'} ${p.model||'-'}</div>
+              <div style="font-size:14px;font-weight:700;margin-bottom:4px">${p.part||'-'}</div>
+              ${p.desc?`<div style="font-size:11px;color:var(--text2);margin-bottom:4px">${p.desc}</div>`:''}
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span style="color:var(--gold);font-weight:700;font-size:13px">${Number(p.price||0).toLocaleString()} ກີບ</span>
+                <span style="font-size:11px;background:rgba(74,222,128,.12);color:#4ade80;border-radius:6px;padding:2px 8px">📦 ${p.stock||0} ຊິ້ນ</span>
+                <span style="font-size:10px;color:var(--text2)">${{screen:'📱ໜ້າຈໍ',battery:'🔋ແບດ',back_glass:'🪟ກະຈົກ',tempered:'🛡ກັນແຕກ',port:'🔌ສາກ',camera:'📷ກ້ອງ'}[p.cat]||p.cat||'-'}</span>
+              </div>
+            </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
-            <button onclick="editPPItem('${p.id}')" style="background:rgba(74,127,193,.2);border:1px solid rgba(74,127,193,.4);color:var(--accent);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">✏️ ແກ້</button>
-            <button onclick="deletePPItem('${p.id}')" style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:#f87171;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">🗑️ ລຶບ</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="editPPItem('${p.id}')" style="background:rgba(74,127,193,.15);border:1px solid rgba(74,127,193,.4);color:#7ba4ff;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">✏️ ແກ້ໄຂ</button>
+            <button onclick="deletePPItem('${p.id}')" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:#f87171;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">🗑️ ລຶບ</button>
           </div>
-        </div>
-      `).join('')}
+        </div>`).join('')
+      : '<div style="text-align:center;padding:40px;color:var(--text2)">ຍັງບໍ່ມີອາໄຫຼ່ — ກົດ ➕ ໃໝ່ ເພື່ອເພີ່ມ</div>'}
     </div>
   `;
+}
+
+function ppAdminClearForm(){
+  ['ppEditId','ppEditBrand','ppEditModel','ppEditPart','ppEditDesc','ppEditPrice','ppEditStock','ppEditImg']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const prev=document.getElementById('ppImgPreview'); if(prev) prev.innerHTML='';
+  const title=document.getElementById('ppFormTitle'); if(title) title.textContent='➕ ເພີ່ມ / ແກ້ໄຂອາໄຫຼ່';
+  // scroll to top of form
+  const pg=document.getElementById('ppAdminPageContent'); if(pg) pg.scrollTo({top:0,behavior:'smooth'});
 }
 
 function previewPPImg(url){
@@ -16067,10 +16133,7 @@ async function savePPItem(){
   showNotif('✅ ບັນທຶກ '+part+' ສຳເລັດ!');
   renderPhonePartsAdminPanel();
   _loadPhonePartsToHome();
-  // clear form
-  ['ppEditId','ppEditBrand','ppEditModel','ppEditPart','ppEditDesc','ppEditPrice','ppEditStock','ppEditImg']
-    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('ppImgPreview').innerHTML='';
+  ppAdminClearForm();
 }
 
 function editPPItem(id){
@@ -16086,9 +16149,11 @@ function editPPItem(id){
   document.getElementById('ppEditCat').value   = p.cat||'screen';
   document.getElementById('ppEditImg').value   = p.img||'';
   previewPPImg(p.img||'');
-  // scroll to form top
-  const formBox = document.querySelector('#phonePartsAdminModal .popup-box');
-  if(formBox) formBox.scrollTo({top:0,behavior:'smooth'});
+  const title = document.getElementById('ppFormTitle');
+  if(title) title.textContent = '✏️ ແກ້ໄຂ: '+p.part;
+  // scroll to top of full page content
+  const pg = document.getElementById('ppAdminPageContent');
+  if(pg) pg.scrollTo({top:0, behavior:'smooth'});
 }
 
 async function deletePPItem(id){
