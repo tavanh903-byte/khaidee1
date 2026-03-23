@@ -13973,12 +13973,19 @@ function goDepStep2(){
   if(!amt||amt<1000){ showNotif('ໃສ່ຈຳນວນຢ່າງໜ້ອຍ 1,000 ກີບ'); return; }
   document.getElementById('dep-step1').style.display='none';
   document.getElementById('dep-step2').style.display='block';
-  // load QR
+  // ✅ ໂຫລດ QR ຈາກ Supabase ກ່ອນ (ທຸກຄົນເຫັນ), fallback localStorage
   const qrImg = document.getElementById('qrCodeImg');
   if(qrImg){
-    const stored = localStorage.getItem('kd_payment_qr')||'';
-    if(stored) qrImg.src=stored;
-    else qrImg.style.display='none';
+    const local = localStorage.getItem('kd_payment_qr')||'';
+    if(local){ qrImg.src = local; qrImg.style.display = ''; }
+    else qrImg.style.display = 'none';
+    // sync ຈາກ Supabase
+    sbGetSetting('payment_qr').then(val=>{
+      if(val && val !== local){
+        localStorage.setItem('kd_payment_qr', val);
+        if(qrImg){ qrImg.src = val; qrImg.style.display = ''; }
+      }
+    }).catch(()=>{});
   }
 }
 function goDepStep1(){
@@ -14073,7 +14080,7 @@ Rules:
   }
 }
 
-// ── previewDepositSlip: อ่านรูป → Gemini → ตรวจสอบ ──
+// ── previewDepositSlip: ກວດຊ້ຳ → ຜ່ານ → Admin ກວດ ──
 function previewDepositSlip(){
   const input=document.getElementById('depositSlipInput');
   const prevDiv=document.getElementById('depositSlipPreview');
@@ -14082,17 +14089,15 @@ function previewDepositSlip(){
   const confirmBtn=document.getElementById('depConfirmBtn');
   if(!input.files[0]) return;
   const file=input.files[0];
-  const mimeType=file.type||'image/jpeg';
 
-  if(validEl){ validEl.style.display='block'; validEl.style.background='rgba(234,179,8,0.08)'; validEl.style.border='1px solid rgba(234,179,8,0.3)'; validEl.style.color='#fbbf24'; validEl.innerHTML='⏳ ກຳລັງກວດສອບຮູບ...'; }
+  if(validEl){ validEl.style.display='block'; validEl.style.background='rgba(234,179,8,0.08)'; validEl.style.border='1px solid rgba(234,179,8,0.3)'; validEl.style.color='#fbbf24'; validEl.innerHTML='⏳ ກຳລັງກວດສອບ...'; }
   if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; }
 
   const reader = new FileReader();
   reader.onload = async function(ev){
     const dataUrl = ev.target.result;
-    const base64 = dataUrl.split(',')[1];
 
-    // แสดง preview
+    // compress ຮູບ
     const imgEl = new Image();
     imgEl.onload = async function(){
       const MAX=800; let w=imgEl.width,h=imgEl.height;
@@ -14102,91 +14107,35 @@ function previewDepositSlip(){
       c.width=w;c.height=h;
       c.getContext('2d').drawImage(imgEl,0,0,w,h);
       const compressed=c.toDataURL('image/jpeg',0.80);
-      const compBase64=compressed.split(',')[1];
 
+      // ສະແດງ preview
       if(placeholder) placeholder.style.display='none';
       if(prevDiv){
         prevDiv.style.display='flex';
         prevDiv.innerHTML=`<img src="${compressed}" style="max-width:100%;max-height:220px;border-radius:10px;border:2px solid rgba(234,179,8,0.5);cursor:pointer;object-fit:contain" onclick="adminViewImg('${compressed}')">`;
       }
 
-      // ตรวจ hash ซ้ำ
-      if(validEl) validEl.innerHTML='🔍 Layer 1/3: ກວດຮູບຊ້ຳ...';
+      // ກວດ hash ຊ້ຳ (local)
       const hash = await hashImage(compressed);
       if(getSlipHashes().some(x=>x.hash===hash)){
         validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='1px solid rgba(220,38,38,0.4)';validEl.style.color='#f87171';
         validEl.innerHTML='<strong>❌ ສລິບນີ້ຖືກໃຊ້ງານໄປແລ້ວ</strong> — ຫ້າມໃຊ້ສລິບຊ້ຳ';
         return;
       }
-      // Supabase hash check
+      // ກວດ hash ຊ້ຳ (Supabase)
       try{
         const {data:dupD}=await supa.from('kd_deposits').select('id').eq('slip_hash',hash).neq('status','rejected').limit(1);
         if(dupD&&dupD.length>0){
           validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='1px solid rgba(220,38,38,0.4)';validEl.style.color='#f87171';
-          validEl.innerHTML='<strong>❌ ສລິບຊ້ຳ (Server)</strong> — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ';
+          validEl.innerHTML='<strong>❌ ສລິບຊ້ຳ</strong> — ສລິບນີ້ຖືກໃຊ້ໄປແລ້ວ';
           return;
         }
       }catch(e){}
 
-      // Gemini AI Vision
-      const geminiKey = getGeminiKey();
-      if(!geminiKey){
-        // ไม่มี Key → ส่ง Admin ตรวจเอง
-        if(validEl){ validEl.style.background='rgba(234,179,8,0.1)';validEl.style.border='1px solid rgba(234,179,8,0.3)';validEl.style.color='#fbbf24'; validEl.innerHTML='⚠️ ບໍ່ມີ Gemini API Key — ສົ່ງ Admin ກວດດ້ວຍຕົນເອງ'; }
-        _enableConfirmBtn(confirmBtn, compressed, hash, null, file.lastModified);
-        return;
-      }
-
-      if(validEl) validEl.innerHTML='🤖 Layer 2/3: AI ກຳລັງອ່ານສລິບ...';
-      const slipData = await analyzeSlipWithGemini(compBase64, mimeType);
-
-      // ✅ ຖ້າ Gemini ບໍ່ສາມາດອ່ານໄດ້ → fallback ໃຫ້ Admin ກວດ
-      if(!slipData || slipData._fallback){
-        if(validEl){ validEl.style.background='rgba(234,179,8,0.1)';validEl.style.border='1px solid rgba(234,179,8,0.3)';validEl.style.color='#fbbf24';
-          validEl.innerHTML='⚠️ AI ບໍ່ສາມາດອ່ານສລິບໄດ້ — ສົ່ງ Admin ກວດດ້ວຍຕົນເອງ'; }
-        _enableConfirmBtn(confirmBtn, compressed, hash, null, file.lastModified);
-        return;
-      }
-
-      if(slipData.is_slip === false){
-        validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='2px solid rgba(220,38,38,0.5)';validEl.style.color='#f87171';
-        validEl.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:6px">🚫 ຮູບນີ້ບໍ່ໃຊ່ສລິບທະນາຄານ</div>
-          <div style="font-size:11px;line-height:1.9;background:rgba(239,68,68,0.08);padding:8px;border-radius:8px">
-          ❌ ຮູບຖ່າຍ, ຮູບ UI, ຮູບທຳມະຊາດ → ປະຕິເສດທັນທີ<br>
-          ✅ ໃຊ້ Screenshot ຈາກໜ້າ Payment Completed ຂອງທະນາຄານ</div>
-          <button onclick="resetSlipInput()" style="margin-top:8px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:9px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🔄 ເລືອກຮູບໃໝ່</button>`;
-        return;
-      }
-
-      // ตรวจจำนวนเงิน
-      if(validEl) validEl.innerHTML='🔍 Layer 3/3: ກວດຈຳນວນເງິນ...';
-      const expectedAmt = parseInt(document.getElementById('depositAmt')?.value||'0')||0;
-      const slipAmt = slipData.amount || 0;
-      if(expectedAmt>0 && slipAmt>0 && slipAmt !== expectedAmt){
-        validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='1px solid rgba(220,38,38,0.4)';validEl.style.color='#f87171';
-        validEl.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:4px">❌ ຈຳນວນເງິນບໍ່ຕ່ງ</div>
-          <div style="font-size:11px;line-height:1.8">ໃນສລິບ: <strong>${Number(slipAmt).toLocaleString()} ₭</strong><br>ຕ້ອງການ: <strong style="color:var(--gold)">${Number(expectedAmt).toLocaleString()} ₭</strong></div>
-          <button onclick="resetSlipInput()" style="margin-top:8px;width:100%;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:9px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🔄 ເລືອກຮູບໃໝ່</button>`;
-        return;
-      }
-
-      // ✅ ผ่านทุกชั้น
-      const bank = slipData.bank||'';
-      const receiverName = slipData.receiver_name||'';
-      const slipDatetime = slipData.datetime||'';
-      const slipRef = slipData.reference||'';
-
-      validEl.style.background='rgba(34,197,94,0.12)';validEl.style.border='1px solid rgba(34,197,94,0.4)';validEl.style.color='#4ade80';
-      validEl.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:6px">✅ AI ກວດສລິບຜ່ານ</div>
-        <div style="font-size:11px;line-height:1.9;background:rgba(34,197,94,0.06);padding:8px;border-radius:8px">
-        👤 ຜູ້ຮັບ: <strong>${receiverName||'-'}</strong><br>
-        💰 ຈຳນວນ: <strong>${slipAmt?Number(slipAmt).toLocaleString()+' ₭':'-'}</strong><br>
-        📅 ເວລາ: <strong>${slipDatetime||'-'}</strong><br>
-        🔢 Reference: <strong>${slipRef||'-'}</strong><br>
-        🏦 ທະນາຄານ: <strong>${bank||'-'}</strong>
-        </div>`;
-
-      _enableConfirmBtn(confirmBtn, compressed, hash, slipData, file.lastModified);
+      // ✅ ຜ່ານ — ສົ່ງ Admin ກວດ
+      validEl.style.background='rgba(34,197,94,0.1)';validEl.style.border='1px solid rgba(34,197,94,0.35)';validEl.style.color='#4ade80';
+      validEl.innerHTML='✅ ກວດສລິບຜ່ານ — ກົດ ຢືນຢັນ ເພື່ອສົ່ງໃຫ້ Admin ກວດ';
+      _enableConfirmBtn(confirmBtn, compressed, hash, null, file.lastModified);
     };
     imgEl.onerror=()=>{ if(validEl) validEl.innerHTML='❌ ເປີດຮູບບໍ່ໄດ້'; };
     imgEl.src=dataUrl;
@@ -14194,6 +14143,7 @@ function previewDepositSlip(){
   reader.onerror=()=>{ if(validEl) validEl.innerHTML='❌ ອ່ານຮູບບໍ່ໄດ້'; };
   reader.readAsDataURL(file);
 }
+
 
 function _enableConfirmBtn(btn, imgData, hash, slipData, lastModified){
   if(!btn) return;
@@ -14347,7 +14297,6 @@ function adminUploadPaymentQR(input){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    // compress ກ່ອນ save
     const img = new Image();
     img.onload = () => {
       const MAX = 600;
@@ -14358,9 +14307,11 @@ function adminUploadPaymentQR(input){
       c.width = w; c.height = h;
       c.getContext('2d').drawImage(img, 0, 0, w, h);
       const data = c.toDataURL('image/png', 0.95);
+      // ✅ save ທັງ localStorage ແລະ Supabase ເພື່ອໃຫ້ທຸກຄົນເຫັນ
       localStorage.setItem('kd_payment_qr', data);
-      showNotif('✅ ບັນທຶກ QR Code ສຳເລັດ!', 'success');
-      // refresh finance tab
+      sbSetSetting('payment_qr', data)
+        .then(()=> showNotif('✅ ບັນທຶກ QR Code ສຳເລັດ! ລູກຄ້າທຸກຄົນຈະເຫັນ QR ນີ້', 'success'))
+        .catch(()=> showNotif('✅ ບັນທຶກ QR ໃນເຄື່ອງແລ້ວ (offline)', 'success'));
       renderAdminTab('finance');
     };
     img.src = e.target.result;
@@ -14371,6 +14322,7 @@ function adminUploadPaymentQR(input){
 function adminDeletePaymentQR(){
   if(!confirm('ລຶບ QR Code ອອກ?')) return;
   localStorage.removeItem('kd_payment_qr');
+  sbSetSetting('payment_qr', '').catch(()=>{});
   showNotif('🗑 ລຶບ QR Code ແລ້ວ');
   renderAdminTab('finance');
 }
