@@ -7614,7 +7614,13 @@ function installPWA(){
   if(deferredPrompt){
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(r=>{
-      if(r.outcome==='accepted') showNotif('🎉 ຕິດຕັ້ງ App ສຳເລັດ!');
+      if(r.outcome==='accepted'){
+        showNotif('🎉 ຕິດຕັ້ງ App ສຳເລັດ!');
+        // ✅ ນັບຈຳນວນດາວໂຫລດ
+        const cnt = parseInt(localStorage.getItem('kd_pwa_install_count')||'0')+1;
+        localStorage.setItem('kd_pwa_install_count', cnt.toString());
+        sbSetSetting('pwa_install_count', cnt.toString()).catch(()=>{});
+      }
       deferredPrompt=null;
     });
   } else {
@@ -7622,6 +7628,13 @@ function installPWA(){
   }
   document.getElementById('pwa-banner').style.display='none';
 }
+
+// ✅ ນັບຕອນ appinstalled (Android Chrome)
+window.addEventListener('appinstalled', ()=>{
+  const cnt = parseInt(localStorage.getItem('kd_pwa_install_count')||'0')+1;
+  localStorage.setItem('kd_pwa_install_count', cnt.toString());
+  sbSetSetting('pwa_install_count', cnt.toString()).catch(()=>{});
+});
 
 function dismissPWA(){
   document.getElementById('pwa-banner').style.display='none';
@@ -12825,14 +12838,47 @@ function renderAdminOverview(){
   const adminIncomeCur  = parseInt(localStorage.getItem('kd_admin_income')||'0');
   const adminExpenseCur = parseInt(localStorage.getItem('kd_admin_expense')||'0');
   const adminProfitCur  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
+  const pwaCount = parseInt(localStorage.getItem('kd_pwa_install_count')||'0');
+  // sync pwa count from Supabase in background
+  sbGetSetting('pwa_install_count').then(v=>{
+    if(v){ const n=parseInt(v)||0; if(n>pwaCount) localStorage.setItem('kd_pwa_install_count',n.toString()); }
+  }).catch(()=>{});
   return `
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-    <div class="admin-stat" style="cursor:pointer" onclick="switchAdminTab('social')"><div class="num" style="color:#0c6">${onlineCnt}</div><div class="lbl">🟢 ອອນລາຍ</div></div>
-    <div class="admin-stat" style="cursor:pointer" onclick="switchAdminTab('social')"><div class="num">${allUsers.length}</div><div class="lbl">👥 ຜູ້ໃຊ້ທັງໝົດ</div></div>
-    <div class="admin-stat"><div class="num" style="color:var(--gold)">${registeredCnt}</div><div class="lbl">📝 ສະໝັກໃໝ່</div></div>
-    <div class="admin-stat"><div class="num">${sellers.length}</div><div class="lbl">🏪 ຜູ້ຂາຍ</div></div>
-    <div class="admin-stat"><div class="num">${products.length}</div><div class="lbl">📦 ສິນຄ້າ</div></div>
-    <div class="admin-stat"><div class="num">${orders.length}</div><div class="lbl">🧾 ອໍເດີ</div></div>
+  <!-- ✅ Stats Block -->
+  <div style="background:linear-gradient(135deg,rgba(74,127,193,0.12),rgba(36,83,160,0.08));border:1.5px solid rgba(74,127,193,0.3);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:700;color:#7ba4ff;margin-bottom:12px;letter-spacing:0.5px">📊 ສະຖິຕິລວມ</div>
+
+    <!-- แถวที่ 1: Users & Downloads (ใหญ่) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="background:rgba(74,127,193,0.1);border:1px solid rgba(74,127,193,0.3);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#7ba4ff;line-height:1">${registeredCnt}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:5px">👥 ຜູ້ໃຊ້ທັງໝົດ</div>
+      </div>
+      <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#4ade80;line-height:1">${pwaCount}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:5px">📲 ດາວໂຫລດ App</div>
+      </div>
+    </div>
+
+    <!-- แถวที่ 2: Online, Orders, Sellers, Products -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+      <div style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:10px;text-align:center;cursor:pointer" onclick="switchAdminTab('social')">
+        <div style="font-size:20px;font-weight:800;color:#4ade80">${onlineCnt}</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:3px">🟢 ອອນລາຍ</div>
+      </div>
+      <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:var(--gold)">${orders.length}</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:3px">🧾 ອໍເດີ</div>
+      </div>
+      <div style="background:rgba(12,180,100,0.07);border:1px solid rgba(12,180,100,0.2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:#0cb464">${sellers.length}</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:3px">🏪 ຜູ້ຂາຍ</div>
+      </div>
+      <div style="background:rgba(255,165,0,0.07);border:1px solid rgba(255,165,0,0.2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:800;color:#ffa500">${products.length}</div>
+        <div style="font-size:9px;color:var(--text2);margin-top:3px">📦 ສິນຄ້າ</div>
+      </div>
+    </div>
   </div>
   <div class="admin-card" style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border-color:rgba(201,168,76,.4);padding:14px">
     <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:10px;letter-spacing:1px">💎 Admin Finance</div>
