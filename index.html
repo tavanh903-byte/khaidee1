@@ -1180,7 +1180,8 @@ async function sbLoadWithdrawals(){
   }));
 }
 async function sbUpdateWithdrawalStatus(id, status){
-  await supa.from('kd_withdrawals').update({status}).eq('id',id);
+  const { error } = await supa.from('kd_withdrawals').update({status}).eq('id',id);
+  if(error) console.warn('sbUpdateWithdrawalStatus error:', error.message);
 }
 
 // ── Seller Apps ──
@@ -1325,8 +1326,37 @@ function _addDeletedProductId(id){
 
 async function syncFromSupabase(){
   try{
-    await clearDemoProductsFromSupabase();
-    const [prods, ords] = await Promise.all([sbLoadProducts(), sbLoadOrders(), sbLoadUsers()]);
+    // ✅ Bug #4 fix: clear demo products only once, not every sync
+    if(!localStorage.getItem('kd_demo_cleared')){
+      await clearDemoProductsFromSupabase();
+      localStorage.setItem('kd_demo_cleared', '1');
+    }
+    const [prods, ords, sbUsers] = await Promise.all([sbLoadProducts(), sbLoadOrders(), sbLoadUsers()]);
+    // ✅ Bug #2 fix: sync users from Supabase into localStorage
+    if(sbUsers && sbUsers.length > 0){
+      try {
+        const db = getUsersDB();
+        sbUsers.forEach(su => {
+          if(!su.id) return;
+          const existing = db[su.id] || {};
+          // Supabase is source of truth for wallet/name/role, keep local-only fields
+          db[su.id] = { ...existing, ...su,
+            avatarImg: su.avatarImg || existing.avatarImg || null,
+            coverImg:  su.coverImg  || existing.coverImg  || null,
+          };
+        });
+        saveUsersDB(db);
+        // ✅ Refresh currentUser wallet if logged in
+        if(currentUser && db[currentUser.id]){
+          const fresh = db[currentUser.id];
+          if(fresh.wallet !== currentUser.wallet){
+            currentUser.wallet = fresh.wallet;
+            saveUser();
+            updateBalanceUI(fresh.wallet);
+          }
+        }
+      } catch(e){ console.warn('users sync merge:', e); }
+    }
     if(prods.length > 0){
       const deletedIds = _getDeletedProductIds();
       const sbProds = prods.filter(p => !deletedIds.has(p.id));
@@ -13061,6 +13091,13 @@ function heartbeat(){
   const m = getOnlineMap();
   m[currentUser.id] = Date.now();
   saveOnlineMap(m);
+  // ✅ Bug #3 fix: sync online presence to Supabase so Admin sees real status
+  try {
+    supa.from('kd_users')
+      .update({ last_seen: new Date().toISOString() })
+      .eq('id', currentUser.id)
+      .then(()=>{}).catch(()=>{});
+  } catch(e){}
   // Update online badge in admin panel if open
   updateOnlineBadge();
 }
@@ -16413,10 +16450,10 @@ async function acsmConfirmRelease(orderId){
   if(btn){ btn.disabled = true; btn.textContent = '⏳ ກຳລັງໂອນ...'; }
   try {
   const idx = orders.findIndex(x=>x.id===orderId);
-  if(idx<0){ showNotif('ບໍ່ພົບ Order'); return; }
+  if(idx<0){ window._releaseLock=false; if(btn){btn.disabled=false;btn.textContent='✅ ຢືນຢັນ — ໂອນ';} showNotif('ບໍ່ພົບ Order'); return; }
   const o = orders[idx];
-  if(o.adminReleased){ showNotif('ໂອນເງິນໃຫ້ຜູ້ຂາຍແລ້ວ'); return; }
-  if(!o.sellerId || o.sellerId==='admin'){ showNotif('Order ນີ້ບໍ່ມີຜູ້ຂາຍ'); return; }
+  if(o.adminReleased){ window._releaseLock=false; if(btn){btn.disabled=false;btn.textContent='✅ ຢືນຢັນ — ໂອນ';} showNotif('ໂອນເງິນໃຫ້ຜູ້ຂາຍແລ້ວ'); return; }
+  if(!o.sellerId || o.sellerId==='admin'){ window._releaseLock=false; if(btn){btn.disabled=false;btn.textContent='✅ ຢືນຢັນ — ໂອນ';} showNotif('Order ນີ້ບໍ່ມີຜູ້ຂາຍ'); return; }
 
   const isGameProd = o.isGame || o.cat==='game' || o.gameType;
   const commission  = isGameProd ? 0.05 : 0;
