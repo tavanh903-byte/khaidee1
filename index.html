@@ -14130,18 +14130,8 @@ function syncDepositQuick(){
   });
 }
 // ══════════════════════════════════════════════════════
-// 💰 WALLET / DEPOSIT SYSTEM — Gemini AI Vision
+// 💰 WALLET / DEPOSIT SYSTEM — ກວດສອບສລິບທະນາຄານລາວ
 // ══════════════════════════════════════════════════════
-
-// ── Gemini API Key (Admin ใส่เองใน Settings) ──
-// ── Claude API Key (Admin ໃສ່ເອງ — ບໍ່ຢູ່ໃນໂຄ້ດ) ──
-function getGeminiKey(){
-  return localStorage.getItem('kd_claude_key')||localStorage.getItem('kd_gemini_key')||'';
-}
-function setGeminiKey(k){
-  localStorage.setItem('kd_claude_key', k.trim());
-  localStorage.removeItem('kd_gemini_key'); // migrate old key
-}
 
 // ── Hash ภาพ (ป้องกันสลิปซ้ำ) ──
 async function hashImage(dataUrl){
@@ -14204,78 +14194,114 @@ function resetSlipInput(){
     delete confirmBtn.dataset.slipData; delete confirmBtn.dataset.slipHash; }
 }
 
-// ── Claude Vision API: ອ່ານສລິບ (ບໍ່ຕິດ CORS) ──
+// ══════════════════════════════════════════════════════
+// 🏦 ກວດສອບສລິບທະນາຄານລາວ ດ້ວຍການວິເຄາະສີ
+// ທະນາຄານທີ່ຮອງຮັບ:
+//  1. BCEL OnePay  — ຂາວ 70% / ແດງ 25% / ເທົາ 5%
+//  2. JDB Yes      — ນ້ຳເງີນເຂັ້ມ 50% / ເຫຼືອງ 30% / ຂາວ 20%
+//  3. LDB Trust    — ຂາວ 60% / ຟ້າ 35% / ຂຽວ 5%
+//  4. Maruhan Japan— ຂາວ 80% / ແດງເຂັ້ມ 15% / ນ້ຳເງີນ 5%
+// ══════════════════════════════════════════════════════
+
+// ── ວິເຄາະສີຮູບພາບດ້ວຍ Canvas ──
+function analyzeImageColors(dataUrl){
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const MAX = 80; // sample ຂະໜາດນ້ອຍໆ ສຳລັບຄວາມໄວ
+      const w = Math.min(img.width, MAX);
+      const h = Math.min(img.height, MAX);
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+      const total = w * h;
+
+      let red=0, green=0, blue=0, yellow=0, white=0, gray=0, darkBlue=0, lightBlue=0;
+
+      for(let i=0; i<data.length; i+=4){
+        const r=data[i], g=data[i+1], b=data[i+2];
+        const brightness = (r+g+b)/3;
+
+        // ສີຂາວ: brightness > 200 ແລະ ຄ່າ RGB ໃກ້ກັນ
+        if(brightness>200 && Math.max(r,g,b)-Math.min(r,g,b)<40){ white++; continue; }
+        // ສີເທົາ: brightness 80-200 ແລະ ຄ່າ RGB ໃກ້ກັນ
+        if(brightness>80 && brightness<=200 && Math.max(r,g,b)-Math.min(r,g,b)<30){ gray++; continue; }
+        // ສີແດງ: r ສູງ, g+b ຕ່ຳ
+        if(r>150 && g<100 && b<100){ red++; continue; }
+        // ສີແດງເຂັ້ມ/ນ້ຳຕານແດງ (Maruhan): r>100, g<70, b<70
+        if(r>100 && r<180 && g<70 && b<70){ red++; continue; }
+        // ສີນ້ຳເງີນເຂັ້ມ (JDB Navy): r<80, g<100, b>100
+        if(r<80 && g<100 && b>100 && b<180){ darkBlue++; continue; }
+        // ສີເຫຼືອງ/ທອງ (JDB): r>180, g>150, b<100
+        if(r>180 && g>150 && b<100){ yellow++; continue; }
+        // ສີຟ້າ/ນ້ຳເງີນສວ່າງ (LDB): b>150, r<150, g<180, b>g, b>r
+        if(b>150 && b>r+30 && b>g+20){ lightBlue++; continue; }
+        // ສີຂຽວ (LDB accent): g>120, r<100, b<120
+        if(g>120 && r<100 && b<120){ green++; continue; }
+      }
+
+      resolve({
+        total,
+        redPct:     (red/total)*100,
+        greenPct:   (green/total)*100,
+        darkBluePct:(darkBlue/total)*100,
+        yellowPct:  (yellow/total)*100,
+        whitePct:   (white/total)*100,
+        grayPct:    (gray/total)*100,
+        lightBluePct:(lightBlue/total)*100,
+      });
+    };
+    img.onerror = ()=> resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+// ── ກວດສອບວ່າເປັນສລິບທະນາຄານລາວ ──
 async function analyzeSlipWithGemini(base64Image, mimeType){
-  const key = getGeminiKey();
-  if(!key) return null;
-
-  // ✅ Claude ຮອງຮັບສະເພາະ: image/jpeg, image/png, image/gif, image/webp
-  const validMime = ['image/jpeg','image/png','image/gif','image/webp'];
-  const safeMime = validMime.includes(mimeType) ? mimeType : 'image/jpeg';
-
-  const prompt = `You are analyzing a payment slip image from Laos.
-This could be a BCEL One app slip, JDB bank slip, or any Lao bank transfer receipt.
-It may be a screenshot of a mobile phone screen showing a payment confirmation.
-
-Reply with JSON only (no markdown, no explanation):
-{
-  "receiver_name": "name of money recipient e.g. SENGTAVANH BOUNXAISENG",
-  "amount": 10000,
-  "currency": "LAK",
-  "datetime": "21/03/2026 12:24:06",
-  "reference": "reference number or transaction ID e.g. BONECLW9K30NXD4M",
-  "bank": "BCEL or JDB or other bank name",
-  "is_slip": true
-}
-Rules:
-- amount = integer, Payment Amount only (not Fee)
-- is_slip = true if image shows any bank payment receipt or transfer confirmation
-- is_slip = false ONLY if clearly not a banking image (nature/selfie/food)
-- set null for any field not found`;
-
-  try{
-    console.log('[Claude] Analyzing slip, mime:', safeMime, 'key prefix:', key.slice(0,12)+'...');
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: safeMime, data: base64Image }},
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
-    console.log('[Claude] Response status:', res.status);
-    if(!res.ok){
-      const err = await res.json().catch(()=>({}));
-      console.warn('[Claude] API error:', res.status, err?.error?.message||JSON.stringify(err));
-      return { is_slip: null, _fallback: true };
-    }
-    const data = await res.json();
-    const text = data?.content?.[0]?.text||'';
-    console.log('[Claude] Raw response:', text.slice(0,200));
-    const clean = text.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
-    console.log('[Claude] Parsed:', parsed);
-    if(parsed && parsed.is_slip === false) return { is_slip: null, _fallback: true };
-    return parsed;
-  }catch(e){
-    console.warn('[Claude] Failed:', e.message);
-    return { is_slip: null, _fallback: true };
-  }
+  // ບໍ່ໃຊ້ API — ໃຊ້ການວິເຄາະສີແທນ
+  return null; // ສົ່ງ null ເພື່ອໃຫ້ previewDepositSlip ໃຊ້ logic ໃໝ່
 }
 
-// ── previewDepositSlip: ກວດຊ້ຳ → ຜ່ານ → Admin ກວດ ──
+// ── ກວດສອບສລິບທະນາຄານລາວດ້ວຍສີ ──
+async function checkLaoBankSlip(dataUrl){
+  const colors = await analyzeImageColors(dataUrl);
+  if(!colors) return { valid: false, reason: 'ບໍ່ສາມາດວິເຄາະຮູບໄດ້' };
+
+  console.log('[SlipCheck] Colors:', JSON.stringify(colors, null, 2));
+
+  const { whitePct, redPct, darkBluePct, yellowPct, lightBluePct, greenPct, grayPct } = colors;
+
+  // ── BCEL OnePay: ຂາວ 70%+ / ແດງ 20%+ ──
+  const isBCEL = whitePct >= 50 && redPct >= 15;
+  // ── JDB Yes: ນ້ຳເງີນເຂັ້ມ 30%+ / ເຫຼືອງ 15%+ ──
+  const isJDB  = darkBluePct >= 20 && yellowPct >= 10;
+  // ── LDB Trust: ຂາວ 50%+ / ຟ້າ 20%+ ──
+  const isLDB  = whitePct >= 45 && lightBluePct >= 15;
+  // ── Maruhan Japan: ຂາວ 70%+ / ແດງ 8%+ (ແດງໜ້ອຍກວ່າ BCEL) ──
+  const isMaruhan = whitePct >= 65 && redPct >= 5 && redPct < 20;
+
+  // ── ຮູບທົ່ວໄປ (ບໍ່ໃຊ່ສລິບ): ສ່ວນໃຫຍ່ບໍ່ຂາວ ──
+  const isNotSlip = whitePct < 30 && darkBluePct < 10 && yellowPct < 8;
+
+  if(isBCEL) return { valid: true, bank: 'BCEL OnePay', reason: `✅ ພົບສລິບ BCEL OnePay (ຂາວ ${whitePct.toFixed(0)}%, ແດງ ${redPct.toFixed(0)}%)` };
+  if(isJDB)  return { valid: true, bank: 'JDB Yes', reason: `✅ ພົບສລິບ JDB Yes (ນ້ຳເງີນ ${darkBluePct.toFixed(0)}%, ເຫຼືອງ ${yellowPct.toFixed(0)}%)` };
+  if(isLDB)  return { valid: true, bank: 'LDB Trust', reason: `✅ ພົບສລິບ LDB Trust (ຂາວ ${whitePct.toFixed(0)}%, ຟ້າ ${lightBluePct.toFixed(0)}%)` };
+  if(isMaruhan) return { valid: true, bank: 'Maruhan Japan Bank Laos', reason: `✅ ພົບສລິບ Maruhan Japan Bank Laos (ຂາວ ${whitePct.toFixed(0)}%, ແດງ ${redPct.toFixed(0)}%)` };
+
+  // ── ລອງຮູ້ຈັກ combo ອື່ນທີ່ອາດເປັນສລິບ (ຂາວ + ສີໃດໜຶ່ງ) ──
+  const looksLikeSlip = whitePct >= 35 && (redPct >= 8 || darkBluePct >= 10 || lightBluePct >= 12 || yellowPct >= 8);
+  if(looksLikeSlip) return { valid: true, bank: 'ທະນາຄານລາວ', reason: `✅ ພົບສລິບທະນາຄານ (ຂາວ ${whitePct.toFixed(0)}%)` };
+
+  // ── ບໍ່ໃຊ່ສລິບ ──
+  return {
+    valid: false,
+    reason: `❌ ຮູບນີ້ບໍ່ແມ່ນສລິບທະນາຄານລາວ (ຂາວ ${whitePct.toFixed(0)}%, ແດງ ${redPct.toFixed(0)}%, ນ້ຳເງີນ ${darkBluePct.toFixed(0)}%, ຟ້າ ${lightBluePct.toFixed(0)}%, ເຫຼືອງ ${yellowPct.toFixed(0)}%)`
+  };
+}
+
+// ── previewDepositSlip: ກວດສີ → ກວດຊ້ຳ → Admin ກວດ ──
 function previewDepositSlip(){
   const input=document.getElementById('depositSlipInput');
   const prevDiv=document.getElementById('depositSlipPreview');
@@ -14310,14 +14336,24 @@ function previewDepositSlip(){
         prevDiv.innerHTML=`<img src="${compressed}" style="max-width:100%;max-height:220px;border-radius:10px;border:2px solid rgba(234,179,8,0.5);cursor:pointer;object-fit:contain" onclick="adminViewImg('${compressed}')">`;
       }
 
-      // ກວດ hash ຊ້ຳ (local)
+      // ── ① ກວດສີວ່າເປັນສລິບທະນາຄານລາວ ──
+      if(validEl){ validEl.innerHTML='⏳ ກຳລັງກວດສີສລິບ...'; }
+      const slipCheck = await checkLaoBankSlip(compressed);
+      if(!slipCheck.valid){
+        validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='1px solid rgba(220,38,38,0.4)';validEl.style.color='#f87171';
+        validEl.innerHTML=`<strong>${slipCheck.reason}</strong><br><span style="font-size:11px;opacity:0.8">ກາລຸນາອັດໂຫລດສລິບທະນາຄານ BCEL, JDB, LDB ຫລື Maruhan ເທົ່ານັ້ນ</span>`;
+        if(confirmBtn){ confirmBtn.style.opacity='0.4'; confirmBtn.style.pointerEvents='none'; delete confirmBtn.dataset.slipData; delete confirmBtn.dataset.slipHash; }
+        return;
+      }
+
+      // ── ② ກວດ hash ຊ້ຳ (local) ──
       const hash = await hashImage(compressed);
       if(getSlipHashes().some(x=>x.hash===hash)){
         validEl.style.background='rgba(220,38,38,0.15)';validEl.style.border='1px solid rgba(220,38,38,0.4)';validEl.style.color='#f87171';
         validEl.innerHTML='<strong>❌ ສລິບນີ້ຖືກໃຊ້ງານໄປແລ້ວ</strong> — ຫ້າມໃຊ້ສລິບຊ້ຳ';
         return;
       }
-      // ກວດ hash ຊ້ຳ (Supabase)
+      // ── ③ ກວດ hash ຊ້ຳ (Supabase) ──
       try{
         const {data:dupD}=await supa.from('kd_deposits').select('id').eq('slip_hash',hash).neq('status','rejected').limit(1);
         if(dupD&&dupD.length>0){
@@ -14327,10 +14363,10 @@ function previewDepositSlip(){
         }
       }catch(e){}
 
-      // ✅ ຜ່ານ — ສົ່ງ Admin ກວດ
+      // ── ④ ຜ່ານ — ສົ່ງ Admin ກວດ ──
       validEl.style.background='rgba(34,197,94,0.1)';validEl.style.border='1px solid rgba(34,197,94,0.35)';validEl.style.color='#4ade80';
-      validEl.innerHTML='✅ ກວດສລິບຜ່ານ — ກົດ ຢືນຢັນ ເພື່ອສົ່ງໃຫ້ Admin ກວດ';
-      _enableConfirmBtn(confirmBtn, compressed, hash, null, file.lastModified);
+      validEl.innerHTML=`${slipCheck.reason}<br><span style="font-size:11px;opacity:0.8">ກົດ ຢືນຢັນ ເພື່ອສົ່ງໃຫ້ Admin ກວດ</span>`;
+      _enableConfirmBtn(confirmBtn, compressed, hash, {bank: slipCheck.bank||''}, file.lastModified);
     };
     imgEl.onerror=()=>{ if(validEl) validEl.innerHTML='❌ ເປີດຮູບບໍ່ໄດ້'; };
     imgEl.src=dataUrl;
@@ -14444,19 +14480,18 @@ async function doDeposit(){
   }
 }
 
-// ── Admin: Gemini Key Settings ──
+// ── Admin: Slip Check Info ──
 function renderGeminiKeySettings(){
-  const key = getGeminiKey();
   return `
     <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.25);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:#4ade80;margin-bottom:10px">🤖 Claude AI API Key (ອ່ານສລິບ)</div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">ໃຊ້ Claude Vision ອ່ານສລິບໂອນເງິນ — Key ບໍ່ຖືກບັນທຶກໃນໂຄ້ດ</div>
-      <input class="form-input" type="password" id="geminiKeyInput" value="${key}" placeholder="sk-ant-api03-...">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-        <button onclick="(function(){const k=document.getElementById('geminiKeyInput').value.trim();if(!k){showNotif('ໃສ່ Key ກ່ອນ');return;}setGeminiKey(k);showNotif('✅ ບັນທຶກ Key ສຳເລັດ');})()" style="background:linear-gradient(135deg,rgba(74,222,128,.2),rgba(34,197,94,.1));border:1px solid rgba(74,222,128,.4);color:#4ade80;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">💾 ບັນທຶກ Key</button>
-        <button onclick="(function(){setGeminiKey('');document.getElementById('geminiKeyInput').value='';showNotif('🗑 ລຶບ Key ແລ້ວ');})()" style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#f87171;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🗑 ລຶບ Key</button>
+      <div style="font-size:13px;font-weight:700;color:#4ade80;margin-bottom:10px">🏦 ກວດສລິບທະນາຄານລາວ (ວິເຄາະສີ)</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.8">
+        ✅ BCEL OnePay — ຂາວ + ແດງ<br>
+        ✅ JDB Yes — ນ້ຳເງີນເຂັ້ມ + ເຫຼືອງ<br>
+        ✅ LDB Trust — ຂາວ + ຟ້າ<br>
+        ✅ Maruhan Japan Bank Laos — ຂາວ + ແດງ (ໜ້ອຍ)<br>
+        ❌ ຮູບອື່ນໆ ທີ່ບໍ່ໃຊ່ສລິບ — ຖືກ Block
       </div>
-      <div style="font-size:10px;color:var(--text2);margin-top:6px">📌 ຮັບ Key ຟຣີໄດ້ທີ່: <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#4ade80">console.anthropic.com</a></div>
     </div>`;
 }
 
