@@ -1649,11 +1649,21 @@ async function syncFromSupabase(){
           <input type="text" id="gameSearchInput" placeholder="ຄົ້ນຫາເກມ / ค้นหาเกม..." oninput="filterGames()" style="background:transparent;border:none;color:var(--text);font-size:14px;width:100%;outline:none">
         </div>
       </div>
+      <!-- ✅ Category tabs -->
+      <div style="padding:8px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <div style="display:flex;gap:8px;white-space:nowrap;padding-bottom:4px" id="gameCategoryTabs">
+          <button onclick="filterByCategory('all')" id="cat_all" class="cat-tab cat-active" style="background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:var(--gold);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif">🎮 ທັງໝົດ</button>
+          <button onclick="filterByCategory('battle')" id="cat_battle" class="cat-tab" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text2);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif">⚔️ Battle Royale</button>
+          <button onclick="filterByCategory('moba')" id="cat_moba" class="cat-tab" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text2);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif">🏆 MOBA</button>
+          <button onclick="filterByCategory('rpg')" id="cat_rpg" class="cat-tab" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text2);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif">⚔ RPG</button>
+          <button onclick="filterByCategory('social')" id="cat_social" class="cat-tab" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text2);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif">🌐 Social/Other</button>
+        </div>
+      </div>
       <!-- featured row -->
-      <div style="padding:12px 14px 4px;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px">⭐ ເກມ Hot</div>
+      <div style="padding:12px 14px 4px;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px" id="featuredLabel">⭐ ເກມ Hot</div>
       <div id="featuredGamesRow" style="display:flex;gap:10px;padding:0 14px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
       <!-- all games -->
-      <div style="padding:0 14px 4px;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px">🎮 ເກມທັງໝົດ</div>
+      <div style="padding:0 14px 4px;font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px" id="allGamesLabel">🎮 ເກມທັງໝົດ</div>
       <div id="allGamesGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px 20px"></div>
     </div>
   </div>
@@ -2170,8 +2180,39 @@ async function syncFromSupabase(){
         <div id="diaSelectedText"></div>
       </div>
       <div class="bill-warning" id="diaWarning">⚠️ ກະລຸນາກວດ Game ID ໃຫ້ຖືກຕ້ອງກ່ອນສັ່ງຊື້</div>
-      <button class="btn btn-gold" onclick="submitDiamondOrder()" style="margin-top:12px;margin-bottom:8px;width:100%">✅ ຢືນຢັນສັ່ງຊື້</button>
+      <button class="btn btn-gold" onclick="showDiamondConfirm()" style="margin-top:12px;margin-bottom:8px;width:100%;font-size:15px;font-weight:800">
+        💎 ເຕີມ Diamond
+      </button>
       <button class="btn btn-outline" onclick="closeModal('diamondOrderModal')" style="width:100%">ຍົກເລີກ</button>
+    </div>
+  </div>
+
+  <!-- ✅ Diamond Confirm Modal -->
+  <div class="popup-overlay" id="diamondConfirmModal" style="display:none">
+    <div class="popup-box" style="max-width:340px">
+      <div style="text-align:center;padding:8px 0 14px">
+        <div style="font-size:48px" id="diaConfirmIcon">💎</div>
+        <div style="font-size:15px;font-weight:800;color:var(--gold);margin-top:6px">ຢືນຢັນການສັ່ງຊື້</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">ກວດສອບຂໍ້ມູນໃຫ້ຄົບຖ້ວນ</div>
+      </div>
+      <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:14px;margin-bottom:14px;font-size:12px;line-height:2">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">🎮 ເກມ</span><span id="diaConfirmGame" style="font-weight:700;color:var(--text)"></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">💎 ຈຳນວນ</span><span id="diaConfirmAmount" style="font-weight:800;color:#7ba4ff"></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">🆔 Game ID</span><span id="diaConfirmGameId" style="font-weight:700;color:var(--gold)"></span></div>
+        <div id="diaConfirmServerRow" style="display:flex;justify-content:space-between"><span style="color:var(--text2)">🌐 Server</span><span id="diaConfirmServer" style="font-weight:700"></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">📱 ໂທ</span><span id="diaConfirmPhone" style="font-weight:700"></span></div>
+        <div style="border-top:1px solid rgba(201,168,76,0.2);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between">
+          <span style="color:var(--text2)">💰 ລາຄາ</span>
+          <span id="diaConfirmPrice" style="font-weight:800;font-size:14px;color:var(--gold)"></span>
+        </div>
+      </div>
+      <div style="background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;padding:10px;font-size:11px;color:#f87171;margin-bottom:14px;line-height:1.7">
+        ⚠️ ກວດ <strong>Game ID</strong> ໃຫ້ຖືກຕ້ອງ<br>ຫາກ ID ຜິດ <strong>ບໍ່ສາມາດຄືນ Diamond</strong> ໄດ້
+      </div>
+      <button class="btn btn-gold" onclick="submitDiamondOrder()" style="width:100%;font-size:15px;font-weight:800;margin-bottom:8px">
+        ✅ ຢືນຢັນສັ່ງຊື້ / ยืนยัน
+      </button>
+      <button class="btn btn-outline" onclick="closeModal('diamondConfirmModal')" style="width:100%">← ແກ້ໄຂ</button>
     </div>
   </div>
 
@@ -8523,7 +8564,40 @@ currentUser = restoreSession();
 
 // ── Sync wallet/avatar/cover from Supabase on app load (ທຸກ user ທຸກເຄື່ອງ) ──
 (function syncUserFromSupabase(){
-  if(!currentUser) return;
+  if(!currentUser){
+    // ✅ ບໍ່ມີ session ໃນ localStorage → ລອງ auto-login ຈາກ saved credentials
+    const saved = (() => { try{ return JSON.parse(localStorage.getItem('kd_saved_login')||'null'); }catch(e){ return null; } })();
+    if(!saved||!saved.val||!saved.pass) return;
+    supa.from('kd_users')
+      .select('*')
+      .or(`email.eq.${saved.val},phone.eq.${saved.val},username.eq.${saved.val}`)
+      .limit(1)
+      .then(({data})=>{
+        if(!data||!data.length) return;
+        const row = data[0];
+        if(row.password !== saved.pass) return;
+        const db = getUsersDB();
+        const u = {
+          id:row.id, name:row.name||'', user:row.username||'',
+          phone:row.phone||'', email:row.email||'', pass:row.password||'',
+          wallet:row.wallet||0, isSeller:row.is_seller||false,
+          isAdmin:row.is_admin||false,
+          avatarImg:row.avatar_img||null, coverImg:row.cover_img||null,
+          adminId:row.admin_id||null,
+        };
+        db[u.id] = u;
+        saveUsersDB(db);
+        localStorage.setItem('kd_session', u.id);
+        currentUser = u;
+        saveUser();
+        if(typeof updateProfileUI==='function') updateProfileUI();
+        if(typeof updateWalletDisplay==='function') updateWalletDisplay();
+        if(typeof updateBalanceUI==='function') updateBalanceUI(u.wallet||0);
+        if(typeof heartbeat==='function') heartbeat();
+        console.log('[AutoRestore] ✅ Session restored:', u.name);
+      }).catch(e=>console.warn('[AutoRestore] failed:', e.message));
+    return;
+  }
   supa.from('kd_users').select('avatar_img,cover_img,wallet').eq('id',currentUser.id).single()
     .then(({data})=>{
       if(!data) return;
@@ -11046,6 +11120,30 @@ function selectDiamondPkg(pkgId){
   }
 }
 
+function showDiamondConfirm(){
+  if(!selectedDiamondPkg){showNotif('ກະລຸນາເລືອກ Package ກ່ອນ');return;}
+  const gameId=document.getElementById('diaGameId').value.trim();
+  const server=document.getElementById('diaServer').value.trim();
+  const phone=document.getElementById('diaPhone').value.trim();
+  if(!gameId){showNotif('ກະລຸນາໃສ່ Game ID');return;}
+  if(!phone){showNotif('ກະລຸນາໃສ່ໂທລະສັບ');return;}
+  const isMLBB=currentDiamondGame==='mlbb';
+  const icon=isMLBB?'💎':'💠';
+  const gameName=isMLBB?'Mobile Legends':'Free Fire';
+  const bonus=selectedDiamondPkg.bonus?` (+${selectedDiamondPkg.bonus} ໂບນັດ)`:'';
+  // populate confirm modal
+  document.getElementById('diaConfirmIcon').textContent=icon;
+  document.getElementById('diaConfirmGame').textContent=gameName;
+  document.getElementById('diaConfirmAmount').textContent=`${icon} ${selectedDiamondPkg.amount.toLocaleString()}${bonus}`;
+  document.getElementById('diaConfirmGameId').textContent=gameId;
+  document.getElementById('diaConfirmServer').textContent=server||'-';
+  document.getElementById('diaConfirmServerRow').style.display=server?'flex':'none';
+  document.getElementById('diaConfirmPhone').textContent=phone;
+  document.getElementById('diaConfirmPrice').textContent=Number(selectedDiamondPkg.price).toLocaleString()+' ກີບ';
+  closeModal('diamondOrderModal');
+  openModal('diamondConfirmModal');
+}
+
 function submitDiamondOrder(){
   if(!selectedDiamondPkg){showNotif('ກະລຸນາເລືອກ Package ກ່ອນ');return;}
   const gameId=document.getElementById('diaGameId').value.trim();
@@ -11059,7 +11157,7 @@ function submitDiamondOrder(){
   const icon=isMLBB?'💎':'💠';
   const gameName=isMLBB?'Mobile Legends':'Free Fire';
   const orderId='DIA-'+Date.now().toString().slice(-6);
-  const _deadlineMs = Date.now() + 30*60*1000; // 30 minutes
+  const _deadlineMs = Date.now() + 30*60*1000;
   const order={
     id:orderId, game:currentDiamondGame, gameName, pkgId:selectedDiamondPkg.id,
     amount:selectedDiamondPkg.amount, bonus:selectedDiamondPkg.bonus||0,
@@ -11070,7 +11168,7 @@ function submitDiamondOrder(){
     status:'pending', date:new Date().toLocaleDateString('lo-LA'), isGame:true,
     productName:`${icon} ${selectedDiamondPkg.amount.toLocaleString()} Diamond ${gameName}`,
     productEmoji:icon, qty:1, total,
-    deadlineMs: _deadlineMs, // 30-min deadline
+    deadlineMs: _deadlineMs,
     createdMs: Date.now(),
   };
   currentUser.wallet-=total; saveUser(); updateWalletDisplay();
@@ -11079,13 +11177,12 @@ function submitDiamondOrder(){
   const ds=getDiamondSellers();
   const s=ds[currentDiamondGame]?.find(x=>x.userId===order.sellerId);
   if(s){s.sold=(s.sold||0)+1;saveDiamondSellers(ds);}
-  // แจ้ง admin ทาง WA
   waNewOrder(currentUser,order);
-  // แจ้ง Diamond seller ทาง WA
   waNotifyDiamondSeller(order);
-  // In-app notification badge + sound
   addDiamondOrderNotif(order);
-  closeModal('diamondOrderModal');
+  // ✅ admin notification
+  addAdminNotification('diamond_order', {orderId:order.id, userName:currentUser.name, amount:order.amount, game:gameName, gameId});
+  closeModal('diamondConfirmModal');
   showDiamondBill(order);
 }
 
@@ -11093,10 +11190,14 @@ function showDiamondBill(order){
   const icon=order.game==='mlbb'?'💎':'💠';
   const accentColor=order.game==='mlbb'?'#6644ff':'#ff4400';
   const bonus=order.bonus?`<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88">+${order.bonus} 💎</span></div>`:'';
+  // WA notify message
+  const waMsg = encodeURIComponent(`🎮 ເຕີມ Diamond ${order.gameName}\n💎 ຈຳນວນ: ${order.amount.toLocaleString()}${order.bonus?` (+${order.bonus})`:''}\n🆔 Game ID: ${order.gameId}${order.server?`\n🌐 Server: ${order.server}`:''}\n📱 ໂທ: ${order.phone}\n💰 ລາຄາ: ${Number(order.price).toLocaleString()} ກີບ\n#${order.id}`);
+  const waUrl = `https://wa.me/?text=${waMsg}`;
   const html=`
     <div style="text-align:center;padding:6px 0 14px">
       <div style="font-size:48px;filter:drop-shadow(0 4px 16px ${accentColor})">${icon}</div>
       <div style="font-size:14px;color:var(--gold);font-weight:700;margin-top:6px">ບິນເຕີມ Diamond ${order.gameName}</div>
+      <div style="font-size:11px;color:#4eff88;margin-top:4px">✅ ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ</div>
     </div>
     <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:12px">
       <div class="bill-detail-row"><span>ລະຫັດ</span><span style="font-weight:700">#${order.id}</span></div>
@@ -11107,13 +11208,24 @@ function showDiamondBill(order){
       <div class="bill-detail-row"><span>ຮ້ານ</span><span>${order.sellerName}</span></div>
       <div class="bill-detail-row"><span>ໂທ</span><span>${order.phone}</span></div>
       <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold);font-weight:700">${Number(order.price).toLocaleString()} ກີບ</span></div>
-      <div class="bill-detail-row"><span>ສະຖານະ</span><span style="color:#ffa500">⏳ ລໍຖ້າ</span></div>
+      <div class="bill-detail-row"><span>ສະຖານະ</span><span style="color:#ffa500">⏳ ລໍຖ້າເຕີມ</span></div>
     </div>
-    <div style="background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.2);border-radius:10px;padding:10px;font-size:11px;color:#4eff88;line-height:2;margin-bottom:14px">
+    <div style="background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.2);border-radius:10px;padding:10px;font-size:11px;color:#4eff88;line-height:2;margin-bottom:12px">
       ✅ ຮ້ານຈະເຕີມໃຫ້ທ່ານພາຍໃນ 15-30 ນາທີ<br>
       ⚠️ ຖ້າ Game ID ຜິດ ຈະບໍ່ສາມາດ refund ໄດ້
     </div>
-    <button class="btn btn-gold" onclick="closeModal('billModal')" style="width:100%">✅ ຮັບຮູ້</button>`;
+    <!-- ✅ ปุ่มแจ้งเตือน -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <a href="${waUrl}" target="_blank"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,rgba(37,211,102,0.2),rgba(37,211,102,0.1));border:1px solid rgba(37,211,102,0.4);color:#25d366;border-radius:12px;padding:12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">
+        <span style="font-size:18px">📲</span> ແຈ້ງທາງ WA
+      </a>
+      <button onclick="openAdminChat('Tavanh999','99999');closeModal('billModal')"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.1));border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:12px;padding:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+        <span style="font-size:18px">💬</span> ແຊດ Admin
+      </button>
+    </div>
+    <button class="btn btn-outline" onclick="closeModal('billModal')" style="width:100%">✅ ຮັບຮູ້ / ปิด</button>`;
   document.getElementById('billModalContent').innerHTML=html;
   openModal('billModal');
 }
@@ -14780,6 +14892,50 @@ function _renderAllGamesGrid(list){
 function filterGames(){
   const q = (document.getElementById('gameSearchInput')?.value||'').toLowerCase().trim();
   const list = q ? TOPUP_GAMES.filter(g=>g.name.toLowerCase().includes(q)||g.short.toLowerCase().includes(q)) : TOPUP_GAMES;
+  _renderAllGamesGrid(list);
+  if(q){
+    const fl=document.getElementById('featuredLabel'); if(fl) fl.style.display='none';
+    const fr=document.getElementById('featuredGamesRow'); if(fr) fr.style.display='none';
+  } else {
+    const fl=document.getElementById('featuredLabel'); if(fl) fl.style.display='';
+    const fr=document.getElementById('featuredGamesRow'); if(fr) fr.style.display='flex';
+  }
+}
+
+// ✅ Category filter
+const GAME_CATEGORIES = {
+  'all': null,
+  'battle': ['ff','pubgm','codm','bloodstrike','deltaforce'],
+  'moba':   ['mlbb','lolwild','aov'],
+  'rpg':    ['genshin','honkai','wuwa','zenithlost'],
+  'social': ['roblox','valorant'],
+};
+let _currentCat = 'all';
+
+function filterByCategory(cat){
+  _currentCat = cat;
+  // update tab styles
+  document.querySelectorAll('.cat-tab').forEach(t=>{
+    t.style.background='rgba(255,255,255,0.04)';
+    t.style.border='1px solid rgba(255,255,255,0.1)';
+    t.style.color='var(--text2)';
+  });
+  const active = document.getElementById('cat_'+cat);
+  if(active){
+    active.style.background='rgba(201,168,76,0.2)';
+    active.style.border='1px solid rgba(201,168,76,0.5)';
+    active.style.color='var(--gold)';
+  }
+  const ids = GAME_CATEGORIES[cat];
+  const list = ids ? TOPUP_GAMES.filter(g=>ids.includes(g.id)) : TOPUP_GAMES;
+  const label = document.getElementById('allGamesLabel');
+  const catNames = {all:'🎮 ເກມທັງໝົດ', battle:'⚔️ Battle Royale', moba:'🏆 MOBA', rpg:'⚔ RPG', social:'🌐 Social/Other'};
+  if(label) label.textContent = catNames[cat]||'🎮 ເກມ';
+  // hide/show featured for non-all
+  const fl=document.getElementById('featuredLabel');
+  const fr=document.getElementById('featuredGamesRow');
+  if(cat==='all'){ if(fl)fl.style.display=''; if(fr)fr.style.display='flex'; }
+  else { if(fl)fl.style.display='none'; if(fr)fr.style.display='none'; }
   _renderAllGamesGrid(list);
 }
 
