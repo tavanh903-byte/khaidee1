@@ -2476,6 +2476,14 @@ async function syncFromSupabase(){
           </div>
           <div style="color:var(--gold)">ຢືນຢັນຂາຍ</div>
         </div>
+        <!-- Admin-only: ຢືນຢັນ Diamond -->
+        <div class="profile-icon-btn" id="adminDiamondConfirmBtn" onclick="openAdminDiamondPanel()" style="display:none;position:relative;background:linear-gradient(135deg,rgba(100,68,255,.2),rgba(100,68,255,.06));border:1.5px solid rgba(100,68,255,.5)">
+          <div class="icon" style="position:relative">
+            💎
+            <span id="adminDiamondDot" style="display:none;position:absolute;top:-6px;right:-8px;background:#e53;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:9px;align-items:center;justify-content:center;border:1.5px solid var(--dark);padding:0 2px">0</span>
+          </div>
+          <div style="color:#a080ff;font-size:10px">ຢືນຢັນ Diamond</div>
+        </div>
         <div class="profile-icon-btn" onclick="logoutUser()">
           <div class="icon">🚪</div>
           <div>ອອກ</div>
@@ -5441,23 +5449,6 @@ async function submitGeneralOrder(){
 }
 
 function showBillPopup(order){
-  const isPhonePart = order.cat === 'phoneparts';
-  const isGame = order.isGame || order.gameType;
-  const proofImg   = order.evidence_url || order.sellerImg || null;
-  const proofVideo = order.video_url    || order.sellerVideo || null;
-
-  // ── ຮູບ/ວິດີໂອຫຼັກຖານ (ຖ້າ seller ອັດໂຫລດມາໄວ) ──
-  const proofHtml = (!isGame && (proofImg || proofVideo)) ? `
-    <div style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.04));border:1.5px solid rgba(74,222,128,.35);border-radius:14px;padding:14px;margin:10px 0">
-      <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:10px">📎 ຫຼັກຖານຈາກຜູ້ຂາຍ</div>
-      ${proofImg ? `<img src="${proofImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid rgba(74,222,128,.3);cursor:pointer;margin-bottom:${proofVideo?'10px':'0'}" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">` : ''}
-      ${proofVideo ? `<video src="${proofVideo}" style="width:100%;border-radius:10px;max-height:200px;border:1px solid rgba(100,160,255,.3)" controls playsinline></video>` : ''}
-    </div>` : (!isGame ? `
-    <div style="background:rgba(201,168,76,.05);border:1px dashed rgba(201,168,76,.3);border-radius:12px;padding:12px;margin:10px 0;text-align:center">
-      <div style="font-size:20px;margin-bottom:4px">📸</div>
-      <div style="font-size:11px;color:var(--text2);line-height:1.6">ຜູ້ຂາຍຈະອັດໂຫລດ<strong style="color:var(--gold)">ຮູບ/ວິດີໂອຫຼັກຖານ</strong><br>ການສົ່ງສິນຄ້າຫຼັງຈາກຫຸ້ມຫໍ່ສຳເລັດ</div>
-    </div>` : '');
-
   const html = `
     <div style="text-align:center;font-size:14px;color:var(--gold);font-weight:700;margin-bottom:12px">🧾 ບິນສິນຄ້າ</div>
     ${(order.productImages&&order.productImages[0])||order.productImg ? `
@@ -5478,7 +5469,6 @@ function showBillPopup(order){
       <div class="bill-detail-row"><span>ຂົນສ່ງ</span><span>${order.shipping}</span></div>
       <div class="bill-detail-row"><span>ວັນທີ</span><span>${order.date}</span></div>
     </div>
-    ${proofHtml}
     <div class="bill-warning">
       ⚠️ ກະລຸນາແຄັບຮູບພາບບິນນີ້ທີ່ມີ ID #${order.productId} ໄວ້<br>
       ຖ້າສິນຄ້າມີບັນຫາ ໃຫ້ຕິດຕໍ່ Admin ແລ້ວແຈ້ງ ID ສິນຄ້າ<br>
@@ -5745,7 +5735,7 @@ function renderBillsPage(){
       <div class="bill-product" onclick="${clickFn}" style="cursor:pointer">
         <div class="bill-product-img">${o.productEmoji||'📦'}</div>
         <div class="bill-product-info">
-          <div class="bill-product-name">${o.productName||o.name}</div>
+          <div class="bill-product-name">${o.productName && o.productName!=='undefined' ? o.productName : (isDia ? `${o.productEmoji||'💎'} ${o.amount?.toLocaleString()||'-'} Diamond ${o.gameName||''}` : o.name||'-')}</div>
           <div class="bill-product-price">${fmtPrice(o.total||o.price)} ${o.qty&&o.qty>1?'× '+o.qty:''}</div>
           <div style="font-size:11px;color:var(--text2)">${fmtBillDate(o.date||o.createdAt)}</div>
           ${o.trackingNum?`<div style="font-size:11px;color:var(--accent);margin-top:2px">📮 ${o.trackingNum}</div>`:''}
@@ -5774,43 +5764,66 @@ function showMyDiamondOrderDetail(id){
   if(!o){ showNotif('ບໍ່ພົບ Order'); return; }
   const isDone = o.status==='done';
   const isCancelled = o.status==='cancelled';
-  const accent = o.game==='mlbb'?'#6644ff':'#ff4400';
   const icon = o.game==='mlbb'?'💎':'💠';
+  const accentColor = o.game==='mlbb'?'#6644ff':'#ff4400';
+  const accentBg    = o.game==='mlbb'?'rgba(100,68,255,.12)':'rgba(255,68,0,.12)';
+  const gameName    = o.gameName || (o.game==='mlbb'?'Mobile Legends':'Free Fire');
+  const proofImg    = o.confirmImg || null;
+
   const html = `
-    <div style="text-align:center;padding:10px 0 14px">
-      <div style="font-size:44px">${icon}</div>
-      <div style="font-size:14px;color:var(--gold);font-weight:700;margin-top:6px">ບິນເຕີມ Diamond ${o.gameName}</div>
-      <div style="font-size:10px;color:var(--text2)">#${o.id}</div>
+    <!-- Hero -->
+    <div style="text-align:center;padding:16px 0 12px;background:linear-gradient(180deg,${accentBg},transparent);border-radius:14px;margin-bottom:14px;position:relative">
+      <div style="font-size:52px;filter:drop-shadow(0 4px 20px ${accentColor})">${icon}</div>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:14px;color:${accentColor};font-weight:700;margin-top:6px">${gameName}</div>
+      <div style="font-size:20px;font-weight:900;color:#fff;margin:4px 0">${icon} ${o.amount?.toLocaleString()||'-'} Diamond</div>
+      ${o.bonus?`<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(78,255,136,.15);border:1px solid rgba(78,255,136,.4);border-radius:20px;padding:3px 12px;font-size:11px;color:#4eff88;font-weight:700">🎁 ໂບນັດ +${o.bonus} ${icon}</div>`:''}
+      <div style="position:absolute;top:10px;left:10px">
+        ${isDone?`<span style="background:rgba(78,255,136,.2);border:1px solid rgba(78,255,136,.5);color:#4eff88;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">✅ ສຳເລັດ</span>`:isCancelled?`<span style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;border-radius:20px;padding:3px 10px;font-size:10px">❌ ຍົກເລີກ</span>`:`<span style="background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.4);color:#ffa500;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">⏳ ລໍຖ້າ</span>`}
+      </div>
+      <div style="position:absolute;top:10px;right:10px;font-size:10px;color:var(--text2)">#${o.id}</div>
     </div>
-    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:12px">
-      <div class="bill-detail-row"><span>Diamond</span><span style="color:${accent};font-weight:700">${icon} ${o.amount?.toLocaleString()||''}</span></div>
-      ${o.bonus?`<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88">+${o.bonus} 💎</span></div>`:''}
-      <div class="bill-detail-row"><span>Game ID</span><span style="color:var(--gold);font-weight:700">${o.gameId}</span></div>
-      ${o.server?`<div class="bill-detail-row"><span>Server</span><span>${o.server}</span></div>`:''}
-      <div class="bill-detail-row"><span>ຮ້ານ</span><span>${o.sellerName||'Admin'}</span></div>
-      <div class="bill-detail-row"><span>ໂທ</span><span>${o.phone}</span></div>
-      <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold);font-weight:700">${fmtPrice(o.price||o.total)}</span></div>
-      <div class="bill-detail-row"><span>ວັນທີ</span><span>${fmtBillDate(o.date||o.createdAt)}</span></div>
+
+    <!-- Details -->
+    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div class="bill-detail-row"><span>🆔 Game ID</span><span style="color:${accentColor};font-weight:800;font-size:13px">${o.gameId}</span></div>
+      ${o.server?`<div class="bill-detail-row"><span>🌐 Server</span><span style="font-weight:700">${o.server}</span></div>`:''}
+      <div class="bill-detail-row"><span>${icon} Diamond</span><span style="color:${accentColor};font-weight:700">${o.amount?.toLocaleString()}</span></div>
+      ${o.bonus?`<div class="bill-detail-row"><span>🎁 ໂບນັດ</span><span style="color:#4eff88;font-weight:700">+${o.bonus} ${icon}</span></div>`:''}
+      <div class="bill-detail-row"><span>🏪 ຮ້ານ</span><span>${o.sellerName||'Admin'}</span></div>
+      <div class="bill-detail-row"><span>📱 ໂທ</span><span>${o.phone}</span></div>
+      <div class="bill-detail-row"><span>💰 ລາຄາ</span><span style="color:var(--gold);font-weight:700">${fmtPrice(o.price||o.total)}</span></div>
+      <div class="bill-detail-row"><span>📅 ວັນທີ</span><span>${fmtBillDate(o.date||o.createdAt)}</span></div>
+      ${isDone && o.confirmedAt?`<div class="bill-detail-row"><span>✅ ຢືນຢັນໂດຍ</span><span style="color:#4eff88">${o.confirmedBy||'Admin'} · ${fmtBillDate(o.confirmedAt)}</span></div>`:''}
     </div>
-    ${isDone?`
-    <div style="background:rgba(78,255,136,.08);border:1.5px solid rgba(78,255,136,.4);border-radius:12px;padding:14px;text-align:center">
-      <div style="font-size:28px">✅</div>
-      <div style="font-size:15px;font-weight:800;color:#4eff88;margin-top:4px">ເຕີມ Diamond ສຳເລັດແລ້ວ!</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">Diamond ໄດ້ຮັບຢູ່ Game ID: ${o.gameId}</div>
-      ${o.confirmedAt?`<div style="font-size:10px;color:var(--text2);margin-top:2px">ຢືນຢັນ: ${fmtBillDate(o.confirmedAt)}</div>`:''}
-    </div>`:isCancelled?`
-    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:12px;text-align:center">
-      <div style="color:#f87171;font-weight:700">❌ ຍົກເລີກ — ເງິນຄືນ Wallet ແລ້ວ</div>
-    </div>`:`
-    <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:12px;padding:14px;text-align:center">
-      <div style="font-size:22px">⏳</div>
-      <div style="font-size:13px;font-weight:700;color:#ffa500;margin-top:4px">ລໍຖ້າການເຕີມ...</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:3px">ຮ້ານຈະເຕີມໃຫ້ທ່ານພາຍໃນ 15-30 ນາທີ</div>
+
+    <!-- Status / Proof -->
+    ${isDone ? `
+    <div style="background:linear-gradient(135deg,rgba(78,255,136,.1),rgba(34,197,94,.05));border:1.5px solid rgba(78,255,136,.45);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="text-align:center;margin-bottom:${proofImg?'12px':'0'}">
+        <div style="font-size:32px;margin-bottom:4px">✅</div>
+        <div style="font-size:15px;font-weight:800;color:#4eff88">ເຕີມ Diamond ສຳເລັດແລ້ວ!</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Diamond ໄດ້ຮັບຢູ່ Game ID: <strong style="color:${accentColor}">${o.gameId}</strong></div>
+      </div>
+      ${proofImg ? `
+      <div style="margin-top:12px">
+        <div style="font-size:11px;color:#4eff88;font-weight:700;margin-bottom:6px">📸 ຫຼັກຖານຈາກ Admin</div>
+        <img src="${proofImg}" style="width:100%;border-radius:10px;max-height:220px;object-fit:cover;border:1.5px solid rgba(78,255,136,.35);cursor:pointer" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">
+        <div style="font-size:10px;color:var(--text2);text-align:center;margin-top:4px">🔍 ກົດຮູບເພື່ອຂະຫຍາຍ</div>
+      </div>` : ''}
+    </div>` : isCancelled ? `
+    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="color:#f87171;font-weight:700;font-size:14px">❌ ຍົກເລີກ — ເງິນຄືນ Wallet ແລ້ວ</div>
+    </div>` : `
+    <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">⏳</div>
+      <div style="font-size:13px;font-weight:700;color:#ffa500">ລໍຖ້າການເຕີມ...</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.7">Admin ຈະເຕີມ Diamond ໃຫ້ທ່ານ<br>ພາຍໃນ <strong style="color:#ffa500">15–30 ນາທີ</strong></div>
       <div style="height:4px;background:rgba(255,165,0,.15);border-radius:2px;margin-top:10px;overflow:hidden">
         <div style="height:100%;width:65%;background:linear-gradient(90deg,#ffa500,#ffcc44);border-radius:2px;animation:shimmer 2s infinite"></div>
       </div>
     </div>`}
-    <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:14px">ປິດ</button>
+
+    <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:4px">ປິດ</button>
   `;
   document.getElementById('billDetailContent').innerHTML = html;
   openModal('billDetailModal');
@@ -6008,8 +6021,6 @@ function viewBillDetail(id){
   // ✅ Buyer proof view — fallback evidence_url / video_url (ใหม่) หรือ sellerImg / sellerVideo (เดิม)
   const proofImg   = o.evidence_url || o.sellerImg || null;
   const proofVideo = o.video_url    || o.sellerVideo || null;
-  const isPhonePartOrder = o.cat === 'phoneparts';
-  const isGameOrder2 = o.isGame || o.cat === 'game' || o.gameType;
 
   const proofHtml = (proofImg || proofVideo) ? `
     <div style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.04));
@@ -6017,9 +6028,9 @@ function viewBillDetail(id){
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#14532d,#166534);
-          display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${isPhonePartOrder?'🔧':'📦'}</div>
+          display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#4ade80">${isPhonePartOrder?'ຮູບ/ວິດີໂອ ອາໄຫຼ່ຈາກຜູ້ຂາຍ':'ຫຼັກຖານການສົ່ງສິນຄ້າ'}</div>
+          <div style="font-size:13px;font-weight:700;color:#4ade80">ຫຼັກຖານການສົ່ງສິນຄ້າ</div>
           <div style="font-size:10px;color:var(--text2);margin-top:1px">ຈາກຜູ້ຂາຍ — ກວດສອບໄດ້ທັນທີ</div>
         </div>
         <span style="background:rgba(74,222,128,.2);border:1px solid rgba(74,222,128,.4);
@@ -6030,7 +6041,7 @@ function viewBillDetail(id){
       <!-- Image Proof -->
       <div style="margin-bottom:${proofVideo?'12px':'0'}">
         <div style="font-size:10px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:4px">
-          <span>📸</span><span>${isPhonePartOrder?'ຮູບອາໄຫຼ່':'ຮູບຫຼັກຖານການສົ່ງ'}</span>
+          <span>📸</span><span>ຮູບຫຼັກຖານການສົ່ງ</span>
         </div>
         <div style="position:relative;border-radius:12px;overflow:hidden;background:var(--dark3)">
           <img src="${proofImg}"
@@ -6048,7 +6059,7 @@ function viewBillDetail(id){
       <!-- Video Proof -->
       <div>
         <div style="font-size:10px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:4px">
-          <span>🎥</span><span>${isPhonePartOrder?'ວິດີໂອອາໄຫຼ່':'ວິດີໂອຫຼັກຖານການສົ່ງ'}</span>
+          <span>🎥</span><span>ວິດີໂອຫຼັກຖານການສົ່ງ</span>
         </div>
         <div style="border-radius:12px;overflow:hidden;background:var(--dark3);border:1px solid rgba(100,160,255,.25)">
           <video src="${proofVideo}"
@@ -6058,13 +6069,7 @@ function viewBillDetail(id){
           </video>
         </div>
       </div>` : ''}
-    </div>`
-  : (!isGameOrder2 ? `
-    <div style="background:rgba(201,168,76,.04);border:1px dashed rgba(201,168,76,.3);border-radius:14px;padding:14px;margin:12px 0;text-align:center">
-      <div style="font-size:28px;margin-bottom:6px">${isPhonePartOrder?'🔧':'📸'}</div>
-      <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:4px">${isPhonePartOrder?'ຮູບ/ວິດີໂອ ອາໄຫຼ່':'ຮູບ/ວິດີໂອຫຼັກຖານ'}</div>
-      <div style="font-size:11px;color:var(--text2);line-height:1.7">ຜູ້ຂາຍຈະອັດໂຫລດ<strong style="color:var(--gold)">ຮູບ/ວິດີໂອ</strong>${isPhonePartOrder?' ອາໄຫຼ່ທີ່ຈະສົ່ງ':' ຫຼັກຖານ'}<br>ຫຼັງຈາກ${isPhonePartOrder?'ກຽມອາໄຫຼ່':'ຫຸ້ມຫໍ່ສຳເລັດ'}</div>
-    </div>` : '');
+    </div>` : '';
 
   const html = `
     <div class="modal-title">${o.isGame ? '🎮 ຂໍ້ມູນ ID ເກມ' : '📦 ຕິດຕາມອໍເດີ'}</div>
@@ -6292,10 +6297,10 @@ function sellerViewBill(id){
     <!-- ══ 📎 ສ່ງຫຼັກຖານການສົ່ງ ══ -->
     <div style="background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1.5px solid rgba(201,168,76,.3);border-radius:16px;padding:16px;margin:12px 0">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${isPhonePart ? '🔧' : '📎'}</div>
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📎</div>
         <div>
-          <div style="font-size:13px;font-weight:700;color:var(--gold)">${isPhonePart ? '📸 ສ່ງຮູບ/ວິດີໂອ ອາໄຫຼ່' : 'ສ່ງຫຼັກຖານການສົ່ງ'}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px">${isPhonePart ? 'ຖ່າຍຮູບ/ວິດີໂອ ອາໄຫຼ່ທີ່ຈະສົ່ງ ແລ້ວກົດຢືນຢັນ' : 'ອັດໂຫລດຮູບ/ວິດີໂອ ແລ້ວກົດຢືນຢັນ'}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">ສ່ງຫຼັກຖານການສົ່ງ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px">ອັດໂຫລດຮູບ/ວິດີໂອ ແລ້ວກົດຢືນຢັນ</div>
         </div>
         ${(o.sellerImg||o.evidence_url) ? `<span style="margin-left:auto;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">✅ ມີຮູບແລ້ວ</span>` : ''}
       </div>
@@ -7420,20 +7425,153 @@ function adminConfirmDiamond(orderId){
   const dorders = getDiamondOrders();
   const idx = dorders.findIndex(o=>o.id===orderId);
   if(idx<0){ showNotif('ບໍ່ພົບ Order'); return; }
+  const o = dorders[idx];
+  const icon = o.game==='mlbb'?'💎':'💠';
+
+  // Open confirm dialog with image upload
+  const overlay = document.createElement('div');
+  overlay.id = 'diaConfirmOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(135deg,#0a0a0a,#1a1200);border:1.5px solid rgba(201,168,76,.5);border-radius:20px;padding:24px;max-width:360px;width:100%;text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">${icon}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--gold);margin-bottom:4px">ຢືນຢັນ — ເຕີມ Diamond</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">#${o.id} · ${o.gameId} · ${icon} ${o.amount?.toLocaleString()}</div>
+
+      <!-- Image upload -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:8px;text-align:left">📸 ຮູບຫຼັກຖານ (ຖ່າຍໜ້າຈໍ/ຮູບຢືນຢັນ)</div>
+        <input type="file" id="diaConfirmImgInput" accept="image/*" style="display:none" onchange="previewDiaConfirmImg(this)">
+        <div onclick="document.getElementById('diaConfirmImgInput').click()"
+          style="border:2px dashed rgba(201,168,76,.4);border-radius:12px;padding:14px;cursor:pointer;background:rgba(201,168,76,.05);transition:.2s"
+          id="diaConfirmImgBox">
+          <div style="font-size:28px;margin-bottom:4px">📷</div>
+          <div style="font-size:12px;color:var(--text2)">ກົດເພື່ອເລືອກຮູບ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">(ບໍ່ບັງຄັບ — ລູກຄ້າຈະເຫັນຮູບນີ້)</div>
+        </div>
+        <div id="diaConfirmImgPreview" style="margin-top:8px"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="doAdminConfirmDiamond('${orderId}')"
+          style="background:linear-gradient(135deg,rgba(78,255,136,.25),rgba(34,197,94,.15));border:1.5px solid rgba(78,255,136,.6);color:#4eff88;border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+          ✅ ຢືນຢັນສຳເລັດ
+        </button>
+        <button onclick="document.getElementById('diaConfirmOverlay').remove()"
+          style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--text2);border-radius:12px;padding:13px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">
+          ຍົກເລີກ
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function previewDiaConfirmImg(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const box = document.getElementById('diaConfirmImgBox');
+    const prev = document.getElementById('diaConfirmImgPreview');
+    if(box) box.style.display = 'none';
+    if(prev) prev.innerHTML = `<div style="position:relative">
+      <img src="${e.target.result}" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;border:1.5px solid rgba(78,255,136,.4)">
+      <div onclick="document.getElementById('diaConfirmImgBox').style.display='block';document.getElementById('diaConfirmImgPreview').innerHTML='';document.getElementById('diaConfirmImgInput').value=''"
+        style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 8px;font-size:11px;color:#f87171;cursor:pointer">✕ ລຶບ</div>
+    </div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function doAdminConfirmDiamond(orderId){
+  const dorders = getDiamondOrders();
+  const idx = dorders.findIndex(o=>o.id===orderId);
+  if(idx<0){ showNotif('ບໍ່ພົບ Order'); return; }
+
+  // Get proof image if any
+  const imgInput = document.getElementById('diaConfirmImgInput');
+  let confirmImg = null;
+  if(imgInput && imgInput.files[0]){
+    const file = imgInput.files[0];
+    try {
+      // Compress image
+      confirmImg = await new Promise((res,rej)=>{
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const MAX=800; let w=img.width,h=img.height;
+            if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+            if(h>1200){w=Math.round(w*1200/h);h=1200;}
+            const c=document.createElement('canvas'); c.width=w; c.height=h;
+            c.getContext('2d').drawImage(img,0,0,w,h);
+            res(c.toDataURL('image/jpeg',0.82));
+          };
+          img.onerror=rej;
+          img.src=e.target.result;
+        };
+        reader.onerror=rej;
+        reader.readAsDataURL(file);
+      });
+    } catch(e){ console.warn('img compress:', e); }
+  }
+
   dorders[idx].status = 'done';
   dorders[idx].confirmedAt = new Date().toISOString();
   dorders[idx].confirmedBy = currentUser?.name||'Admin';
+  if(confirmImg) dorders[idx].confirmImg = confirmImg;
   saveDiamondOrders(dorders);
-  // ✅ อัปเดต orders array ด้วย
+
+  // ✅ Sync to orders array too
   const oidx = orders.findIndex(o=>o.id===orderId);
-  if(oidx>=0){ orders[oidx].status='done'; saveOrders(); }
-  showNotif('✅ ຢືນຢັນ Diamond ສຳເລັດ!');
+  if(oidx>=0){
+    orders[oidx].status='done';
+    orders[oidx].confirmedAt = dorders[idx].confirmedAt;
+    if(confirmImg) orders[oidx].confirmImg = confirmImg;
+    saveOrders();
+  }
+
+  // Close overlay
+  const overlay = document.getElementById('diaConfirmOverlay');
+  if(overlay) overlay.remove();
+
+  showNotif('✅ ຢືນຢັນ Diamond ສຳເລັດ!', 'success');
   renderBillsPage();
-  // Refresh admin view
-  if(typeof switchAdminTab === 'function') switchAdminTab('diamond');
+  if(typeof renderAdminDiamondPanel === 'function') renderAdminDiamondPanel();
+  else if(typeof switchAdminTab === 'function') switchAdminTab('diamond');
 }
 
-function adminCancelDiamond(orderId){
+function updateAdminDiamondBadge(){
+  const btn = document.getElementById('adminDiamondConfirmBtn');
+  const dot = document.getElementById('adminDiamondDot');
+  if(!btn) return;
+  if(!currentUser?.isAdmin){ btn.style.display='none'; return; }
+  btn.style.display='flex';
+  const pending = getDiamondOrders().filter(o=>o.status==='pending'||!o.status);
+  if(pending.length>0){
+    dot.style.display='inline-flex';
+    dot.textContent = pending.length > 99 ? '99+' : String(pending.length);
+  } else {
+    dot.style.display='none';
+  }
+}
+
+function openAdminDiamondPanel(){
+  if(!currentUser?.isAdmin){ showNotif('Admin ເທົ່ານັ້ນ'); return; }
+  if(typeof switchAdminTab === 'function'){
+    switchPage('admin');
+    setTimeout(()=>switchAdminTab('diamond'), 100);
+  }
+}
+
+function renderAdminDiamondPanel(){
+  // Re-render diamond tab if it's open
+  const content = document.getElementById('adminTabContent');
+  if(content && content.dataset.tab === 'diamond'){
+    content.innerHTML = renderAdminDiamond();
+  }
+  updateAdminDiamondBadge();
+}
   if(!confirm('❌ ຍົກເລີກ Order ນີ້ + Refund ເງິນໃຫ້ລູກຄ້າ?')) return;
   const dorders = getDiamondOrders();
   const idx = dorders.findIndex(o=>o.id===orderId);
@@ -9077,6 +9215,8 @@ function updateProfileUI(){
     updateAdminNotifBadge();
     // Show admin confirm sale button only for admin
     updateAdminConfirmSaleBtnVisibility();
+    // Show admin diamond confirm button
+    updateAdminDiamondBadge();
   } else {
     document.getElementById('profileNotLoggedIn').style.display='block';
     document.getElementById('profileLoggedIn').style.display='none';
@@ -11243,46 +11383,73 @@ function submitDiamondOrder(){
 }
 
 function showDiamondBill(order){
-  const icon=order.game==='mlbb'?'💎':'💠';
-  const accentColor=order.game==='mlbb'?'#6644ff':'#ff4400';
-  const bonus=order.bonus?`<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88">+${order.bonus} 💎</span></div>`:'';
-  // WA notify message
-  const waMsg = encodeURIComponent(`🎮 ເຕີມ Diamond ${order.gameName}\n💎 ຈຳນວນ: ${order.amount.toLocaleString()}${order.bonus?` (+${order.bonus})`:''}\n🆔 Game ID: ${order.gameId}${order.server?`\n🌐 Server: ${order.server}`:''}\n📱 ໂທ: ${order.phone}\n💰 ລາຄາ: ${Number(order.price).toLocaleString()} ກີບ\n#${order.id}`);
+  const icon = order.game==='mlbb'?'💎':'💠';
+  const accentColor = order.game==='mlbb'?'#6644ff':'#ff4400';
+  const accentBg    = order.game==='mlbb'?'rgba(100,68,255,.15)':'rgba(255,68,0,.15)';
+  const gameName    = order.gameName || (order.game==='mlbb'?'Mobile Legends':'Free Fire');
+  const bonus = order.bonus ? `<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88;font-weight:700">+${order.bonus} ${icon}</span></div>` : '';
+  const proofImg = order.confirmImg || null;
+
+  const waMsg = encodeURIComponent(`🎮 ເຕີມ Diamond ${gameName}\n${icon} ຈຳນວນ: ${order.amount?.toLocaleString()}${order.bonus?` (+${order.bonus})`:''}${icon}\n🆔 Game ID: ${order.gameId}${order.server?`\n🌐 Server: ${order.server}`:''}\n📱 ໂທ: ${order.phone}\n💰 ລາຄາ: ${Number(order.price).toLocaleString()} ກີບ\n#${order.id}`);
   const waUrl = `https://wa.me/?text=${waMsg}`;
-  const html=`
-    <div style="text-align:center;padding:6px 0 14px">
-      <div style="font-size:48px;filter:drop-shadow(0 4px 16px ${accentColor})">${icon}</div>
-      <div style="font-size:14px;color:var(--gold);font-weight:700;margin-top:6px">ບິນເຕີມ Diamond ${order.gameName}</div>
-      <div style="font-size:11px;color:#4eff88;margin-top:4px">✅ ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ</div>
+
+  const html = `
+    <!-- Hero -->
+    <div style="text-align:center;padding:16px 0 12px;background:linear-gradient(180deg,${accentBg},transparent);border-radius:14px;margin-bottom:14px;position:relative">
+      <div style="font-size:56px;filter:drop-shadow(0 4px 20px ${accentColor})">${icon}</div>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:${accentColor};font-weight:700;margin-top:8px">${gameName}</div>
+      <div style="font-size:22px;font-weight:900;color:#fff;margin:4px 0">${icon} ${order.amount?.toLocaleString()||'-'} Diamond</div>
+      ${order.bonus?`<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(78,255,136,.15);border:1px solid rgba(78,255,136,.4);border-radius:20px;padding:3px 12px;font-size:11px;color:#4eff88;font-weight:700">🎁 ໂບນັດ +${order.bonus} ${icon}</div>`:''}
+      <div style="position:absolute;top:10px;right:10px;font-size:10px;color:var(--text2)">#${order.id}</div>
     </div>
-    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:14px;margin-bottom:12px">
-      <div class="bill-detail-row"><span>ລະຫັດ</span><span style="font-weight:700">#${order.id}</span></div>
-      <div class="bill-detail-row"><span>Diamond</span><span style="color:${accentColor};font-weight:700">${icon} ${order.amount.toLocaleString()}</span></div>
+
+    <!-- Details box -->
+    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div class="bill-detail-row"><span>🆔 Game ID</span><span style="color:${accentColor};font-weight:800;font-size:13px">${order.gameId}</span></div>
+      ${order.server?`<div class="bill-detail-row"><span>🌐 Server</span><span style="font-weight:700">${order.server}</span></div>`:''}
+      <div class="bill-detail-row"><span>💎 Diamond</span><span style="color:${accentColor};font-weight:700">${icon} ${order.amount?.toLocaleString()}</span></div>
       ${bonus}
-      <div class="bill-detail-row"><span>Game ID</span><span style="color:var(--gold);font-weight:700">${order.gameId}</span></div>
-      ${order.server?`<div class="bill-detail-row"><span>Server</span><span>${order.server}</span></div>`:''}
-      <div class="bill-detail-row"><span>ຮ້ານ</span><span>${order.sellerName}</span></div>
-      <div class="bill-detail-row"><span>ໂທ</span><span>${order.phone}</span></div>
-      <div class="bill-detail-row"><span>ລາຄາ</span><span style="color:var(--gold);font-weight:700">${Number(order.price).toLocaleString()} ກີບ</span></div>
-      <div class="bill-detail-row"><span>ສະຖານະ</span><span style="color:#ffa500">⏳ ລໍຖ້າເຕີມ</span></div>
+      <div class="bill-detail-row"><span>🏪 ຮ້ານ</span><span>${order.sellerName||'Admin'}</span></div>
+      <div class="bill-detail-row"><span>📱 ໂທ</span><span>${order.phone}</span></div>
+      <div class="bill-detail-row"><span>💰 ລາຄາ</span><span style="color:var(--gold);font-weight:700">${Number(order.price||order.total).toLocaleString()} ກີບ</span></div>
+      <div class="bill-detail-row"><span>📅 ວັນທີ</span><span>${order.date||'-'}</span></div>
     </div>
-    <div style="background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.2);border-radius:10px;padding:10px;font-size:11px;color:#4eff88;line-height:2;margin-bottom:12px">
-      ✅ ຮ້ານຈະເຕີມໃຫ້ທ່ານພາຍໃນ 15-30 ນາທີ<br>
-      ⚠️ ຖ້າ Game ID ຜິດ ຈະບໍ່ສາມາດ refund ໄດ້
+
+    <!-- Proof image from admin -->
+    ${proofImg ? `
+    <div style="background:linear-gradient(135deg,rgba(78,255,136,.08),rgba(34,197,94,.04));border:1.5px solid rgba(78,255,136,.4);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#4eff88;margin-bottom:8px">📸 ຫຼັກຖານຈາກ Admin — ເຕີມສຳເລັດ</div>
+      <img src="${proofImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid rgba(78,255,136,.3);cursor:pointer" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">
+    </div>` : `
+    <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">⏳</div>
+      <div style="font-size:13px;font-weight:700;color:#ffa500">ລໍຖ້າການເຕີມ...</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.7">Admin ຈະເຕີມ Diamond ໃຫ້ທ່ານ<br>ພາຍໃນ <strong style="color:#ffa500">15–30 ນາທີ</strong></div>
+      <div style="height:4px;background:rgba(255,165,0,.15);border-radius:2px;margin-top:10px;overflow:hidden">
+        <div style="height:100%;width:70%;background:linear-gradient(90deg,#ffa500,#ffcc44);border-radius:2px;animation:shimmer 2s infinite"></div>
+      </div>
+    </div>`}
+
+    <!-- Warning -->
+    <div style="background:rgba(255,80,80,.06);border:1px solid rgba(255,80,80,.25);border-radius:10px;padding:10px;font-size:11px;color:#fca5a5;line-height:1.8;margin-bottom:12px">
+      ⚠️ ຖ້າ Game ID ຜິດ ຈະ<strong>ບໍ່ສາມາດ refund</strong> ໄດ້<br>
+      📲 ກວດ Game ID ຂ້າງເທິງໃຫ້ຖືກຕ້ອງ
     </div>
-    <!-- ✅ ปุ่มแจ้งเตือน -->
+
+    <!-- Action buttons -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <a href="${waUrl}" target="_blank"
-        style="display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,rgba(37,211,102,0.2),rgba(37,211,102,0.1));border:1px solid rgba(37,211,102,0.4);color:#25d366;border-radius:12px;padding:12px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer">
-        <span style="font-size:18px">📲</span> ແຈ້ງທາງ WA
+        style="display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,rgba(37,211,102,.2),rgba(37,211,102,.1));border:1px solid rgba(37,211,102,.4);color:#25d366;border-radius:12px;padding:12px;font-size:12px;font-weight:700;text-decoration:none">
+        <span style="font-size:18px">📲</span> ແຈ້ງ WA
       </a>
       <button onclick="openAdminChat('Tavanh999','99999');closeModal('billModal')"
-        style="display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.1));border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:12px;padding:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
+        style="display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(201,168,76,.1));border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:12px;padding:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
         <span style="font-size:18px">💬</span> ແຊດ Admin
       </button>
     </div>
-    <button class="btn btn-outline" onclick="closeModal('billModal')" style="width:100%">✅ ຮັບຮູ້ / ปิด</button>`;
-  document.getElementById('billModalContent').innerHTML=html;
+    <button class="btn btn-outline" onclick="closeModal('billModal')" style="width:100%">✅ ຮັບຮູ້ / ປິດ</button>`;
+
+  document.getElementById('billModalContent').innerHTML = html;
   openModal('billModal');
 }
 
