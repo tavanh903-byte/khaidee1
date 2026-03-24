@@ -536,7 +536,7 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .upload-preview-item{width:80px;height:80px;border-radius:8px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;overflow:hidden}
 .upload-preview-item img{width:100%;height:100%;object-fit:cover;image-rendering:-webkit-optimize-contrast}
 /* INFO BOX */
-.info-box{background:rgba(15,30,55,.75);border:1px solid rgba(74,127,193,.45);border-radius:12px;padding:14px 16px;font-size:13.5px;color:#d8e4f0;line-height:1.85;margin-bottom:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(4px)}
+.info-box{background:rgba(26,58,92,.3);border:1px solid rgba(74,127,193,.3);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px}
 /* SELLER HISTORY */
 .history-item{display:flex;gap:12px;padding:12px;background:var(--dark3);border-radius:12px;margin-bottom:10px;cursor:pointer;border:1px solid rgba(255,255,255,.05);transition:.2s}
 .history-item:hover{border-color:var(--gold-dark)}
@@ -5115,7 +5115,7 @@ function showProductDetail(id){
       <span class="tag">${getCatLabel(p.cat)}</span><span class="tag">ຂາຍ ${p.sold||0}</span><span class="tag">ເຫຼືອ ${p.qty}</span>
       ${p.isGame?`<span class="tag">${p.gameType?.toUpperCase()||'GAME'}</span>`:''}
     </div>
-    <div class="info-box" style="margin-bottom:12px;font-size:13.5px;color:#d8e4f0;line-height:1.85;background:rgba(15,30,55,.75);border:1px solid rgba(74,127,193,.45)">${p.desc}</div>
+    <div class="info-box" style="margin-bottom:12px">${p.desc}</div>
     ${buildVariantUI(p)}
     <div class="guaranteed-badge" style="display:inline-flex;margin-bottom:10px">✅ ຮັບປະກັນ 24 ຊົ່ວໂມງ</div>
     <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--gold);margin-bottom:12px;line-height:1.6">
@@ -5441,6 +5441,23 @@ async function submitGeneralOrder(){
 }
 
 function showBillPopup(order){
+  const isPhonePart = order.cat === 'phoneparts';
+  const isGame = order.isGame || order.gameType;
+  const proofImg   = order.evidence_url || order.sellerImg || null;
+  const proofVideo = order.video_url    || order.sellerVideo || null;
+
+  // ── ຮູບ/ວິດີໂອຫຼັກຖານ (ຖ້າ seller ອັດໂຫລດມາໄວ) ──
+  const proofHtml = (!isGame && (proofImg || proofVideo)) ? `
+    <div style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.04));border:1.5px solid rgba(74,222,128,.35);border-radius:14px;padding:14px;margin:10px 0">
+      <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:10px">📎 ຫຼັກຖານຈາກຜູ້ຂາຍ</div>
+      ${proofImg ? `<img src="${proofImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid rgba(74,222,128,.3);cursor:pointer;margin-bottom:${proofVideo?'10px':'0'}" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">` : ''}
+      ${proofVideo ? `<video src="${proofVideo}" style="width:100%;border-radius:10px;max-height:200px;border:1px solid rgba(100,160,255,.3)" controls playsinline></video>` : ''}
+    </div>` : (!isGame ? `
+    <div style="background:rgba(201,168,76,.05);border:1px dashed rgba(201,168,76,.3);border-radius:12px;padding:12px;margin:10px 0;text-align:center">
+      <div style="font-size:20px;margin-bottom:4px">📸</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6">ຜູ້ຂາຍຈະອັດໂຫລດ<strong style="color:var(--gold)">ຮູບ/ວິດີໂອຫຼັກຖານ</strong><br>ການສົ່ງສິນຄ້າຫຼັງຈາກຫຸ້ມຫໍ່ສຳເລັດ</div>
+    </div>` : '');
+
   const html = `
     <div style="text-align:center;font-size:14px;color:var(--gold);font-weight:700;margin-bottom:12px">🧾 ບິນສິນຄ້າ</div>
     ${(order.productImages&&order.productImages[0])||order.productImg ? `
@@ -5461,6 +5478,7 @@ function showBillPopup(order){
       <div class="bill-detail-row"><span>ຂົນສ່ງ</span><span>${order.shipping}</span></div>
       <div class="bill-detail-row"><span>ວັນທີ</span><span>${order.date}</span></div>
     </div>
+    ${proofHtml}
     <div class="bill-warning">
       ⚠️ ກະລຸນາແຄັບຮູບພາບບິນນີ້ທີ່ມີ ID #${order.productId} ໄວ້<br>
       ຖ້າສິນຄ້າມີບັນຫາ ໃຫ້ຕິດຕໍ່ Admin ແລ້ວແຈ້ງ ID ສິນຄ້າ<br>
@@ -5990,6 +6008,8 @@ function viewBillDetail(id){
   // ✅ Buyer proof view — fallback evidence_url / video_url (ใหม่) หรือ sellerImg / sellerVideo (เดิม)
   const proofImg   = o.evidence_url || o.sellerImg || null;
   const proofVideo = o.video_url    || o.sellerVideo || null;
+  const isPhonePartOrder = o.cat === 'phoneparts';
+  const isGameOrder2 = o.isGame || o.cat === 'game' || o.gameType;
 
   const proofHtml = (proofImg || proofVideo) ? `
     <div style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(34,197,94,.04));
@@ -5997,9 +6017,9 @@ function viewBillDetail(id){
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#14532d,#166534);
-          display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>
+          display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${isPhonePartOrder?'🔧':'📦'}</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:#4ade80">ຫຼັກຖານການສົ່ງສິນຄ້າ</div>
+          <div style="font-size:13px;font-weight:700;color:#4ade80">${isPhonePartOrder?'ຮູບ/ວິດີໂອ ອາໄຫຼ່ຈາກຜູ້ຂາຍ':'ຫຼັກຖານການສົ່ງສິນຄ້າ'}</div>
           <div style="font-size:10px;color:var(--text2);margin-top:1px">ຈາກຜູ້ຂາຍ — ກວດສອບໄດ້ທັນທີ</div>
         </div>
         <span style="background:rgba(74,222,128,.2);border:1px solid rgba(74,222,128,.4);
@@ -6010,7 +6030,7 @@ function viewBillDetail(id){
       <!-- Image Proof -->
       <div style="margin-bottom:${proofVideo?'12px':'0'}">
         <div style="font-size:10px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:4px">
-          <span>📸</span><span>ຮູບຫຼັກຖານການສົ່ງ</span>
+          <span>📸</span><span>${isPhonePartOrder?'ຮູບອາໄຫຼ່':'ຮູບຫຼັກຖານການສົ່ງ'}</span>
         </div>
         <div style="position:relative;border-radius:12px;overflow:hidden;background:var(--dark3)">
           <img src="${proofImg}"
@@ -6028,7 +6048,7 @@ function viewBillDetail(id){
       <!-- Video Proof -->
       <div>
         <div style="font-size:10px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:4px">
-          <span>🎥</span><span>ວິດີໂອຫຼັກຖານການສົ່ງ</span>
+          <span>🎥</span><span>${isPhonePartOrder?'ວິດີໂອອາໄຫຼ່':'ວິດີໂອຫຼັກຖານການສົ່ງ'}</span>
         </div>
         <div style="border-radius:12px;overflow:hidden;background:var(--dark3);border:1px solid rgba(100,160,255,.25)">
           <video src="${proofVideo}"
@@ -6038,7 +6058,13 @@ function viewBillDetail(id){
           </video>
         </div>
       </div>` : ''}
-    </div>` : '';
+    </div>`
+  : (!isGameOrder2 ? `
+    <div style="background:rgba(201,168,76,.04);border:1px dashed rgba(201,168,76,.3);border-radius:14px;padding:14px;margin:12px 0;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">${isPhonePartOrder?'🔧':'📸'}</div>
+      <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:4px">${isPhonePartOrder?'ຮູບ/ວິດີໂອ ອາໄຫຼ່':'ຮູບ/ວິດີໂອຫຼັກຖານ'}</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7">ຜູ້ຂາຍຈະອັດໂຫລດ<strong style="color:var(--gold)">ຮູບ/ວິດີໂອ</strong>${isPhonePartOrder?' ອາໄຫຼ່ທີ່ຈະສົ່ງ':' ຫຼັກຖານ'}<br>ຫຼັງຈາກ${isPhonePartOrder?'ກຽມອາໄຫຼ່':'ຫຸ້ມຫໍ່ສຳເລັດ'}</div>
+    </div>` : '');
 
   const html = `
     <div class="modal-title">${o.isGame ? '🎮 ຂໍ້ມູນ ID ເກມ' : '📦 ຕິດຕາມອໍເດີ'}</div>
@@ -6266,10 +6292,10 @@ function sellerViewBill(id){
     <!-- ══ 📎 ສ່ງຫຼັກຖານການສົ່ງ ══ -->
     <div style="background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1.5px solid rgba(201,168,76,.3);border-radius:16px;padding:16px;margin:12px 0">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📎</div>
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${isPhonePart ? '🔧' : '📎'}</div>
         <div>
-          <div style="font-size:13px;font-weight:700;color:var(--gold)">ສ່ງຫຼັກຖານການສົ່ງ</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px">ອັດໂຫລດຮູບ/ວິດີໂອ ແລ້ວກົດຢືນຢັນ</div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">${isPhonePart ? '📸 ສ່ງຮູບ/ວິດີໂອ ອາໄຫຼ່' : 'ສ່ງຫຼັກຖານການສົ່ງ'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px">${isPhonePart ? 'ຖ່າຍຮູບ/ວິດີໂອ ອາໄຫຼ່ທີ່ຈະສົ່ງ ແລ້ວກົດຢືນຢັນ' : 'ອັດໂຫລດຮູບ/ວິດີໂອ ແລ້ວກົດຢືນຢັນ'}</div>
         </div>
         ${(o.sellerImg||o.evidence_url) ? `<span style="margin-left:auto;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);color:#4ade80;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700">✅ ມີຮູບແລ້ວ</span>` : ''}
       </div>
@@ -15605,7 +15631,7 @@ function renderPPList(){
       <div style="padding:12px">
         <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:2px">${p.brand} · ${p.model}</div>
         <div style="font-size:15px;font-weight:800;margin-bottom:6px">${p.part}</div>
-        <div style="font-size:13px;color:#d0dcea;line-height:1.75;margin-bottom:10px;background:rgba(15,28,50,.8);border:1px solid rgba(74,127,193,.35);border-radius:10px;padding:10px 12px">${p.desc}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px">${p.desc}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="font-size:18px;font-weight:900;color:var(--gold)">${Number(p.price).toLocaleString()} ກີບ</div>
           <div style="display:flex;align-items:center;gap:8px">
@@ -16247,7 +16273,7 @@ function renderPPDetailPage(fakeProd, p){
     <div style="padding:16px">
       <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">${catIcon[p.cat]||'🔧'} ${catName[p.cat]||p.cat} · ${p.brand} · ${p.model}</div>
       <div style="font-size:18px;font-weight:800;line-height:1.3;margin-bottom:8px">${p.part}</div>
-      <div style="font-size:13.5px;color:#d0dcea;line-height:1.85;margin-bottom:14px;background:rgba(12,25,48,.85);border:1px solid rgba(74,127,193,.4);border-radius:12px;padding:14px 16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)">${p.desc}</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:14px;background:rgba(255,255,255,.03);border-radius:10px;padding:10px">${p.desc}</div>
 
       <!-- ราคา -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
