@@ -2382,6 +2382,7 @@ async function syncFromSupabase(){
         <button class="mp-ftab"        id="bft-general"  onclick="setBillFilter('general',this)">📦 ທົ່ວໄປ</button>
         <button class="mp-ftab"        id="bft-game"     onclick="setBillFilter('game',this)">🎮 ID ເກມ</button>
         <button class="mp-ftab"        id="bft-diamond"  onclick="setBillFilter('diamond',this)">💎 ເຕີມເກມ</button>
+        <button class="mp-ftab"        id="bft-topup"    onclick="setBillFilter('topup',this)">🎮 ເຕີມຍອດ</button>
         <button class="mp-ftab"        id="bft-phonepart" onclick="setBillFilter('phonepart',this)">🔧 ອະໄຫຼ່</button>
       </div>
     </div>
@@ -5651,6 +5652,7 @@ function setBillFilter(f, el){
 
 function _getBillType(o){
   if(o.id && o.id.startsWith('DIA-')) return 'diamond';
+  if(o.id && o.id.startsWith('GT-') && o.type==='game_topup') return 'topup';
   if(o.isGame || o.cat==='game' || o.gameType) return 'game';
   if(o.cat==='phoneparts') return 'phonepart';
   return 'general';
@@ -5661,6 +5663,7 @@ function _billTypeTag(type){
     general:  {label:'📦 ທົ່ວໄປ',  bg:'rgba(201,168,76,.12)', color:'#c9a84c'},
     game:     {label:'🎮 ID ເກມ',   bg:'rgba(105,100,255,.15)',color:'#9090ff'},
     diamond:  {label:'💎 ເຕີມເກມ', bg:'rgba(100,68,255,.15)', color:'#a080ff'},
+    topup:    {label:'🎮 ເຕີມຍອດ', bg:'rgba(50,180,120,.15)', color:'#4eff88'},
     phonepart:{label:'🔧 ອະໄຫຼ່',  bg:'rgba(100,200,255,.12)',color:'#64c8ff'},
   };
   const t = map[type]||map.general;
@@ -5710,6 +5713,7 @@ function renderBillsPage(){
       general:'ຍັງບໍ່ມີສິນຄ້າທົ່ວໄປ',
       game:'ຍັງບໍ່ມີ ID ເກມ',
       diamond:'ຍັງບໍ່ມີການເຕີມເກມ',
+      topup:'ຍັງບໍ່ມີການເຕີມຍອດ',
       phonepart:'ຍັງບໍ່ມີສິນຄ້າອະໄຫຼ່',
     }[_billFilter]||'ຍັງບໍ່ມີ';
     container.innerHTML=`<div style="text-align:center;color:var(--text2);padding:40px 20px"><div style="font-size:40px;margin-bottom:12px">📭</div><div>${emptyMsg}</div></div>`;
@@ -5721,7 +5725,7 @@ function renderBillsPage(){
     const isDia = type==='diamond';
     const clickFn = isDia
       ? `showMyDiamondOrderDetail('${o.id}')`
-      : `viewBillDetail('${o.id}')`;
+      : (type==='topup' ? `showMyTopupOrderDetail('${o.id}')` : `viewBillDetail('${o.id}')`);
     return `
     <div class="bill-card" style="border-color:${type==='diamond'?'rgba(100,68,255,.3)':type==='game'?'rgba(105,100,255,.2)':type==='phonepart'?'rgba(100,200,255,.2)':o.status==='cancelled'?'rgba(239,68,68,.3)':'rgba(201,168,76,.15)'};position:relative">
       ${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?`<button onclick="event.stopPropagation();deleteBillItem('${o.id}','${isDia?'diamond':'order'}')" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:'Sarabun',sans-serif;z-index:2">🗑 ລຶບ</button>`:(o.status==='pending'||o.status==='packed')&&o.date?(()=>{const _cr=o.createdAt?new Date(o.createdAt).getTime():new Date(o.date).getTime();const _left=Math.max(0,_cr+(24*60*60*1000)-Date.now());const _h=Math.floor(_left/3600000);const _m=Math.floor((_left%3600000)/60000);return _left>0?`<div style="position:absolute;top:8px;right:8px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.4);color:#fbbf24;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">⏰ ${_h}h ${_m}m</div>`:`<div style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px">⏰ ໝົດເວລາ</div>`;})():''}
@@ -5755,6 +5759,131 @@ function deleteBillItem(id, type){
     orders = orders.filter(o => o.id !== id);
     saveOrders();
   }
+  showNotif('🗑 ລຶບບິນແລ້ວ');
+  renderBillsPage();
+}
+
+function showMyTopupOrderDetail(id){
+  // ดึงจาก kd_diamond_orders (GT- orders เก็บไว้ที่นี่)
+  const allOrders = JSON.parse(localStorage.getItem('kd_diamond_orders')||'[]');
+  const o = allOrders.find(x=>x.id===id);
+  if(!o){ showNotif('ບໍ່ພົບ Order'); return; }
+
+  const isDone      = o.status==='done';
+  const isCancelled = o.status==='cancelled';
+  const isPending   = !isDone && !isCancelled;
+
+  // แยก accountInfo เป็น Game ID, ລາຄາ, ຈຳນວນ
+  const acInfo = o.accountInfo||'';
+  // แสดงสถานะ
+  const statusTag = isDone
+    ? `<span style="background:rgba(78,255,136,.2);border:1px solid rgba(78,255,136,.5);color:#4eff88;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ ສຳເລັດ</span>`
+    : isCancelled
+    ? `<span style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;border-radius:20px;padding:3px 10px;font-size:11px">❌ ຍົກເລີກ</span>`
+    : `<span style="background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.4);color:#ffa500;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">⏳ ລໍຖ້າ</span>`;
+
+  // ภาพบิลแบบรูปที่ 2 — overlay ข้อมูลลูกค้าลงบนรูป
+  const QR_B64_TOPUP = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII='; // placeholder
+
+  const html = `
+    <!-- Hero — รูปบิลเติมเกม + ข้อมูลทับ -->
+    <div style="position:relative;width:100%;overflow:hidden;border-radius:14px;margin-bottom:14px;background:#0a0505">
+      <!-- รูปพื้นหลัง (ใช้รูปจาก uploaded) -->
+      <img src="https://i.imgur.com/placeholder.png"
+        style="width:100%;display:block;opacity:0.18"
+        onerror="this.style.display='none'">
+      <!-- กล่องบิลทับ -->
+      <div style="position:relative;z-index:2;padding:0 16px 16px">
+        <!-- หัวบิล -->
+        <div style="text-align:center;padding:18px 0 10px">
+          <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">ບິນເຕີມເກມ</div>
+          <div style="font-family:'Cinzel Decorative',serif;font-size:26px;font-weight:900;color:var(--gold);letter-spacing:2px;text-shadow:0 0 20px rgba(201,168,76,.5)">TOP·UPເກມ</div>
+          <div style="margin-top:10px">${statusTag}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:6px">#${o.id}</div>
+        </div>
+
+        <!-- กรอบบิล -->
+        <div style="background:rgba(0,0,0,.55);border:1.5px solid rgba(201,168,76,.35);border-radius:14px;padding:16px;backdrop-filter:blur(4px)">
+          <!-- Game ID -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,.15)">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🎮</div>
+            <div style="flex:1">
+              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Game ID:</div>
+              <div style="font-size:15px;font-weight:700;color:#fff;word-break:break-all">${acInfo||'-'}</div>
+            </div>
+          </div>
+          <!-- ລາຄາ -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,.15)">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💰</div>
+            <div style="flex:1">
+              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">ລາຄາ (LAK):</div>
+              <div style="font-size:18px;font-weight:900;color:var(--gold)">${Number(o.price||0).toLocaleString()} ກີບ</div>
+            </div>
+          </div>
+          <!-- ຈຳນວນ / Package -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,.15)">
+            <div style="width:28px;height:28px;border-radius:8px;background:rgba(100,180,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💎</div>
+            <div style="flex:1">
+              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">ຈຳນວນເພັດ/ສະຕາ:</div>
+              <div style="font-size:15px;font-weight:700;color:#a0d0ff">${o.pkg||'-'}</div>
+            </div>
+          </div>
+          <!-- ລາຍລະອຽດ -->
+          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px">
+            <div style="font-size:10px;color:var(--text2);margin-bottom:8px">ລາຍລະອຽດການທຳລາການ:</div>
+            <div style="font-size:12px;color:var(--text);line-height:1.8">
+              🕹️ ເກມ: <strong style="color:var(--gold)">${o.game||'-'}</strong><br>
+              👤 ຜູ້ສັ່ງ: ${o.userName||'-'}<br>
+              📅 ວັນທີ: ${fmtBillDate(o.createdAt)}<br>
+              ${o.note?`📝 ໝາຍເຫດ: ${o.note}<br>`:''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Logo KhaiDee -->
+        <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid rgba(201,168,76,.15)">
+          <div style="font-family:'Cinzel Decorative',serif;font-size:13px;color:var(--gold);opacity:.7">✦ KhaiDee ✦</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- สถานะ -->
+    ${isDone ? `
+    <div style="background:linear-gradient(135deg,rgba(78,255,136,.1),rgba(34,197,94,.05));border:1.5px solid rgba(78,255,136,.45);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">✅</div>
+      <div style="font-size:14px;font-weight:800;color:#4eff88">ເຕີມສຳເລັດແລ້ວ!</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">ຂໍຂອບໃຈທີ່ໃຊ້ບໍລິການ KhaiDee</div>
+    </div>` : isCancelled ? `
+    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="color:#f87171;font-weight:700;font-size:14px">❌ ຍົກເລີກ — ເງິນຄືນ Wallet ແລ້ວ</div>
+    </div>` : `
+    <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="font-size:24px;margin-bottom:6px">⏳</div>
+      <div style="font-size:13px;font-weight:700;color:#ffa500">ລໍຖ້າການດຳເນີນການ...</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.7">Admin ຈະດຳເນີນການ<br>ພາຍໃນ <strong style="color:#ffa500">5–30 ນາທີ</strong></div>
+      <div style="height:4px;background:rgba(255,165,0,.15);border-radius:2px;margin-top:10px;overflow:hidden">
+        <div style="height:100%;width:65%;background:linear-gradient(90deg,#ffa500,#ffcc44);border-radius:2px;animation:shimmer 2s infinite"></div>
+      </div>
+    </div>`}
+
+    <!-- ปุ่มลบ (เมื่อสำเร็จ/ยกเลิก) -->
+    ${(isDone||isCancelled)?`
+    <button onclick="deleteTopupBill('${o.id}');closeModal('billDetailModal')"
+      style="width:100%;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);color:#f87171;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;margin-bottom:8px">
+      🗑 ລຶບບິນນີ້
+    </button>`:''}
+
+    <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:4px">ປິດ</button>
+  `;
+
+  document.getElementById('billDetailContent').innerHTML = html;
+  openModal('billDetailModal');
+}
+
+function deleteTopupBill(id){
+  let arr = JSON.parse(localStorage.getItem('kd_diamond_orders')||'[]');
+  arr = arr.filter(x=>x.id!==id);
+  localStorage.setItem('kd_diamond_orders', JSON.stringify(arr));
   showNotif('🗑 ລຶບບິນແລ້ວ');
   renderBillsPage();
 }
@@ -7558,136 +7687,10 @@ function updateAdminDiamondBadge(){
 
 function openAdminDiamondPanel(){
   if(!currentUser?.isAdmin){ showNotif('Admin ເທົ່ານັ້ນ'); return; }
-
-  // ── ສ້າງ overlay modal ສຳລັບ ຢືນຢັນ Diamond ──
-  const existing = document.getElementById('adminDiaPanelOverlay');
-  if(existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'adminDiaPanelOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9500;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
-
-  overlay.innerHTML = `
-    <div style="background:var(--dark2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92dvh;display:flex;flex-direction:column;animation:slideUp .3s ease">
-      <!-- Header -->
-      <div style="padding:16px 16px 12px;border-bottom:1px solid rgba(100,68,255,.25);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-        <div>
-          <div style="font-size:16px;font-weight:800;color:#a080ff">💎 ຢືນຢັນ Diamond Topup</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">ລາຍການລໍຖ້າການຢືນຢັນ</div>
-        </div>
-        <button onclick="document.getElementById('adminDiaPanelOverlay').remove()"
-          style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text2);border-radius:10px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif">✕ ປິດ</button>
-      </div>
-      <!-- Content -->
-      <div id="adminDiaPanelContent" style="overflow-y:auto;flex:1;padding:14px 16px 24px"></div>
-    </div>`;
-
-  document.body.appendChild(overlay);
-  _renderAdminDiaPanelContent();
-
-  // ปิดเมื่อกด overlay นอก sheet
-  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
-}
-
-function _renderAdminDiaPanelContent(){
-  const el = document.getElementById('adminDiaPanelContent');
-  if(!el) return;
-
-  const dorders = getDiamondOrders();
-  const pending = dorders.filter(o => !o.status || o.status === 'pending').reverse();
-  const done    = dorders.filter(o => o.status === 'done').slice(-10).reverse();
-  const cancelled = dorders.filter(o => o.status === 'cancelled').slice(-5).reverse();
-
-  const renderCard = (o, mode) => {
-    const accent = o.game==='mlbb' ? '#6644ff' : '#ff4400';
-    const accentBg = o.game==='mlbb' ? 'rgba(100,68,255,.1)' : 'rgba(255,68,0,.1)';
-    const icon = o.game==='mlbb' ? '💎' : '💠';
-    const gameName = o.gameName || (o.game==='mlbb' ? 'Mobile Legends' : 'Free Fire');
-
-    const statusTag = mode==='pending'
-      ? `<span style="background:rgba(255,165,0,.15);color:#ffa500;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">⏳ ລໍຖ້າ</span>`
-      : mode==='done'
-      ? `<span style="background:rgba(78,255,136,.15);color:#4eff88;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">✅ ສຳເລັດ</span>`
-      : `<span style="background:rgba(248,113,113,.15);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px">❌ ຍົກເລີກ</span>`;
-
-    const actionBtns = mode==='pending' ? `
-      <div style="display:flex;gap:6px;margin-top:10px">
-        <button onclick="adminConfirmDiamond('${o.id}');_renderAdminDiaPanelContent()"
-          style="flex:2;background:linear-gradient(135deg,rgba(78,255,136,.2),rgba(34,197,94,.1));border:1.5px solid rgba(78,255,136,.5);color:#4eff88;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
-          ✅ ຢືນຢັນ — ເຕີມສຳເລັດ
-        </button>
-        <button onclick="adminCancelDiamondOrder('${o.id}');_renderAdminDiaPanelContent()"
-          style="flex:1;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;border-radius:8px;padding:9px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">
-          ❌ ຍົກ
-        </button>
-      </div>` : '';
-
-    return `
-      <div style="background:${accentBg};border:1.5px solid ${mode==='pending'?'rgba(255,165,0,.4)':mode==='done'?'rgba(78,255,136,.3)':'rgba(248,113,113,.3)'};border-radius:14px;padding:13px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <div style="font-size:26px">${icon}</div>
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${icon} ${o.amount?.toLocaleString()||'-'} Diamond · ${gameName}</div>
-            <div style="font-size:10px;color:var(--text2);margin-top:1px">#${o.id} · ${o.userName||o.userId||'-'}</div>
-          </div>
-          ${statusTag}
-        </div>
-        <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:8px;font-size:11px;color:var(--text2);line-height:1.9">
-          <span style="color:${accent};font-weight:700">🎮 ID: ${o.gameId||'-'}</span>${o.server?' · 🌐 '+o.server:''}<br>
-          📱 ${o.phone||'-'} &nbsp;|&nbsp; 💰 <span style="color:var(--gold);font-weight:700">${fmtPrice(o.price||o.total)}</span><br>
-          📅 ${fmtBillDate(o.date||o.createdAt)}${o.confirmedAt?' · ✅ ຢືນຢັນ: '+fmtBillDate(o.confirmedAt):''}
-        </div>
-        ${o.confirmImg ? `<div style="margin-top:8px"><img src="${o.confirmImg}" style="width:100%;border-radius:8px;max-height:140px;object-fit:cover;border:1px solid rgba(78,255,136,.3);cursor:pointer" onclick="adminViewImg('${o.confirmImg}')"></div>` : ''}
-        ${actionBtns}
-      </div>`;
-  };
-
-  let html = '';
-
-  // ── Stats bar ──
-  const total = dorders.length;
-  const totalPending = pending.length;
-  const totalDone = dorders.filter(o=>o.status==='done').length;
-  html += `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div style="background:rgba(255,165,0,.08);border:1px solid rgba(255,165,0,.2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:18px;font-weight:800;color:#ffa500">${totalPending}</div>
-        <div style="font-size:10px;color:var(--text2)">⏳ ລໍຖ້າ</div>
-      </div>
-      <div style="background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:18px;font-weight:800;color:#4eff88">${totalDone}</div>
-        <div style="font-size:10px;color:var(--text2)">✅ ສຳເລັດ</div>
-      </div>
-      <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:18px;font-weight:800;color:var(--gold)">${total}</div>
-        <div style="font-size:10px;color:var(--text2)">📊 ທັງໝົດ</div>
-      </div>
-    </div>`;
-
-  // ── Pending orders ──
-  if(pending.length){
-    html += `<div style="font-size:12px;font-weight:700;color:#ffa500;margin-bottom:8px">⏳ ລໍຖ້າຢືນຢັນ (${pending.length})</div>`;
-    html += pending.map(o => renderCard(o,'pending')).join('');
-  } else {
-    html += `<div style="text-align:center;padding:20px;background:rgba(78,255,136,.06);border:1px solid rgba(78,255,136,.2);border-radius:12px;margin-bottom:14px">
-      <div style="font-size:28px;margin-bottom:6px">✅</div>
-      <div style="font-size:13px;font-weight:700;color:#4eff88">ບໍ່ມີລາຍການລໍຖ້າ</div>
-    </div>`;
+  if(typeof switchAdminTab === 'function'){
+    switchPage('admin');
+    setTimeout(()=>switchAdminTab('diamond'), 100);
   }
-
-  // ── Recent done ──
-  if(done.length){
-    html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin:14px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">✅ ສຳເລັດລ່າສຸດ (${done.length})</div>`;
-    html += done.map(o => renderCard(o,'done')).join('');
-  }
-
-  // ── Recent cancelled ──
-  if(cancelled.length){
-    html += `<div style="font-size:12px;font-weight:700;color:var(--text2);margin:14px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)">❌ ຍົກເລີກລ່າສຸດ (${cancelled.length})</div>`;
-    html += cancelled.map(o => renderCard(o,'cancelled')).join('');
-  }
-
-  el.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text2)">ຍັງບໍ່ມີລາຍການ</div>';
 }
 
 function renderAdminDiamondPanel(){
