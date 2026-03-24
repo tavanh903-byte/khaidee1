@@ -6019,7 +6019,7 @@ function viewBillDetail(id){
     </div>` : '';
 
   // ✅ Buyer proof view — fallback evidence_url / video_url (ใหม่) หรือ sellerImg / sellerVideo (เดิม)
-  const proofImg   = o.evidence_url || o.sellerImg || null;
+  const proofImg   = o.confirmImg || o.evidence_url || o.sellerImg || null;
   const proofVideo = o.video_url    || o.sellerVideo || null;
 
   const proofHtml = (proofImg || proofVideo) ? `
@@ -11340,6 +11340,231 @@ function showDiamondConfirm(){
   openModal('diamondConfirmModal');
 }
 
+// ══════════════════════════════════════════════════════
+// 🎨 ສ້າງຮູບໃບສັ່ງ Diamond (Receipt Image) — ບໍ່ໃຊ້ Admin ຖ່າຍຮູບ
+// ══════════════════════════════════════════════════════
+async function generateDiamondReceiptImage(order) {
+  return new Promise((resolve) => {
+    try {
+      const W = 600, H = 900;
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      const isMLBB = order.game === 'mlbb';
+      const accentHex   = isMLBB ? '#6644ff' : '#ff4400';
+      const accentHex2  = isMLBB ? '#a080ff' : '#ff9944';
+      const gameLabel   = order.gameName || (isMLBB ? 'Mobile Legends: Bang Bang' : 'Free Fire');
+      const icon        = isMLBB ? '💎' : '💠';
+
+      // ── Background gradient (dark gold theme) ──
+      const bgGrad = ctx.createRadialGradient(W/2, H*0.85, 50, W/2, H/2, H);
+      bgGrad.addColorStop(0,   '#1c1000');
+      bgGrad.addColorStop(0.5, '#0d0900');
+      bgGrad.addColorStop(1,   '#050300');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // ── Gold sparkles (simplified dots) ──
+      ctx.fillStyle = 'rgba(201,168,76,0.4)';
+      [[60,80],[540,60],[120,200],[480,180],[40,450],[560,400],[200,750],[400,800],[80,650],[520,700]].forEach(([x,y])=>{
+        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill();
+      });
+
+      // ── Top decorative border ──
+      const topGrad = ctx.createLinearGradient(0,0,W,0);
+      topGrad.addColorStop(0,'rgba(139,105,20,0)');
+      topGrad.addColorStop(0.3,'rgba(201,168,76,0.8)');
+      topGrad.addColorStop(0.7,'rgba(240,208,128,0.9)');
+      topGrad.addColorStop(1,'rgba(139,105,20,0)');
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 0, W, 3);
+
+      // ── Hero banner top (game character area) ──
+      const heroGrad = ctx.createLinearGradient(0,0,0,260);
+      heroGrad.addColorStop(0, isMLBB ? 'rgba(34,0,170,0.6)' : 'rgba(153,0,0,0.6)');
+      heroGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = heroGrad;
+      ctx.fillRect(0, 0, W, 260);
+
+      // ── Game title "TOP UP เกม" style ──
+      ctx.save();
+      // "ເຕີມ Diamond" label
+      ctx.font = 'bold 20px Sarabun, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = accentHex2;
+      ctx.fillText('ເຕີມ Diamond', W/2, 60);
+
+      // Big "TOP·UP" text
+      ctx.font = 'bold 52px Cinzel Decorative, serif';
+      ctx.textAlign = 'center';
+      const titleGrad = ctx.createLinearGradient(0, 70, 0, 130);
+      titleGrad.addColorStop(0, '#fff9e0');
+      titleGrad.addColorStop(0.4, '#f0d060');
+      titleGrad.addColorStop(1, '#c9a84c');
+      ctx.fillStyle = titleGrad;
+      ctx.shadowColor = accentHex;
+      ctx.shadowBlur = 20;
+      ctx.fillText('TOP·UP', W/2, 130);
+      ctx.shadowBlur = 0;
+
+      // Game name subtitle
+      ctx.font = 'bold 18px Sarabun, sans-serif';
+      ctx.fillStyle = accentHex2;
+      ctx.fillText(gameLabel, W/2, 158);
+      ctx.restore();
+
+      // ── Gold border frame ──
+      const frameX = 30, frameY = 175, frameW = W-60, frameH = H-230;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(201,168,76,0.6)';
+      ctx.lineWidth = 2;
+      // Main frame
+      ctx.beginPath();
+      ctx.moveTo(frameX+20, frameY);
+      ctx.lineTo(frameX+frameW-20, frameY);
+      ctx.arcTo(frameX+frameW, frameY, frameX+frameW, frameY+20, 20);
+      ctx.lineTo(frameX+frameW, frameY+frameH-20);
+      ctx.arcTo(frameX+frameW, frameY+frameH, frameX+frameW-20, frameY+frameH, 20);
+      ctx.lineTo(frameX+20, frameY+frameH);
+      ctx.arcTo(frameX, frameY+frameH, frameX, frameY+frameH-20, 20);
+      ctx.lineTo(frameX, frameY+20);
+      ctx.arcTo(frameX, frameY, frameX+20, frameY, 20);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Corner decorations
+      const corners = [[frameX,frameY],[frameX+frameW,frameY],[frameX,frameY+frameH],[frameX+frameW,frameY+frameH]];
+      corners.forEach(([cx,cy])=>{
+        ctx.beginPath();
+        ctx.arc(cx, cy, 8, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(201,168,76,0.8)';
+        ctx.fill();
+      });
+      ctx.restore();
+
+      // ── Inner background ──
+      ctx.fillStyle = 'rgba(15,10,0,0.7)';
+      ctx.beginPath();
+      ctx.roundRect(frameX+2, frameY+2, frameW-4, frameH-4, 18);
+      ctx.fill();
+
+      // ── Divider after title ──
+      const divGrad = ctx.createLinearGradient(frameX+20, 0, frameX+frameW-20, 0);
+      divGrad.addColorStop(0,'rgba(201,168,76,0)');
+      divGrad.addColorStop(0.5,'rgba(201,168,76,0.6)');
+      divGrad.addColorStop(1,'rgba(201,168,76,0)');
+      ctx.fillStyle = divGrad;
+      ctx.fillRect(frameX+20, 200, frameW-40, 1);
+
+      // ── Order detail rows ──
+      const rows = [
+        { icon: '🎮', label: 'ເກມ', value: gameLabel },
+        { icon: '🆔', label: 'Game ID', value: order.gameId || '-' },
+        ...(order.server ? [{ icon: '🌐', label: 'Server', value: order.server }] : []),
+        { icon: icon, label: 'Diamond', value: `${Number(order.amount||0).toLocaleString()} ${icon}${order.bonus?` (+${order.bonus} ໂບນັດ)`:''}` },
+        { icon: '💰', label: 'ລາຄາ (LAK)', value: `${Number(order.price||order.total||0).toLocaleString()} ₭` },
+        { icon: '🏪', label: 'ຮ້ານ', value: order.sellerName || 'Admin' },
+        { icon: '📋', label: 'ລາຍລະອຽດ', value: order.productName || `${icon} ${order.amount} Diamond` },
+        { icon: '📅', label: 'ວັນທີ', value: order.date || new Date().toLocaleDateString('lo-LA') },
+        { icon: '🔖', label: 'ໝາຍເລກ', value: `#${order.id}` },
+      ];
+
+      let rowY = 220;
+      const rowH = 52;
+      rows.forEach((row, i) => {
+        // Row bg alternate
+        if(i%2===0){
+          ctx.fillStyle = 'rgba(201,168,76,0.04)';
+          ctx.fillRect(frameX+10, rowY, frameW-20, rowH-4);
+        }
+
+        // Icon box
+        ctx.fillStyle = 'rgba(201,168,76,0.15)';
+        ctx.beginPath();
+        ctx.roundRect(frameX+18, rowY+8, 34, 34, 8);
+        ctx.fill();
+        ctx.font = '18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(row.icon, frameX+35, rowY+30);
+
+        // Label
+        ctx.font = '13px Sarabun, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#a09880';
+        ctx.fillText(row.label, frameX+60, rowY+20);
+
+        // Value
+        ctx.font = 'bold 14px Sarabun, sans-serif';
+        ctx.fillStyle = row.label==='Game ID' ? accentHex2 :
+                        row.label.includes('Diamond') ? accentHex2 :
+                        row.label.includes('ລາຄາ') ? '#c9a84c' : '#e8e0cc';
+        // truncate long values
+        let val = row.value;
+        ctx.fillText(val, frameX+60, rowY+40);
+
+        // Divider
+        ctx.fillStyle = 'rgba(201,168,76,0.1)';
+        ctx.fillRect(frameX+10, rowY+rowH-4, frameW-20, 1);
+
+        rowY += rowH;
+      });
+
+      // ── Status stamp ──
+      const stampY = rowY + 12;
+      ctx.save();
+      ctx.fillStyle = 'rgba(34,197,94,0.1)';
+      ctx.strokeStyle = 'rgba(34,197,94,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(frameX+10, stampY, frameW-20, 46, 10);
+      ctx.fill(); ctx.stroke();
+      ctx.font = 'bold 14px Sarabun, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#4ade80';
+      ctx.fillText('✅ ຮັບຄຳສັ່ງສຳເລັດ — ລໍຖ້າການດຳເນີນການ', W/2, stampY+20);
+      ctx.font = '11px Sarabun, sans-serif';
+      ctx.fillStyle = 'rgba(74,222,128,0.7)';
+      ctx.fillText('ຈະດຳເນີນການພາຍໃນ 15–30 ນາທີ', W/2, stampY+38);
+      ctx.restore();
+
+      // ── KhaiDee logo footer ──
+      const footY = H - 52;
+      ctx.save();
+      const footGrad2 = ctx.createLinearGradient(0, footY-10, 0, H);
+      footGrad2.addColorStop(0,'rgba(0,0,0,0)');
+      footGrad2.addColorStop(1,'rgba(0,0,0,0.8)');
+      ctx.fillStyle = footGrad2;
+      ctx.fillRect(0, footY-10, W, H-(footY-10));
+
+      ctx.font = 'bold 22px Cinzel Decorative, serif';
+      ctx.textAlign = 'center';
+      const logoGrad = ctx.createLinearGradient(0, footY, 0, footY+30);
+      logoGrad.addColorStop(0,'#fff9e0');
+      logoGrad.addColorStop(0.5,'#f0d060');
+      logoGrad.addColorStop(1,'#c9a84c');
+      ctx.fillStyle = logoGrad;
+      ctx.shadowColor = 'rgba(201,168,76,0.8)';
+      ctx.shadowBlur = 12;
+      ctx.fillText('⊙ KhaiDee', W/2, footY+25);
+      ctx.restore();
+
+      // ── Bottom border ──
+      const botGrad = ctx.createLinearGradient(0,0,W,0);
+      botGrad.addColorStop(0,'rgba(139,105,20,0)');
+      botGrad.addColorStop(0.5,'rgba(201,168,76,0.8)');
+      botGrad.addColorStop(1,'rgba(139,105,20,0)');
+      ctx.fillStyle = botGrad;
+      ctx.fillRect(0, H-3, W, 3);
+
+      resolve(canvas.toDataURL('image/jpeg', 0.88));
+    } catch(e) {
+      console.warn('[Receipt] Canvas error:', e.message);
+      resolve(null);
+    }
+  });
+}
+
 function submitDiamondOrder(){
   if(!selectedDiamondPkg){showNotif('ກະລຸນາເລືອກ Package ກ່ອນ');return;}
   const gameId=document.getElementById('diaGameId').value.trim();
@@ -11379,6 +11604,55 @@ function submitDiamondOrder(){
   // ✅ admin notification
   addAdminNotification('diamond_order', {orderId:order.id, userName:currentUser.name, amount:order.amount, game:gameName, gameId});
   closeModal('diamondConfirmModal');
+
+  // ✅ ສ້າງຮູບໃບສັ່ງ Receipt ທັນທີ ແລ້ວ sync Supabase
+  (async () => {
+    try {
+      const receiptDataUrl = await generateDiamondReceiptImage(order);
+      if(receiptDataUrl) {
+        // ບັນທຶກໃສ່ order object
+        order.sellerImg = receiptDataUrl;
+        order.evidence_url = receiptDataUrl;
+        order.confirmImg = receiptDataUrl;
+        // ອັບເດດ localStorage
+        const dorders2 = getDiamondOrders();
+        const di = dorders2.findIndex(x=>x.id===order.id);
+        if(di>=0){ dorders2[di].sellerImg=receiptDataUrl; dorders2[di].evidence_url=receiptDataUrl; dorders2[di].confirmImg=receiptDataUrl; saveDiamondOrders(dorders2); }
+        const oi = orders.findIndex(x=>x.id===order.id);
+        if(oi>=0){ orders[oi].sellerImg=receiptDataUrl; orders[oi].evidence_url=receiptDataUrl; orders[oi].confirmImg=receiptDataUrl; saveOrders(); }
+
+        // ✅ Upload ຮູບໄປ Supabase Storage ແລ້ວ update kd_orders
+        try {
+          const mt = 'image/jpeg';
+          const ext = 'jpg';
+          const bs = atob(receiptDataUrl.split(',')[1]);
+          const ab = new ArrayBuffer(bs.length); const ia = new Uint8Array(ab);
+          for(let i=0;i<bs.length;i++) ia[i]=bs.charCodeAt(i);
+          const f = new File([ab], `receipt_${order.id}.${ext}`, {type:mt});
+          const url = await uploadImageToStorage(f, 'receipts');
+          if(url && !url.startsWith('data:')) {
+            order.sellerImg = url; order.evidence_url = url; order.confirmImg = url;
+            const dorders3 = getDiamondOrders();
+            const di3 = dorders3.findIndex(x=>x.id===order.id);
+            if(di3>=0){ dorders3[di3].sellerImg=url; dorders3[di3].evidence_url=url; dorders3[di3].confirmImg=url; saveDiamondOrders(dorders3); }
+            const oi3 = orders.findIndex(x=>x.id===order.id);
+            if(oi3>=0){ orders[oi3].sellerImg=url; orders[oi3].evidence_url=url; orders[oi3].confirmImg=url; saveOrders(); }
+            // Supabase update
+            await supa.from('kd_orders')
+              .update({ seller_img: url, evidence_url: url, updated_at: new Date().toISOString() })
+              .eq('id', order.id).catch(e=>console.warn('receipt url sync:', e));
+          }
+        } catch(uploadErr) {
+          console.warn('[Receipt] Upload failed, using base64:', uploadErr.message);
+          // fallback: save base64 to Supabase directly
+          await sbSaveOrder(order).catch(e=>console.warn('sbSaveOrder receipt:', e));
+        }
+      }
+    } catch(e) { console.warn('[Receipt] Generate error:', e.message); }
+    // Save to Supabase anyway
+    sbSaveOrder(order).catch(e=>console.warn('sbSaveOrder diamond:', e));
+  })();
+
   showDiamondBill(order);
 }
 
@@ -11388,7 +11662,7 @@ function showDiamondBill(order){
   const accentBg    = order.game==='mlbb'?'rgba(100,68,255,.15)':'rgba(255,68,0,.15)';
   const gameName    = order.gameName || (order.game==='mlbb'?'Mobile Legends':'Free Fire');
   const bonus = order.bonus ? `<div class="bill-detail-row"><span>ໂບນັດ</span><span style="color:#4eff88;font-weight:700">+${order.bonus} ${icon}</span></div>` : '';
-  const proofImg = order.confirmImg || null;
+  const proofImg = order.confirmImg || order.evidence_url || order.sellerImg || null;
 
   const waMsg = encodeURIComponent(`🎮 ເຕີມ Diamond ${gameName}\n${icon} ຈຳນວນ: ${order.amount?.toLocaleString()}${order.bonus?` (+${order.bonus})`:''}${icon}\n🆔 Game ID: ${order.gameId}${order.server?`\n🌐 Server: ${order.server}`:''}\n📱 ໂທ: ${order.phone}\n💰 ລາຄາ: ${Number(order.price).toLocaleString()} ກີບ\n#${order.id}`);
   const waUrl = `https://wa.me/?text=${waMsg}`;
@@ -11418,8 +11692,8 @@ function showDiamondBill(order){
     <!-- Proof image from admin -->
     ${proofImg ? `
     <div style="background:linear-gradient(135deg,rgba(78,255,136,.08),rgba(34,197,94,.04));border:1.5px solid rgba(78,255,136,.4);border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#4eff88;margin-bottom:8px">📸 ຫຼັກຖານຈາກ Admin — ເຕີມສຳເລັດ</div>
-      <img src="${proofImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid rgba(78,255,136,.3);cursor:pointer" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">
+      <div style="font-size:12px;font-weight:700;color:#4eff88;margin-bottom:8px">📋 ໃບສັ່ງ Diamond — ກົດຮູບເພື່ອຂະຫຍາຍ</div>
+      <img src="${proofImg}" style="width:100%;border-radius:10px;max-height:320px;object-fit:contain;border:1px solid rgba(78,255,136,.3);cursor:pointer;background:#0a0900" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">
     </div>` : `
     <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
       <div style="font-size:28px;margin-bottom:6px">⏳</div>
@@ -16645,9 +16919,11 @@ function acsmOpenDetail(orderId){
     ['ການຕິດຕາມ', o.trackingNum||'(ບໍ່ມີ)'],
   ].map(([k,v])=>`<div class="acsm-detail-row"><span style="color:var(--text2)">${k}</span><span style="text-align:right;max-width:60%">${v}</span></div>`).join('');
 
-  const sellerImgHtml = o.sellerImg
-    ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">📸 ຫຼັກຖານຈາກຜູ້ຂາຍ</div>
-       <img src="${o.sellerImg}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;border:1px solid rgba(201,168,76,.3)"
+  const _proofSrc = o.confirmImg || o.evidence_url || o.sellerImg || null;
+  const sellerImgHtml = _proofSrc
+    ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--text2);margin-bottom:6px">${o.isGame?'📋 ໃບສັ່ງ Diamond':'📸 ຫຼັກຖານຈາກຜູ້ຂາຍ'}</div>
+       <img src="${_proofSrc}" style="width:100%;border-radius:10px;max-height:${o.isGame?'320':'200'}px;object-fit:contain;background:#0a0900;border:1px solid rgba(201,168,76,.3);cursor:pointer"
+            onclick="adminViewImg('${_proofSrc}')"
             onerror="this.style.display='none'"></div>` : '';
 
   const confirmBtnHtml = isReleased
