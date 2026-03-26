@@ -16949,7 +16949,7 @@ async function acsmConfirmRelease(orderId){
 /* ── Service Worker Register ── */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/Khaidee/sw.js',{scope:'/Khaidee/'})
+    navigator.serviceWorker.register('/khaidee1/sw.js',{scope:'/khaidee1/'})
       .then(reg=>{
         reg.addEventListener('updatefound',()=>{
           const w=reg.installing;

@@ -13,13 +13,13 @@ const CACHE_FONTS   = `khaidee-fonts-v${APP_VERSION}`;
 
 /* ── ไฟล์ที่ต้อง cache ตั้งแต่ install ── */
 const SHELL_FILES = [
-  '/Khaidee/',
-  '/Khaidee/index.html',
-  '/Khaidee/manifest.json',
-  '/Khaidee/icon.png',
-  '/Khaidee/icons/icon-192x192.png',
-  '/Khaidee/icons/icon-512x512.png',
-  '/Khaidee/offline.html'   /* หน้า fallback เมื่อ offline */
+  '/khaidee1/',
+  '/khaidee1/index.html',
+  '/khaidee1/manifest.json',
+  '/khaidee1/icon.png',
+  '/khaidee1/icons/icon-192x192.png',
+  '/khaidee1/icons/icon-512x512.png',
+  '/khaidee1/offline.html'   /* หน้า fallback เมื่อ offline */
 ];
 
 /* ── ไม่ cache URL เหล่านี้เลย ── */
@@ -86,18 +86,18 @@ self.addEventListener('fetch', event => {
 
   /* ── Shell files (HTML / JS / CSS) → Cache-First → fallback offline ── */
   if (
-    url.pathname.startsWith('/Khaidee/') &&
+    url.pathname.startsWith('/khaidee1/') &&
     (url.hostname === self.location.hostname || url.hostname === 'tavanh903-byte.github.io')
   ) {
     event.respondWith(
       cacheFirst(request, CACHE_SHELL)
-        .catch(() => caches.match('/Khaidee/offline.html'))
+        .catch(() => caches.match('/khaidee1/offline.html'))
     );
     return;
   }
 
   /* ── อื่นๆ → Network ── */
-  event.respondWith(fetch(request).catch(() => caches.match('/Khaidee/offline.html')));
+  event.respondWith(fetch(request).catch(() => caches.match('/khaidee1/offline.html')));
 });
 
 /* ================================================================
