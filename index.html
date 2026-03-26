@@ -12,6 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="ຂາຍດີ">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120x120.png">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5887,6 +5890,77 @@ function deleteTopupBill(id){
   showNotif('🗑 ລຶບບິນແລ້ວ');
   renderBillsPage();
 }
+
+function showMyDiamondOrderDetail(id){
+  const o = getDiamondOrders().find(x=>x.id===id);
+  if(!o){ showNotif('ບໍ່ພົບ Order'); return; }
+  const isDone = o.status==='done';
+  const isCancelled = o.status==='cancelled';
+  const icon = o.game==='mlbb'?'💎':'💠';
+  const accentColor = o.game==='mlbb'?'#6644ff':'#ff4400';
+  const accentBg    = o.game==='mlbb'?'rgba(100,68,255,.12)':'rgba(255,68,0,.12)';
+  const gameName    = o.gameName || (o.game==='mlbb'?'Mobile Legends':'Free Fire');
+  const proofImg    = o.confirmImg || null;
+
+  const html = `
+    <!-- Hero -->
+    <div style="text-align:center;padding:16px 0 12px;background:linear-gradient(180deg,${accentBg},transparent);border-radius:14px;margin-bottom:14px;position:relative">
+      <div style="font-size:52px;filter:drop-shadow(0 4px 20px ${accentColor})">${icon}</div>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:14px;color:${accentColor};font-weight:700;margin-top:6px">${gameName}</div>
+      <div style="font-size:20px;font-weight:900;color:#fff;margin:4px 0">${icon} ${o.amount?.toLocaleString()||'-'} Diamond</div>
+      ${o.bonus?`<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(78,255,136,.15);border:1px solid rgba(78,255,136,.4);border-radius:20px;padding:3px 12px;font-size:11px;color:#4eff88;font-weight:700">🎁 ໂບນັດ +${o.bonus} ${icon}</div>`:''}
+      <div style="position:absolute;top:10px;left:10px">
+        ${isDone?`<span style="background:rgba(78,255,136,.2);border:1px solid rgba(78,255,136,.5);color:#4eff88;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">✅ ສຳເລັດ</span>`:isCancelled?`<span style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;border-radius:20px;padding:3px 10px;font-size:10px">❌ ຍົກເລີກ</span>`:`<span style="background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.4);color:#ffa500;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">⏳ ລໍຖ້າ</span>`}
+      </div>
+      <div style="position:absolute;top:10px;right:10px;font-size:10px;color:var(--text2)">#${o.id}</div>
+    </div>
+
+    <!-- Details -->
+    <div style="background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div class="bill-detail-row"><span>🆔 Game ID</span><span style="color:${accentColor};font-weight:800;font-size:13px">${o.gameId}</span></div>
+      ${o.server?`<div class="bill-detail-row"><span>🌐 Server</span><span style="font-weight:700">${o.server}</span></div>`:''}
+      <div class="bill-detail-row"><span>${icon} Diamond</span><span style="color:${accentColor};font-weight:700">${o.amount?.toLocaleString()}</span></div>
+      ${o.bonus?`<div class="bill-detail-row"><span>🎁 ໂບນັດ</span><span style="color:#4eff88;font-weight:700">+${o.bonus} ${icon}</span></div>`:''}
+      <div class="bill-detail-row"><span>🏪 ຮ້ານ</span><span>${o.sellerName||'Admin'}</span></div>
+      <div class="bill-detail-row"><span>📱 ໂທ</span><span>${o.phone}</span></div>
+      <div class="bill-detail-row"><span>💰 ລາຄາ</span><span style="color:var(--gold);font-weight:700">${fmtPrice(o.price||o.total)}</span></div>
+      <div class="bill-detail-row"><span>📅 ວັນທີ</span><span>${fmtBillDate(o.date||o.createdAt)}</span></div>
+      ${isDone && o.confirmedAt?`<div class="bill-detail-row"><span>✅ ຢືນຢັນໂດຍ</span><span style="color:#4eff88">${o.confirmedBy||'Admin'} · ${fmtBillDate(o.confirmedAt)}</span></div>`:''}
+    </div>
+
+    <!-- Status / Proof -->
+    ${isDone ? `
+    <div style="background:linear-gradient(135deg,rgba(78,255,136,.1),rgba(34,197,94,.05));border:1.5px solid rgba(78,255,136,.45);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="text-align:center;margin-bottom:${proofImg?'12px':'0'}">
+        <div style="font-size:32px;margin-bottom:4px">✅</div>
+        <div style="font-size:15px;font-weight:800;color:#4eff88">ເຕີມ Diamond ສຳເລັດແລ້ວ!</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Diamond ໄດ້ຮັບຢູ່ Game ID: <strong style="color:${accentColor}">${o.gameId}</strong></div>
+      </div>
+      ${proofImg ? `
+      <div style="margin-top:12px">
+        <div style="font-size:11px;color:#4eff88;font-weight:700;margin-bottom:6px">📸 ຫຼັກຖານຈາກ Admin</div>
+        <img src="${proofImg}" style="width:100%;border-radius:10px;max-height:220px;object-fit:cover;border:1.5px solid rgba(78,255,136,.35);cursor:pointer" onclick="adminViewImg('${proofImg}')" onerror="this.style.display='none'">
+        <div style="font-size:10px;color:var(--text2);text-align:center;margin-top:4px">🔍 ກົດຮູບເພື່ອຂະຫຍາຍ</div>
+      </div>` : ''}
+    </div>` : isCancelled ? `
+    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="color:#f87171;font-weight:700;font-size:14px">❌ ຍົກເລີກ — ເງິນຄືນ Wallet ແລ້ວ</div>
+    </div>` : `
+    <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">⏳</div>
+      <div style="font-size:13px;font-weight:700;color:#ffa500">ລໍຖ້າການເຕີມ...</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.7">Admin ຈະເຕີມ Diamond ໃຫ້ທ່ານ<br>ພາຍໃນ <strong style="color:#ffa500">15–30 ນາທີ</strong></div>
+      <div style="height:4px;background:rgba(255,165,0,.15);border-radius:2px;margin-top:10px;overflow:hidden">
+        <div style="height:100%;width:65%;background:linear-gradient(90deg,#ffa500,#ffcc44);border-radius:2px;animation:shimmer 2s infinite"></div>
+      </div>
+    </div>`}
+
+    <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:4px">ປິດ</button>
+  `;
+  document.getElementById('billDetailContent').innerHTML = html;
+  openModal('billDetailModal');
+}
+
 
 function fmtBillDate(d){
   if(!d) return '';
@@ -16849,6 +16923,81 @@ async function acsmConfirmRelease(orderId){
   }
 }
 
+</script>
+
+<!-- ── PWA Install Banner ── -->
+<div id="pwaInstallBanner" style="display:none;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:12px;right:12px;z-index:99000;background:linear-gradient(135deg,#1a1b24,#22242f);border:1px solid rgba(201,168,76,.35);border-radius:18px;padding:14px;display:none;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:460px;margin:0 auto;animation:bannerUp .4s cubic-bezier(.34,1.56,.64,1) both">
+  <div style="font-size:26px;width:44px;height:44px;background:linear-gradient(135deg,#c9a84c,#f0d080);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🛒</div>
+  <div style="flex:1;overflow:hidden">
+    <div id="pwaBannerTitle" style="font-size:13px;font-weight:700;color:#e8e0cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ຕິດຕັ້ງ ຂາຍດີ</div>
+    <div id="pwaBannerDesc" style="font-size:11px;color:#a09880;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ທຳໃຫ້ເປັນ App ໄດ້ເລີຍ ຟຣີ!</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <button id="pwaInstallBtn" style="background:linear-gradient(135deg,#c9a84c,#f0d080);color:#000;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">ຕິດຕັ້ງ</button>
+    <button id="pwaCloseBtn" style="background:rgba(255,255,255,.08);color:#a09880;border:1px solid rgba(255,255,255,.1);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:11px">✕</button>
+  </div>
+</div>
+<!-- iOS tip -->
+<div id="pwaIosTip" style="display:none;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);left:16px;right:16px;z-index:99001;background:#1a1b24;border:1px solid rgba(201,168,76,.4);border-radius:16px;padding:16px 40px 16px 16px;font-size:13px;color:#e8e0cc;line-height:1.7;box-shadow:0 8px 32px rgba(0,0,0,.7)">
+  <span id="pwaIosClose" style="position:absolute;top:10px;right:12px;font-size:14px;color:#a09880;cursor:pointer">✕</span>
+  ເພື່ອເພີ່ມແອັບລົງໜ້າຈໍຫຼັກ:<br>ກົດ <strong>Share ⬆️</strong> ແລ້ວເລືອກ <strong>"Add to Home Screen"</strong>
+</div>
+<style>
+@keyframes bannerUp{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+</style>
+<script>
+/* ── Service Worker Register ── */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/Khaidee/sw.js',{scope:'/Khaidee/'})
+      .then(reg=>{
+        reg.addEventListener('updatefound',()=>{
+          const w=reg.installing;
+          w&&w.addEventListener('statechange',()=>{
+            if(w.state==='installed'&&navigator.serviceWorker.controller) w.postMessage({type:'SKIP_WAITING'});
+          });
+        });
+      }).catch(e=>console.warn('[SW]',e));
+  });
+  let _ref=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!_ref){_ref=true;location.reload();}});
+}
+/* ── Install Banner ── */
+(function(){
+  const BKEY='kd_pwa_dismissed', IKEY='kd_ios_dismissed', DAYS=7;
+  const banner=document.getElementById('pwaInstallBanner');
+  const iosTip=document.getElementById('pwaIosTip');
+  if(!banner) return;
+  if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone) return;
+  if(!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  function stale(k){const t=localStorage.getItem(k);return t&&Date.now()-+t<DAYS*864e5;}
+  const isIos=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isSafari=/Safari/i.test(navigator.userAgent)&&!/Chrome|CriOS|FxiOS/i.test(navigator.userAgent);
+  if(isIos&&isSafari&&!stale(IKEY)){
+    document.getElementById('pwaBannerTitle').textContent='ເພີ່ມລົງໜ້າຈໍຫຼັກ';
+    document.getElementById('pwaBannerDesc').textContent='ເປີດໄດ້ໄວຄືກັບ App ຈິງ';
+    document.getElementById('pwaInstallBtn').textContent='ຄູ່ມື';
+    setTimeout(()=>{banner.style.display='flex';},3500);
+    document.getElementById('pwaInstallBtn').onclick=()=>{banner.style.display='none';iosTip.style.display='block';};
+    document.getElementById('pwaCloseBtn').onclick=()=>{banner.style.display='none';localStorage.setItem(IKEY,Date.now());};
+    document.getElementById('pwaIosClose').onclick=()=>{iosTip.style.display='none';localStorage.setItem(IKEY,Date.now());};
+    return;
+  }
+  let dp=null;
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault(); dp=e;
+    if(!stale(BKEY)) setTimeout(()=>{banner.style.display='flex';},3500);
+  });
+  document.getElementById('pwaInstallBtn').onclick=async()=>{
+    banner.style.display='none';
+    if(!dp) return;
+    dp.prompt();
+    await dp.userChoice;
+    dp=null;
+  };
+  document.getElementById('pwaCloseBtn').onclick=()=>{banner.style.display='none';localStorage.setItem(BKEY,Date.now());};
+  window.addEventListener('appinstalled',()=>{banner.style.display='none';dp=null;});
+})();
 </script>
 </body>
 </html>
