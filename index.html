@@ -3,18 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ຂາຍດີ - Khaidee Marketplace v2.13</title>
+<title>BizSun - BizSun Marketplace v2.13</title>
 <meta name="app-version" content="202603111854">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#1565C0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ຂາຍດີ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BizSun">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
-<link rel="apple-touch-icon" sizes="120x120" href="icon-120x120.png">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,20 +19,45 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Sarabun:wght@300;400;600;700&family=Noto+Sans+Lao:wght@300;400;700&display=swap" rel="stylesheet"></noscript>
 <style>
 :root {
-  --gold: #c9a84c;
-  --gold-light: #f0d080;
-  --gold-dark: #8b6914;
-  --black: #0a0a0a;
-  --dark: #111218;
-  --dark2: #1a1b24;
-  --dark3: #22242f;
-  --gray: #2e3040;
-  --gray2: #3d4055;
-  --text: #e8e0cc;
-  --text2: #a09880;
-  --blue: #1a3a5c;
-  --blue2: #2453a0;
-  --accent: #4a7fc1;
+  /* ── BizSun Brand Palette ── */
+  --sun: #FF6B00;
+  --sun-light: #FF9A3C;
+  --sun-deep: #E05500;
+  --sol: #FFBC00;
+  --sol-light: #FFD95A;
+  --sol-pale: #FFF8E1;
+
+  --sky: #1565C0;
+  --sky-mid: #1E88E5;
+  --sky-light: #42A5F5;
+  --sky-pale: #E3F2FD;
+
+  --white: #FFFFFF;
+  --off-white: #F7F9FC;
+  --surface: #EFF4FB;
+  --surface2: #E8EEFA;
+
+  --ink: #0D1117;
+  --ink2: #3D4A5C;
+  --ink3: #7A8899;
+  --border: rgba(21,101,192,0.15);
+  --border-strong: rgba(21,101,192,0.35);
+
+  /* ── Legacy aliases (keep JS/HTML working) ── */
+  --gold: var(--sun);
+  --gold-light: var(--sol-light);
+  --gold-dark: var(--sun-deep);
+  --black: var(--ink);
+  --dark: var(--off-white);
+  --dark2: var(--surface);
+  --dark3: var(--surface2);
+  --gray: rgba(21,101,192,0.08);
+  --gray2: rgba(21,101,192,0.2);
+  --text: var(--ink);
+  --text2: var(--ink2);
+  --blue: var(--sky);
+  --blue2: var(--sky-mid);
+  --accent: var(--sky-light);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -44,17 +66,17 @@ html { height: -webkit-fill-available; }
 * { -webkit-tap-highlight-color: transparent; }
 input, select, textarea { font-size: 16px !important; -webkit-appearance: none; }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;max-width:480px;margin:0 auto;position:relative;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--white);color:var(--ink);min-height:100vh;min-height:100dvh;overflow-x:hidden;max-width:480px;margin:0 auto;position:relative;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* FORCE UPDATE OVERLAY */
 #forceUpdateOverlay{
   position:fixed;inset:0;z-index:99999;
-  background:radial-gradient(ellipse at 50% 100%,#1c1000,#050300);
+  background:linear-gradient(160deg,#0D47A1,#1565C0,#E65100);
   display:none;flex-direction:column;align-items:center;justify-content:center;
   padding:32px 24px;text-align:center;
 }
 .fuo-icon{font-size:64px;margin-bottom:16px;animation:splashFloat 3s ease-in-out infinite;}
 .fuo-title{font-family:'Cinzel Decorative',serif;font-size:22px;color:transparent;
-  background:linear-gradient(180deg,#fff9e0,#f0d060,#c9a84c);
+  background:linear-gradient(180deg,#ffffff,#ffe082,#FFBC00);
   -webkit-background-clip:text;background-clip:text;
   margin-bottom:8px;filter:drop-shadow(0 0 16px rgba(255,220,80,.8));}
 .fuo-ver{font-size:12px;color:var(--gold);opacity:0.7;margin-bottom:20px;letter-spacing:2px;}
@@ -67,7 +89,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .fuo-btn{width:100%;max-width:340px;background:linear-gradient(135deg,var(--gold),#f0d080);
   color:#000;border:none;border-radius:14px;padding:16px;
   font-size:15px;font-weight:900;cursor:pointer;font-family:'Sarabun',sans-serif;
-  box-shadow:0 4px 20px rgba(201,168,76,.4);}
+  box-shadow:0 4px 20px rgba(255,107,0,.5);}
 .fuo-skip{margin-top:12px;font-size:12px;color:var(--text2);cursor:pointer;text-decoration:underline;}
 /* SPLASH */
 /* ===== SPLASH SCREEN ===== */
@@ -77,7 +99,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 #splash{
   position:fixed;inset:0;z-index:9999;
   padding-top:env(safe-area-inset-top);
-  background:radial-gradient(ellipse 140% 100% at 50% 110%,#1c1000 0%,#0d0900 40%,#050300 100%);
+  background:linear-gradient(160deg,#0D47A1 0%,#1565C0 30%,#1976D2 55%,#E65100 85%,#FF6B00 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   transition:opacity .9s ease;overflow:hidden;
 }
@@ -100,7 +122,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 #splash::after{
   content:'';position:absolute;bottom:-40px;left:50%;transform:translateX(-50%);
   width:420px;height:160px;
-  background:radial-gradient(ellipse,rgba(201,168,76,.3) 0%,rgba(201,168,76,.08) 50%,transparent 70%);
+  background:radial-gradient(ellipse,rgba(255,188,0,.4) 0%,rgba(255,107,0,.12) 50%,transparent 70%);
   border-radius:50%;filter:blur(24px);
   animation:splashGroundGlow 2.8s ease-in-out infinite alternate;
 }
@@ -128,9 +150,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
   border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:12px;line-height:1;
-  background:radial-gradient(circle at 35% 30%,#3d2c00,#1a1200);
-  border:1px solid rgba(201,168,76,.7);
-  box-shadow:0 0 6px rgba(201,168,76,.8),0 0 14px rgba(201,168,76,.4),inset 0 0 4px rgba(0,0,0,.4);
+  background:radial-gradient(circle at 35% 30%,#1565C0,#0D47A1);
+  border:1px solid rgba(255,188,0,.8);
+  box-shadow:0 0 8px rgba(255,188,0,.8),0 0 20px rgba(255,107,0,.4),inset 0 0 4px rgba(0,0,0,.2);
   transform:translate(-50%,-50%);
 }
 /* radius ~115px from center 160px,160px — อยู่ภายในวง */
@@ -146,18 +168,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 /* ── CENTER SPHERE (cart inside) ── */
 .splash-logo-center{
   position:absolute;inset:68px;border-radius:50%;
-  background:radial-gradient(circle at 38% 32%,#3a2800 0%,#1e1400 45%,#0d0900 100%);
+  background:radial-gradient(circle at 38% 32%,#fff8e1 0%,#FFBC00 35%,#FF6B00 70%,#E65100 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  box-shadow:0 0 0 2.5px rgba(201,168,76,.55),0 0 0 6px rgba(201,168,76,.1),0 0 45px rgba(201,168,76,.45),0 0 90px rgba(201,168,76,.12),inset 0 0 30px rgba(0,0,0,.6);
+  box-shadow:0 0 0 3px rgba(255,188,0,.6),0 0 0 8px rgba(255,107,0,.2),0 0 60px rgba(255,188,0,.6),0 0 120px rgba(255,107,0,.25),inset 0 0 40px rgba(255,255,255,.3);
   animation:splashFloat 3.2s ease-in-out infinite;overflow:hidden;
 }
 .splash-logo-center::before{content:'';position:absolute;top:16%;left:20%;width:38%;height:38%;background:radial-gradient(circle,rgba(255,240,180,.18) 0%,transparent 70%);border-radius:50%;pointer-events:none;}
 .cart-svg{width:100px;height:100px;filter:drop-shadow(0 0 14px rgba(255,220,80,1)) drop-shadow(0 0 28px rgba(201,168,76,.8)) drop-shadow(0 0 56px rgba(201,168,76,.4));animation:splashCartGlow 2.2s ease-in-out infinite alternate;position:relative;z-index:1;}
-.splash-name-inner{font-family:'Cinzel Decorative',serif;font-size:15px;color:transparent;background:linear-gradient(180deg,#fff9e0 0%,#f0d060 40%,#c9a84c 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:4px;margin-bottom:2px;filter:drop-shadow(0 0 10px rgba(255,220,80,.9));animation:splashNameInner 2.2s ease-in-out infinite alternate;position:relative;z-index:1;white-space:nowrap;}
+.splash-name-inner{font-family:'Cinzel Decorative',serif;font-size:15px;color:transparent;background:linear-gradient(180deg,#ffffff 0%,#ffe082 60%,#FFD95A 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:4px;margin-bottom:2px;filter:drop-shadow(0 0 10px rgba(255,220,80,.9));animation:splashNameInner 2.2s ease-in-out infinite alternate;position:relative;z-index:1;white-space:nowrap;}
 
 /* ── TITLE ── */
-.splash-title{font-family:'Cinzel Decorative',serif;font-size:40px;color:transparent;text-align:center;width:100%;display:block;background:linear-gradient(180deg,#fff9e0 0%,#f5e070 20%,#e8c040 55%,#c9a84c 80%,#f0d060 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:8px;margin-top:10px;margin-bottom:3px;animation:splashTitleAura 2.5s ease-in-out infinite alternate;filter:drop-shadow(0 0 24px rgba(255,230,80,1)) drop-shadow(0 0 48px rgba(201,168,76,.8));line-height:1;}
-.splash-sub{color:rgba(201,168,76,.5);font-size:10px;letter-spacing:3.5px;text-transform:uppercase;}
+.splash-title{font-family:'Cinzel Decorative',serif;font-size:40px;color:transparent;text-align:center;width:100%;display:block;background:linear-gradient(180deg,#ffffff 0%,#ffe082 35%,#FFD95A 70%,#FFBC00 100%);-webkit-background-clip:text;background-clip:text;letter-spacing:8px;margin-top:10px;margin-bottom:3px;animation:splashTitleAura 2.5s ease-in-out infinite alternate;filter:drop-shadow(0 0 24px rgba(255,230,80,1)) drop-shadow(0 0 48px rgba(201,168,76,.8));line-height:1;}
+.splash-sub{color:rgba(255,255,255,.7);font-size:10px;letter-spacing:3.5px;text-transform:uppercase;}
 
 /* ── SPARKLES ── */
 .sparkle{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff9e0,#f0d060);box-shadow:0 0 6px rgba(255,220,100,.8),0 0 14px rgba(201,168,76,.5);animation:splashSparkle linear infinite;}
@@ -168,10 +190,10 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .splash-bar-track{position:absolute;inset:0;border-radius:7px;overflow:hidden;}
 .splash-bar-fill{
   height:100%;width:0%;border-radius:7px;
-  background:linear-gradient(90deg,#8b6914,#f5e070,#c9a84c,#f5e070,#8b6914);
+  background:linear-gradient(90deg,#1565C0,#42A5F5,#FFBC00,#FF6B00,#1565C0);
   background-size:200%;
   animation:splashLoad5 5s linear forwards, splashShimmer 1.2s linear infinite;
-  box-shadow:0 0 14px rgba(201,168,76,1),0 0 28px rgba(201,168,76,.5);
+  box-shadow:0 0 14px rgba(255,188,0,.9),0 0 28px rgba(255,107,0,.5);
 }
 /* Running cart emoji above bar */
 .splash-cart-run{
@@ -185,8 +207,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
   animation-name:cartRun5;
 }
 /* Percent text */
-.splash-pct{text-align:right;font-size:11px;color:rgba(201,168,76,.65);margin-top:5px;letter-spacing:1px;font-family:'Sarabun',sans-serif;}
-.splash-loading-txt{font-size:10px;color:rgba(201,168,76,.4);letter-spacing:2.5px;margin-top:5px;text-transform:uppercase;}
+.splash-pct{text-align:right;font-size:11px;color:rgba(255,255,255,.8);margin-top:5px;letter-spacing:1px;font-family:'Sarabun',sans-serif;}
+.splash-loading-txt{font-size:10px;color:rgba(255,255,255,.55);letter-spacing:2.5px;margin-top:5px;text-transform:uppercase;}
 
 /* ════ KEYFRAMES ════ */
 @keyframes blink {
@@ -305,25 +327,25 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .cat-icon-label{font-size:10px;color:var(--text2);text-align:center;line-height:1.2;transition:.2s;white-space:nowrap}
 .cat-icon-btn.active .cat-icon-label{color:var(--gold);font-weight:700}
 /* PRODUCTS GRID */
-.section-title{padding:16px 16px 8px;font-size:14px;color:var(--gold);letter-spacing:1px;font-weight:700}
+.section-title{padding:16px 16px 8px;font-size:14px;color:var(--sky);letter-spacing:1px;font-weight:700}
 .products-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;padding:0 12px 80px;align-items:start;min-width:0}
-.product-card{background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:12px;overflow:hidden;cursor:pointer;transition:.2s;position:relative;margin-bottom:10px;break-inside:avoid;min-width:0;width:100%}
-.product-card:hover{border-color:var(--gold-dark);transform:translateY(-2px)}
-.product-img{width:100%;aspect-ratio:1;object-fit:cover;background:linear-gradient(135deg,var(--dark3),var(--gray));display:flex;align-items:center;justify-content:center;font-size:36px}
-.product-badge{position:absolute;top:8px;left:8px;background:var(--gold);color:var(--black);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px}
-.product-id-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);color:var(--gold-light);font-size:9px;padding:2px 6px;border-radius:8px}
+.product-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:.2s;position:relative;margin-bottom:10px;break-inside:avoid;min-width:0;width:100%}
+.product-card:hover{border-color:var(--sky-light);transform:translateY(-2px);box-shadow:0 4px 20px rgba(21,101,192,.15)}
+.product-img{width:100%;aspect-ratio:1;object-fit:cover;background:linear-gradient(135deg,var(--sky-pale),var(--sol-pale));display:flex;align-items:center;justify-content:center;font-size:36px}
+.product-badge{position:absolute;top:8px;left:8px;background:linear-gradient(135deg,var(--sun),var(--sun-light));color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px}
+.product-id-badge{position:absolute;top:8px;right:8px;background:rgba(21,101,192,.1);color:var(--sky);font-size:9px;padding:2px 6px;border-radius:8px}
 .product-info{padding:10px}
-.product-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;line-height:1.4}
-.product-price{font-size:14px;font-weight:700;color:var(--gold)}
+.product-name{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;line-height:1.4}
+.product-price{font-size:14px;font-weight:800;color:var(--sun)}
 .product-sold{font-size:11px;color:var(--text2);margin-top:2px}
-.guaranteed-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(74,127,193,.2);color:var(--accent);font-size:10px;padding:2px 7px;border-radius:8px;margin-top:4px}
+.guaranteed-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(21,101,192,.1);color:var(--sky-mid);font-size:10px;padding:2px 7px;border-radius:8px;margin-top:4px}
 /* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(180deg,rgba(10,10,10,0) 0%,rgba(10,10,10,.95) 30%);padding:0 0 14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));z-index:100}
-.nav-inner{display:flex;align-items:center;background:linear-gradient(135deg,#16171f,#1e1f2a);border:1px solid rgba(201,168,76,.25);border-radius:28px;margin:0 14px;padding:0 4px;box-shadow:0 -4px 24px rgba(0,0,0,.5)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:11px 4px 10px;cursor:pointer;transition:.2s;font-size:9px;color:var(--text2);gap:3px;position:relative}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(180deg,rgba(247,249,252,0) 0%,rgba(247,249,252,.0) 0%);padding:0 0 14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));z-index:100}
+.nav-inner{display:flex;align-items:center;background:linear-gradient(135deg,var(--sky),#1565C0ee);border:none;border-radius:28px;margin:0 14px;padding:0 4px;box-shadow:0 -2px 24px rgba(21,101,192,.35),0 4px 20px rgba(0,0,0,.12)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:11px 4px 10px;cursor:pointer;transition:.2s;font-size:9px;color:rgba(255,255,255,.6);gap:3px;position:relative}
 .nav-btn .nav-icon{font-size:20px}
-.nav-btn.active{color:var(--gold)}
-.nav-btn.active::after{content:'';position:absolute;bottom:0;left:25%;right:25%;height:2px;background:var(--gold);border-radius:2px}
+.nav-btn.active{color:#ffffff;font-weight:700}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:25%;right:25%;height:2px;background:#FFBC00;border-radius:2px}
 /* CART FAB */
 .cart-fab-wrap{display:none}
 .cart-fab{display:none}
@@ -333,55 +355,55 @@ body{font-family:'Sarabun',sans-serif;background:var(--dark);color:var(--text);m
 .page{display:none;flex-direction:column;flex:1;padding-bottom:calc(80px + env(safe-area-inset-bottom));overflow:hidden;clip:rect(0,auto,auto,0)}#page-adminshop{display:none;flex-direction:column}#page-adminshop.active{display:flex;overflow-y:auto;height:100%;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .page.active{display:flex}.page:not(.active){visibility:hidden;pointer-events:none}
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay{position:fixed;inset:0;background:rgba(13,17,23,.7);z-index:500;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal-sheet{background:var(--dark2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;animation:slideUp .3s ease}
-.modal-full{background:var(--dark2);border-radius:20px;width:90%;max-width:420px;max-height:85vh;overflow-y:auto;padding:20px;animation:popIn .3s ease;margin:auto}
+.modal-sheet{background:var(--white);border-radius:20px 20px 0 0;border-top:3px solid var(--sky);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;animation:slideUp .3s ease}
+.modal-full{background:var(--white);border-radius:20px;border-top:3px solid var(--sky);width:90%;max-width:420px;max-height:85vh;overflow-y:auto;padding:20px;animation:popIn .3s ease;margin:auto}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
-.modal-handle{width:40px;height:4px;background:var(--gray2);border-radius:2px;margin:0 auto 16px}
-.modal-title{font-size:18px;font-weight:700;color:var(--gold);margin-bottom:16px;text-align:center}
+.modal-handle{width:40px;height:4px;background:rgba(21,101,192,.2);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:700;color:var(--sky);margin-bottom:16px;text-align:center}
 /* FORMS */
 .form-group{margin-bottom:14px}
-.form-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block}
-.form-input{width:100%;background:var(--dark3);border:1px solid var(--gray2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:16px;font-family:'Sarabun',sans-serif;outline:none;transition:.2s;-webkit-appearance:none;appearance:none}
-.form-input:focus{border-color:var(--gold-dark)}
+.form-label{font-size:12px;color:var(--ink2);margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--white);border:1.5px solid var(--border-strong);border-radius:10px;padding:10px 14px;color:var(--ink);font-size:16px;font-family:'Sarabun',sans-serif;outline:none;transition:.2s;-webkit-appearance:none;appearance:none}
+.form-input:focus{border-color:var(--sky-mid);box-shadow:0 0 0 3px rgba(30,136,229,.15)}
 .form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 select.form-input{-webkit-appearance:none;appearance:none}
 .btn{width:100%;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.2s}
-.btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));color:var(--black)}
-.btn-outline{background:transparent;border:1px solid var(--gold-dark);color:var(--gold)}
+.btn-gold{background:linear-gradient(135deg,var(--sun-deep),var(--sun),var(--sun-light));color:#fff;box-shadow:0 4px 16px rgba(255,107,0,.35)}
+.btn-outline{background:var(--white);border:1.5px solid var(--sky);color:var(--sky)}
 .btn-sm{padding:8px 16px;font-size:13px;width:auto;border-radius:20px}
 .btn-danger{background:linear-gradient(135deg,#8b1a1a,#d44);color:#fff}
 /* PROFILE */
-.profile-header{background:linear-gradient(180deg,var(--black) 0%,var(--dark2) 100%);padding:30px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;border-bottom:1px solid rgba(201,168,76,.2)}
+.profile-header{background:linear-gradient(180deg,var(--sky-pale) 0%,var(--white) 100%);padding:30px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
 .avatar-wrap{position:relative;width:80px;height:80px}
-.avatar{width:80px;height:80px;border-radius:50%;border:3px solid var(--gold);object-fit:cover;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;cursor:pointer}
+.avatar{width:80px;height:80px;border-radius:50%;border:3px solid var(--sky-mid);object-fit:cover;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;cursor:pointer}
 .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 /* COVER PHOTO */
-.profile-cover{position:relative;width:100%;height:160px;background:linear-gradient(135deg,#1a1200,#2a1f00,#1a1200);overflow:hidden}
+.profile-cover{position:relative;width:100%;height:160px;background:linear-gradient(135deg,var(--sky),var(--sky-mid),var(--sun));overflow:hidden}
 .profile-cover img{width:100%;height:100%;object-fit:cover}
-.profile-cover-edit{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px)}
+.profile-cover-edit{position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.85);border:1px solid var(--sky);color:var(--sky);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px)}
 .profile-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.7))}
 /* Avatar floats outside cover using negative margin-top */
 .profile-avatar-outer{position:relative;height:52px;padding-left:20px}
-.profile-avatar-over{position:absolute;top:-44px;left:20px;width:88px;height:88px;border-radius:50%;border:3px solid var(--gold);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:30}
+.profile-avatar-over{position:absolute;top:-44px;left:20px;width:88px;height:88px;border-radius:50%;border:3px solid var(--sky-mid);background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:30}
 .profile-avatar-over img{width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none}
-.profile-avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--black);border:2px solid var(--black);pointer-events:none;z-index:31}
+.profile-avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--sun);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;border:2px solid var(--white);pointer-events:none;z-index:31}
 /* Admin Confirm Sale Button (eye icon below avatar) */
 /* admin-confirm-sale-btn uses profile-icon-btn style */
 /* Admin confirm sale modal */
-.acsm-card{background:var(--dark2);border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.2s}
-.acsm-card:hover{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.05)}
-.acsm-card.pending-release{border-color:rgba(234,179,8,.5);background:rgba(234,179,8,.05)}
+.acsm-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.2s}
+.acsm-card:hover{border-color:var(--border-strong);background:var(--sky-pale)}
+.acsm-card.pending-release{border-color:rgba(255,107,0,.5);background:rgba(255,107,0,.04)}
 .acsm-detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
 .acsm-detail-row:last-child{border-bottom:none}
 .acsm-confirm-btn{width:100%;background:linear-gradient(135deg,#0c6,#0a5);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;color:#fff;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(0,180,100,.3);margin-top:14px;transition:.2s}
 .acsm-confirm-btn:hover{opacity:.88}
 /* PUBLIC PROFILE MODAL */
-.pub-profile-modal{position:fixed;inset:0;z-index:900;background:var(--black);overflow-y:auto;display:none;flex-direction:column}
-.pub-cover{position:relative;width:100%;height:200px;background:linear-gradient(135deg,#1a1200,#2a1f00);overflow:hidden;flex-shrink:0}
+.pub-profile-modal{position:fixed;inset:0;z-index:900;background:var(--white);overflow-y:auto;display:none;flex-direction:column}
+.pub-cover{position:relative;width:100%;height:200px;background:linear-gradient(135deg,var(--sky),var(--sky-mid),var(--sun));overflow:hidden;flex-shrink:0}
 .pub-cover img{width:100%;height:100%;object-fit:cover}
 .pub-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.85))}
 .pub-back-btn{position:absolute;top:16px;left:16px;width:36px;height:36px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#fff;backdrop-filter:blur(4px);z-index:10}
@@ -478,20 +500,20 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .tracking-num-box .tn-label{font-size:11px;color:var(--text2)}
 .tracking-num-box .tn-val{font-size:15px;font-weight:700;color:var(--accent);letter-spacing:1px}
 .copy-btn{background:rgba(74,127,193,.2);border:1px solid rgba(74,127,193,.4);color:var(--accent);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer}
-.seller-track-card{background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:14px;margin-bottom:10px}
+.seller-track-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
 .bill-product{display:flex;gap:10px;align-items:center;margin-bottom:10px}
 .bill-product-img{width:50px;height:50px;border-radius:8px;object-fit:cover;background:var(--dark2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .bill-product-info{flex:1}
 .bill-product-name{font-size:14px;font-weight:600}
-.bill-product-price{font-size:15px;font-weight:700;color:var(--gold)}
+.bill-product-price{font-size:15px;font-weight:700;color:var(--sun)}
 .bill-detail-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text2)}
 .bill-detail-row span:last-child{color:var(--text);font-weight:600}
-.bill-warning{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:10px;font-size:11px;color:var(--gold);margin-top:10px;line-height:1.5}
+.bill-warning{background:var(--sky-pale);border:1px solid var(--border-strong);border-radius:8px;padding:10px;font-size:11px;color:var(--sky);margin-top:10px;line-height:1.5}
 /* WALLET */
 .wallet-page{padding:20px 16px}
-.wallet-card{background:linear-gradient(135deg,var(--black),var(--dark2));border:1px solid var(--gold-dark);border-radius:20px;padding:24px;margin-bottom:20px;text-align:center}
-.wallet-label{font-size:12px;color:var(--text2);margin-bottom:8px}
-.wallet-balance{font-size:36px;font-weight:700;color:var(--gold);font-family:'Cinzel Decorative',serif}
+.wallet-card{background:linear-gradient(135deg,var(--sky) 0%,var(--sky-mid) 60%,#1976D2 100%);border:none;box-shadow:0 8px 32px rgba(21,101,192,.4);border-radius:20px;padding:24px;margin-bottom:20px;text-align:center}
+.wallet-label{font-size:12px;color:rgba(255,255,255,.75);margin-bottom:8px}
+.wallet-balance{font-size:36px;font-weight:700;color:#FFBC00;font-family:'Cinzel Decorative',serif;text-shadow:0 0 20px rgba(255,188,0,.5)}
 .wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 /* NOTIFICATION */
 /* ═══ NOTIFICATION SYSTEM ═══ */
@@ -504,19 +526,19 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .notif-close{font-size:16px;color:rgba(255,255,255,.5);cursor:pointer;flex-shrink:0;padding:4px;line-height:1}
 
 /* ประเภท success — ทอง */
-.notif-success{background:linear-gradient(135deg,rgba(15,10,0,.97),rgba(30,20,0,.97));border:1px solid rgba(201,168,76,.5)}
-.notif-success .notif-icon{background:rgba(201,168,76,.15)}
-.notif-success .notif-title{color:var(--gold)}
+.notif-success{background:linear-gradient(135deg,rgba(255,252,245,.97),rgba(255,248,235,.97));border:1px solid rgba(255,107,0,.4)}
+.notif-success .notif-icon{background:rgba(255,107,0,.12)}
+.notif-success .notif-title{color:var(--sun-deep)}
 
 /* ประเภท error — แดง */
-.notif-error{background:linear-gradient(135deg,rgba(15,0,0,.97),rgba(30,5,5,.97));border:1px solid rgba(255,60,60,.5)}
+.notif-error{background:linear-gradient(135deg,rgba(255,245,245,.97),rgba(255,235,235,.97));border:1px solid rgba(220,50,50,.4)}
 .notif-error .notif-icon{background:rgba(255,60,60,.15)}
-.notif-error .notif-title{color:#ff6666}
+.notif-error .notif-title{color:#c00}
 
 /* ประเภท info — น้ำเงิน */
-.notif-info{background:linear-gradient(135deg,rgba(0,5,20,.97),rgba(5,15,35,.97));border:1px solid rgba(60,130,255,.5)}
+.notif-info{background:linear-gradient(135deg,rgba(240,248,255,.97),rgba(225,245,255,.97));border:1px solid rgba(21,101,192,.35)}
 .notif-info .notif-icon{background:rgba(60,130,255,.15)}
-.notif-info .notif-title{color:#7ab4ff}
+.notif-info .notif-title{color:var(--sky)}
 
 /* ประเภท order — Diamond/สำคัญ */
 .notif-order{background:linear-gradient(135deg,rgba(0,0,30,.97),rgba(10,5,50,.97));border:1px solid rgba(120,100,255,.6);border-left:3px solid #a080ff}
@@ -533,31 +555,31 @@ select.form-input{-webkit-appearance:none;appearance:none}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* UPLOAD BOX */
-.upload-box{border:2px dashed rgba(201,168,76,.3);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;color:var(--text2);font-size:13px}
-.upload-box:hover{border-color:var(--gold);color:var(--gold)}
+.upload-box{border:2px dashed rgba(21,101,192,.3);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.2s;color:var(--ink3);font-size:13px}
+.upload-box:hover{border-color:var(--sky-mid);color:var(--sky-mid)}
 .upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .upload-preview-item{width:80px;height:80px;border-radius:8px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;overflow:hidden}
 .upload-preview-item img{width:100%;height:100%;object-fit:cover;image-rendering:-webkit-optimize-contrast}
 /* INFO BOX */
-.info-box{background:rgba(26,58,92,.3);border:1px solid rgba(74,127,193,.3);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+.info-box{background:var(--sky-pale);border:1px solid var(--border-strong);border-radius:10px;padding:12px;font-size:12px;color:var(--ink2);line-height:1.6;margin-bottom:12px}
 /* SELLER HISTORY */
-.history-item{display:flex;gap:12px;padding:12px;background:var(--dark3);border-radius:12px;margin-bottom:10px;cursor:pointer;border:1px solid rgba(255,255,255,.05);transition:.2s}
-.history-item:hover{border-color:var(--gold-dark)}
+.history-item{display:flex;gap:12px;padding:12px;background:var(--white);border-radius:12px;margin-bottom:10px;cursor:pointer;border:1px solid var(--border);transition:.2s}
+.history-item:hover{border-color:var(--sky-light);box-shadow:0 2px 12px rgba(21,101,192,.1)}
 /* PAGE HEADER */
-.page-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--dark2);border-bottom:1px solid rgba(255,255,255,.05);position:sticky;top:0;z-index:50}
-.back-btn{width:32px;height:32px;background:var(--dark3);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px}
+.page-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--white);border-bottom:1.5px solid var(--sky-pale);box-shadow:0 1px 8px rgba(21,101,192,.08);position:sticky;top:0;z-index:50}
+.back-btn{width:32px;height:32px;background:var(--sky-pale);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sky);font-size:16px}
 /* TAG */
-.tag{display:inline-block;background:rgba(201,168,76,.15);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:8px;margin-right:4px}
+.tag{display:inline-block;background:rgba(21,101,192,.1);color:var(--sky);font-size:10px;padding:2px 8px;border-radius:8px;margin-right:4px}
 /* ══════════ MANAGE PRODUCTS PAGE ══════════ */
-.mp-ftab{white-space:nowrap;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:.2s;font-family:'Sarabun',sans-serif}
-.mp-ftab.active{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#000;border-color:transparent;font-weight:700}
-.mp-product-card{background:var(--dark2);border:1px solid rgba(255,255,255,.07);border-radius:16px;margin-bottom:12px;overflow:hidden;transition:.2s}
-.mp-product-card:hover{border-color:rgba(201,168,76,.25)}
+.mp-ftab{white-space:nowrap;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--ink2);cursor:pointer;transition:.2s;font-family:'Sarabun',sans-serif}
+.mp-ftab.active{background:linear-gradient(135deg,var(--sky),var(--sky-mid));color:#fff;border-color:transparent;font-weight:700}
+.mp-product-card{background:var(--white);border:1px solid var(--border);border-radius:16px;margin-bottom:12px;overflow:hidden;transition:.2s;box-shadow:0 2px 8px rgba(21,101,192,.07)}
+.mp-product-card:hover{border-color:var(--sky-light)}
 .mp-card-header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
 .mp-card-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden}
 .mp-card-info{flex:1;min-width:0}
-.mp-card-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mp-card-price{font-size:13px;color:var(--gold);font-weight:700;margin-top:1px}
+.mp-card-name{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-card-price{font-size:13px;color:var(--sun);font-weight:700;margin-top:1px}
 .mp-card-meta{font-size:11px;color:var(--text2);margin-top:2px}
 .mp-card-stats{display:flex;gap:0;border-top:1px solid rgba(255,255,255,.05)}
 .mp-stat-box{flex:1;text-align:center;padding:8px 4px;border-right:1px solid rgba(255,255,255,.05)}
@@ -568,8 +590,8 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .mp-action-btn{flex:1;padding:10px 4px;border:none;cursor:pointer;font-size:12px;font-family:'Sarabun',sans-serif;transition:.18s;display:flex;align-items:center;justify-content:center;gap:4px}
 .mp-action-btn:first-child{border-radius:0 0 0 16px}
 .mp-action-btn:last-child{border-radius:0 0 16px 0}
-.mp-action-btn.edit{background:rgba(201,168,76,.1);color:var(--gold)}
-.mp-action-btn.edit:hover{background:rgba(201,168,76,.2)}
+.mp-action-btn.edit{background:rgba(255,107,0,.08);color:var(--sun)}
+.mp-action-btn.edit:hover{background:rgba(255,107,0,.16)}
 .mp-action-btn.toggle{background:rgba(78,255,136,.07);color:#4eff88}
 .mp-action-btn.toggle:hover{background:rgba(78,255,136,.14)}
 .mp-action-btn.del{background:rgba(255,80,80,.08);color:#f77}
@@ -578,26 +600,26 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .mp-stock-fill{height:100%;border-radius:2px;transition:width .4s}
 .mp-age-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
 /* Diamond admin */
-.dia-admin-section{background:var(--dark2);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:16px;margin-bottom:16px}
+.dia-admin-section{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
 .dia-admin-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.dia-seller-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.dia-seller-chip{display:flex;align-items:center;gap:8px;background:var(--sky-pale);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .topup-hero{position:relative;width:100%;height:210px;overflow:hidden;border-radius:0 0 24px 24px;margin-bottom:16px}
 .topup-hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.75) 100%)}
 .topup-hero-text{position:absolute;bottom:0;left:0;right:0;padding:16px 20px}
 .topup-hero-title{font-family:'Cinzel Decorative',serif;font-size:22px;font-weight:900;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.9)}
 .topup-hero-sub{font-size:12px;color:rgba(255,255,255,.72);margin-top:4px;letter-spacing:1px}
-.topup-hero-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(201,168,76,.25);border:1px solid rgba(201,168,76,.5);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--gold);margin-top:6px}
-.pkg-section-title{padding:0 16px 10px;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1px}
+.topup-hero-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,0,.15);border:1px solid rgba(255,107,0,.5);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--sun);margin-top:6px}
+.pkg-section-title{padding:0 16px 10px;font-size:13px;font-weight:700;color:var(--sky);letter-spacing:1px}
 .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px}
 .pkg-card{border-radius:16px;padding:14px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;border:2px solid rgba(255,255,255,.08);transition:all .22s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden}
 .pkg-card::before{content:'';position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.07),transparent 60%);pointer-events:none}
 .pkg-card:active{transform:scale(.96)}
-.pkg-card.selected{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(201,168,76,.3),0 8px 28px rgba(0,0,0,.5)}
-.pkg-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:13px;color:var(--gold);font-weight:800}
+.pkg-card.selected{border-color:var(--sun)!important;box-shadow:0 0 0 3px rgba(255,107,0,.25),0 8px 28px rgba(0,0,0,.12)}
+.pkg-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:13px;color:var(--sun);font-weight:800}
 .pkg-amount{font-size:16px;font-weight:900;color:#fff;line-height:1.1;text-align:center}
 .pkg-bonus{font-size:10px;color:#4eff88;font-weight:700;background:rgba(0,200,80,.15);border:1px solid rgba(0,200,80,.3);border-radius:10px;padding:1px 7px}
-.pkg-price{font-size:12px;font-weight:700;color:var(--gold)}
-.pkg-popular{position:absolute;top:0;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#ff6b00,#ff9900);color:#fff;font-size:9px;font-weight:700;padding:2px 10px;border-radius:0 0 8px 8px;white-space:nowrap}
+.pkg-price{font-size:12px;font-weight:700;color:var(--sun)}
+.pkg-popular{position:absolute;top:0;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--sun-deep),var(--sun-light));color:#fff;font-size:9px;font-weight:700;padding:2px 10px;border-radius:0 0 8px 8px;white-space:nowrap}
 .topup-shop-row{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px}
 .topup-shop-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s}
 .topup-shop-card:hover{background:rgba(201,168,76,.07);border-color:rgba(201,168,76,.25)}
@@ -616,11 +638,11 @@ select.form-input{-webkit-appearance:none;appearance:none}
 .htb-name{font-size:12px;font-weight:800;color:#fff;letter-spacing:.5px;text-align:center}
 .htb-sub{font-size:10px;color:rgba(255,255,255,.5);text-align:center}
 /* SELL FORM DYNAMIC */
-.sell-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:14px}
-.sell-section-title{font-size:12px;font-weight:700;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.sell-section{background:var(--sky-pale);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px}
+.sell-section-title{font-size:12px;font-weight:700;color:var(--sky);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .color-option-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;align-items:center}
-.color-add-btn{background:rgba(201,168,76,.15);border:1px dashed rgba(201,168,76,.4);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.2s}
-.color-add-btn:hover{background:rgba(201,168,76,.25)}
+.color-add-btn{background:rgba(255,107,0,.1);border:1px dashed rgba(255,107,0,.4);color:var(--sun);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;transition:.2s}
+.color-add-btn:hover{background:rgba(255,107,0,.18)}
 .tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;background:var(--dark3);border:1px solid var(--gray2);border-radius:10px;padding:8px;min-height:42px;cursor:text}
 .tag-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.35);color:var(--gold);border-radius:20px;padding:3px 10px;font-size:12px}
 .tag-pill button{background:none;border:none;color:var(--gold);cursor:pointer;font-size:14px;line-height:1;padding:0}
@@ -745,7 +767,7 @@ body::before {
   pointer-events: none;
 }
 body {
-  background: #0a0a0a;
+  background: #F7F9FC;
 }
 /* ─────────────────────────────────────────── */
 
@@ -757,22 +779,24 @@ body {
 .cart-item,
 .order-item,
 .section-card {
-  background: rgba(18,15,10,0.82) !important;
+  background: var(--white) !important;
+  border:1px solid var(--border) !important;
 }
 /* topbar ให้มี bg เพื่ออ่านง่าย */
 .topbar {
-  background: rgba(10,8,4,0.88) !important;
-  backdrop-filter: blur(8px);
+  background: var(--white) !important;
+  backdrop-filter:none;
+  border-bottom:2px solid var(--sky-pale);
 }
 /* bottom nav */
 .bottom-nav {
-  background: rgba(10,8,4,0.92) !important;
-  backdrop-filter: blur(10px);
+  background: transparent !important;
+  backdrop-filter:none;
 }
 /* ─────────────────────────────────── */
 
-.dep-quick{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 6px;color:rgba(255,255,255,0.8);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font-lao);}
-.dep-quick:hover,.dep-quick.dep-active{background:rgba(201,168,76,0.2);border-color:var(--gold);color:var(--gold);}
+.dep-quick{background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:9px 6px;color:var(--ink2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font-lao);}
+.dep-quick:hover,.dep-quick.dep-active{background:rgba(255,107,0,.1);border-color:var(--sun);color:var(--sun);}
 /* topbar scroll hide animation */
 #mainTopbar{
   transition: transform 0.3s ease, opacity 0.3s ease;
@@ -800,7 +824,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
     timeout: 30000,
   },
   global: {
-    headers: { 'x-client-info': 'khaidee-app' }
+    headers: { 'x-client-info': 'bizsun-app' }
   }
 });
 
@@ -1312,10 +1336,10 @@ async function clearDemoProductsFromSupabase(){
 }
 
 // ✅ Track deleted product IDs so sync doesn't bring them back
-const _KD_DELETED_PRODS_KEY = 'kd_deleted_product_ids';
+const _BS_DELETED_PRODS_KEY = 'bs_deleted_product_ids';
 function _getDeletedProductIds(){
   try{
-    const arr = JSON.parse(localStorage.getItem(_KD_DELETED_PRODS_KEY)||'[]');
+    const arr = JSON.parse(localStorage.getItem(_BS_DELETED_PRODS_KEY)||'[]');
     return new Set(arr);
   }catch(e){ return new Set(); }
 }
@@ -1324,15 +1348,15 @@ function _addDeletedProductId(id){
   set.add(id);
   // Keep only last 500 deleted IDs to avoid localStorage bloat
   const arr = Array.from(set).slice(-500);
-  localStorage.setItem(_KD_DELETED_PRODS_KEY, JSON.stringify(arr));
+  localStorage.setItem(_BS_DELETED_PRODS_KEY, JSON.stringify(arr));
 }
 
 async function syncFromSupabase(){
   try{
     // ✅ Bug #4 fix: clear demo products only once, not every sync
-    if(!localStorage.getItem('kd_demo_cleared')){
+    if(!localStorage.getItem('bs_demo_cleared')){
       await clearDemoProductsFromSupabase();
-      localStorage.setItem('kd_demo_cleared', '1');
+      localStorage.setItem('bs_demo_cleared', '1');
     }
     const [prods, ords, sbUsers] = await Promise.all([sbLoadProducts(), sbLoadOrders(), sbLoadUsers()]);
     // ✅ Bug #2 fix: sync users from Supabase into localStorage
@@ -1363,7 +1387,7 @@ async function syncFromSupabase(){
     if(prods.length > 0){
       const deletedIds = _getDeletedProductIds();
       const sbProds = prods.filter(p => !deletedIds.has(p.id));
-      const localProds = JSON.parse(localStorage.getItem('kd_products')||'[]');
+      const localProds = JSON.parse(localStorage.getItem('bs_products')||'[]');
       products = sbProds.map(sp => {
         const local = localProds.find(lp => lp.id === sp.id);
         if((!sp.images || !sp.images.length) && local && local.images && local.images.length){
@@ -1371,11 +1395,11 @@ async function syncFromSupabase(){
         }
         return sp;
       });
-      localStorage.setItem('kd_products', JSON.stringify(products));
+      localStorage.setItem('bs_products', JSON.stringify(products));
     }
     if(ords.length > 0){
       // ✅ Merge: Supabase เป็น source of truth แต่เก็บ field พิเศษจาก local ไว้
-      const localOrds = JSON.parse(localStorage.getItem('kd_orders')||'[]');
+      const localOrds = JSON.parse(localStorage.getItem('bs_orders')||'[]');
       orders = ords.map(so => {
         const local = localOrds.find(lo => lo.id === so.id);
         // เก็บ fields ที่ Supabase ไม่มี เช่น productEmoji, ban, muang, khwaeng
@@ -1387,14 +1411,14 @@ async function syncFromSupabase(){
       });
       // เพิ่ม local orders ที่ยังไม่มีใน Supabase
       localOrds.forEach(lo => { if(!orders.find(o=>o.id===lo.id)) orders.push(lo); });
-      localStorage.setItem('kd_orders', JSON.stringify(orders));
+      localStorage.setItem('bs_orders', JSON.stringify(orders));
     }
     // ✅ โหลด deposits + withdrawals จาก Supabase (ข้ามเครื่อง)
     try{
       const [sbDeps, sbWiths] = await Promise.all([sbLoadDeposits(), sbLoadWithdrawals()]);
       if(sbDeps.length > 0){
         // Merge กับ local (เก็บ slipImg จาก local ไว้)
-        const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+        const localDeps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
         const merged = sbDeps.map(sd => {
           const local = localDeps.find(d => d.id === sd.id);
           return { ...sd, slipImg: local?.slipImg || sd.slipImg || null };
@@ -1403,15 +1427,15 @@ async function syncFromSupabase(){
         localDeps.forEach(ld => {
           if(!merged.find(m => m.id === ld.id)) merged.push(ld);
         });
-        localStorage.setItem('kd_deposit_requests', JSON.stringify(merged));
+        localStorage.setItem('bs_deposit_requests', JSON.stringify(merged));
       }
       if(sbWiths.length > 0){
-        localStorage.setItem('kd_withdraw_requests', JSON.stringify(sbWiths));
+        localStorage.setItem('bs_withdraw_requests', JSON.stringify(sbWiths));
       }
     } catch(e2){ console.warn('deposit sync:', e2); }
 
     const updateInfo = await sbGetSetting('update_info');
-    if(updateInfo) localStorage.setItem('kd_update_info', updateInfo);
+    if(updateInfo) localStorage.setItem('bs_update_info', updateInfo);
     // ✅ Cache transactions count for UI badge
     try {
       const { count } = await supa.from('kd_transactions')
@@ -1425,19 +1449,19 @@ async function syncFromSupabase(){
     // ✅ โหລດ admin finance ຈາກ Supabase
     try {
       const sysW = await sbGetSetting('admin_sys_wallet');
-      if(sysW !== null){ adminSysWallet = parseInt(sysW)||0; localStorage.setItem('kd_admin_sys_wallet', sysW); updateAdminSysWalletDisplay(); }
+      if(sysW !== null){ adminSysWallet = parseInt(sysW)||0; localStorage.setItem('bs_admin_sys_wallet', sysW); updateAdminSysWalletDisplay(); }
       const fin = await sbGetSetting('admin_finance');
-      if(fin){ const f=JSON.parse(fin); adminIncome=f.income||0; adminExpense=f.expense||0; adminProfit=f.profit||0; localStorage.setItem('kd_admin_income',String(adminIncome)); localStorage.setItem('kd_admin_expense',String(adminExpense)); localStorage.setItem('kd_admin_profit',String(adminProfit)); }
+      if(fin){ const f=JSON.parse(fin); adminIncome=f.income||0; adminExpense=f.expense||0; adminProfit=f.profit||0; localStorage.setItem('bs_admin_income',String(adminIncome)); localStorage.setItem('bs_admin_expense',String(adminExpense)); localStorage.setItem('bs_admin_profit',String(adminProfit)); }
     } catch(e2){ console.warn('admin finance sync:', e2); }
 
     // ✅ โหລດ seller apps ຈາກ Supabase
     try {
       const sbApps = await sbLoadSellerApps();
       if(sbApps.length > 0){
-        const localApps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+        const localApps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
         const merged = sbApps.map(sa => { const local = localApps.find(la=>la.userId===sa.userId); return local ? {...sa, idCardImg:local.idCardImg||sa.idCardImg, selfieImg:local.selfieImg||sa.selfieImg} : sa; });
         localApps.forEach(la => { if(!merged.find(m=>m.userId===la.userId)) merged.push(la); });
-        try { localStorage.setItem('kd_seller_apps', JSON.stringify(merged)); } catch(e){}
+        try { localStorage.setItem('bs_seller_apps', JSON.stringify(merged)); } catch(e){}
       }
     } catch(e2){ console.warn('seller apps sync:', e2); }
   } catch(e){
@@ -1448,14 +1472,14 @@ async function syncFromSupabase(){
 // ── Auto-update checker ──
 (function(){
   const CURRENT_VER = '202603111854';
-  const saved = localStorage.getItem('kd_app_ver');
+  const saved = localStorage.getItem('bs_app_ver');
   if(saved && saved !== CURRENT_VER){
     // New version detected — clear old cache and reload
-    localStorage.setItem('kd_app_ver', CURRENT_VER);
+    localStorage.setItem('bs_app_ver', CURRENT_VER);
     // Force reload bypassing cache
     window.location.reload(true);
   } else {
-    localStorage.setItem('kd_app_ver', CURRENT_VER);
+    localStorage.setItem('bs_app_ver', CURRENT_VER);
   }
 })();
 </script>
@@ -1485,7 +1509,7 @@ async function syncFromSupabase(){
 <!-- FORCE UPDATE OVERLAY -->
 <div id="forceUpdateOverlay">
   <div class="fuo-icon">🚀</div>
-  <div class="fuo-title">ຂາຍດີ</div>
+  <div class="fuo-title">BizSun</div>
   <div class="fuo-ver" id="fuoVer">v2.0</div>
   <div class="fuo-note" id="fuoNote">ມີການອັບເດດໃໝ່ມາແລ້ວ!</div>
   <div class="fuo-changes" id="fuoChanges"></div>
@@ -1521,7 +1545,7 @@ async function syncFromSupabase(){
 
     <!-- ══ CENTER SPHERE — cart + name ══ -->
     <div class="splash-logo-center">
-      <div class="splash-name-inner" style="font-size:16px;margin-bottom:4px;margin-top:0">ຂາຍດີ</div>
+      <div class="splash-name-inner" style="font-size:16px;margin-bottom:4px;margin-top:0">BizSun</div>
       <svg class="cart-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="cg" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
@@ -1549,8 +1573,8 @@ async function syncFromSupabase(){
   </div>
 
   <!-- Big title below orbit -->
-  <div class="splash-title">ຂາຍດີ</div>
-  <div class="splash-sub">KHAIDEE MARKETPLACE • LAO</div>
+  <div class="splash-title">BizSun</div>
+  <div class="splash-sub">BIZSUN MARKETPLACE • LAO</div>
 
   <!-- ══ 5-SECOND PROGRESS BAR with running cart ══ -->
   <div class="splash-bar-wrap">
@@ -1571,7 +1595,7 @@ async function syncFromSupabase(){
   <div style="display:flex;align-items:center;gap:12px;width:100%">
     <div class="pwa-logo">ຂດ</div>
     <div class="pwa-text" style="flex:1">
-      <h3>ຕິດຕັ້ງ ຂາຍດີ App</h3>
+      <h3>ຕິດຕັ້ງ BizSun App</h3>
       <p>ເພີ່ມໄປຍັງໜ້າຈໍຫຼັກ ເພື່ອໃຊ້ງານໄດ້ງ່າຍຂຶ້ນ<br>ຄືກັບ App ຈິງໆ • ໃຊ້ໄດ້ offline</p>
     </div>
   </div>
@@ -1601,7 +1625,7 @@ async function syncFromSupabase(){
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
       <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#b8860b,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:12px;font-weight:900;color:#000;flex-shrink:0;box-shadow:0 3px 12px rgba(201,168,76,.4)">ຂດ</div>
       <div>
-        <div style="font-size:15px;font-weight:800;color:#fff">ຕິດຕັ້ງ ຂາຍດີ App</div>
+        <div style="font-size:15px;font-weight:800;color:#fff">ຕິດຕັ້ງ BizSun App</div>
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">ເພີ່ມໃສ່ໜ້າຈໍຫຼັກ iPhone</div>
       </div>
       <button onclick="dismissIOSBanner()" style="margin-left:auto;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
@@ -1658,7 +1682,7 @@ async function syncFromSupabase(){
           </svg>
         </div>
       </div>
-      <span class="logo-text">ຂາຍດີ</span>
+      <span class="logo-text">BizSun</span>
     </div>
     <button id="updateBtn" onclick="showUpdatePopup()" style="display:none;align-items:center;gap:5px;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.5);color:var(--gold);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">
       🆕 ອັບເດດ<span class="update-dot"></span>
@@ -2316,7 +2340,7 @@ async function syncFromSupabase(){
       <div class="chat-room-item" onclick="openChatRoom('general')">
         <div class="chat-avatar">🛒</div>
         <div class="chat-room-info">
-          <div class="chat-room-name">ຫ້ອງສາທາລະນະ ຂາຍດີ</div>
+          <div class="chat-room-name">ຫ້ອງສາທາລະນະ BizSun</div>
           <div class="chat-room-last">ສົນທະນາໄດ້ທຸກຄົນ...</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
@@ -2385,7 +2409,6 @@ async function syncFromSupabase(){
         <button class="mp-ftab"        id="bft-general"  onclick="setBillFilter('general',this)">📦 ທົ່ວໄປ</button>
         <button class="mp-ftab"        id="bft-game"     onclick="setBillFilter('game',this)">🎮 ID ເກມ</button>
         <button class="mp-ftab"        id="bft-diamond"  onclick="setBillFilter('diamond',this)">💎 ເຕີມເກມ</button>
-        <button class="mp-ftab"        id="bft-topup"    onclick="setBillFilter('topup',this)">🎮 ເຕີມຍອດ</button>
         <button class="mp-ftab"        id="bft-phonepart" onclick="setBillFilter('phonepart',this)">🔧 ອະໄຫຼ່</button>
       </div>
     </div>
@@ -2983,7 +3006,7 @@ async function syncFromSupabase(){
 <!-- WALLET MODAL -->
 <div class="popup-overlay" id="walletModal" style="display:none">
   <div class="popup-box">
-    <div class="modal-title">💰 Wallet ຂາຍດີ</div>
+    <div class="modal-title">💰 Wallet BizSun</div>
     <div class="wallet-card">
       <div class="wallet-label">ຍອດເງິນ / ยอดเงิน / Balance</div>
       <div class="wallet-balance" id="walletBalance">0</div>
@@ -3004,7 +3027,7 @@ async function syncFromSupabase(){
       </div>
       <button class="btn btn-outline" id="withdrawBtn" onclick="showWithdraw()" style="width:100%;display:none">⬆️ ຖອນເງິນ / ถอนเงิน</button>
     </div>
-    <div style="font-size:12px;color:var(--text2);text-align:center;line-height:1.6">ຕິດຕໍ່ Admin: WhatsApp 020-549-66168<br>Line: @khaidee_lao<br>Facebook: P'Seng SaenDy</div>
+    <div style="font-size:12px;color:var(--text2);text-align:center;line-height:1.6">ຕິດຕໍ່ Admin: WhatsApp 020-549-66168<br>Line: @bizsun_lao<br>Facebook: P'Seng SaenDy</div>
     <div style="height:12px"></div>
     <button class="btn btn-outline" onclick="closeModal('walletModal')">ປິດ</button>
   </div>
@@ -3252,7 +3275,7 @@ async function syncFromSupabase(){
       ກະລຸນາກວດສອບໃຫ້ລະອຽດກ່ອນສັ່ງຊື້<br>
       ຖ້າມີບັນຫາ ໂປຣດຕິດຕໍ່ Admin:<br>
       📱 WhatsApp: <strong>020-549-66168</strong><br>
-      💚 Line: <strong>@khaidee_lao</strong><br>
+      💚 Line: <strong>@bizsun_lao</strong><br>
       📘 Facebook: <strong>P'Seng SaenDy</strong><br><br>
       ⏰ ສິນຄ້ານີ້ມີການຮັບປະກັນ 24 ຊົ່ວໂມງ<br>
       ພາຍໃນ 24 ຊົ່ວໂມງ ກວດເຊັກໃຫ້ລະອຽດ
@@ -3488,7 +3511,7 @@ async function syncFromSupabase(){
 <!-- REGISTER MODAL -->
 <div class="popup-overlay" id="registerModal" style="display:none">
   <div class="popup-box">
-    <div class="modal-title">📝 ສ້າງບັນຊີ ຂາຍດີ</div>
+    <div class="modal-title">📝 ສ້າງບັນຊີ BizSun</div>
     <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:12px;line-height:1.7;background:rgba(201,168,76,.06);border-radius:10px;padding:8px">
       ໃຊ້ <strong style="color:var(--gold)">ອີເມລ</strong> ຫຼື <strong style="color:var(--gold)">ເບີໂທ</strong> ຂອງທ່ານ — ຈົດຈຳໄວ້ Login ຄັ້ງຕໍ່ໄປ
     </div>
@@ -3732,7 +3755,7 @@ async function syncFromSupabase(){
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
           <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#b8860b,#c9a84c,#f0d080);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:13px;font-weight:900;color:#000;flex-shrink:0;box-shadow:0 4px 14px rgba(201,168,76,.3)">ຂດ</div>
           <div style="flex:1">
-            <div style="font-size:15px;font-weight:800;color:var(--gold)">ຂາຍດີ App</div>
+            <div style="font-size:15px;font-weight:800;color:var(--gold)">BizSun App</div>
             <div style="font-size:10px;color:var(--text2);margin-top:2px">ຕະຫຼາດອອນລາຍ ລາວ · ไทย · English</div>
             <div id="installStatusBadge" style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(78,255,136,.1);color:#4eff88;border:1px solid rgba(78,255,136,.2)">⬇️ ພ້ອມຕິດຕັ້ງ</div>
           </div>
@@ -3748,9 +3771,9 @@ async function syncFromSupabase(){
           <span style="font-size:16px">🌐</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:9px;color:var(--text2);margin-bottom:2px">ລິ້ງໂດຍກົງ / Link ตรง</div>
-            <div style="font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">tavanh903-byte.github.io/khaidee-V1</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">tavanh903-byte.github.io/bizsun</div>
           </div>
-          <a href="https://tavanh903-byte.github.io/khaidee-V1/" target="_blank"
+          <a href="https://tavanh903-byte.github.io/bizsun/" target="_blank"
             style="background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0">
             ເປີດ 🔗
           </a>
@@ -3832,12 +3855,12 @@ async function syncFromSupabase(){
           <div style="font-size:11px;color:var(--text2)">020-549-66168</div>
         </div>
       </a>
-      <a href="https://line.me/ti/p/~khaidee_lao" target="_blank"
+      <a href="https://line.me/ti/p/~bizsun_lao" target="_blank"
          style="display:flex;align-items:center;gap:10px;background:rgba(0,195,0,.15);border:1px solid rgba(0,195,0,.4);border-radius:10px;padding:10px;margin-bottom:8px;text-decoration:none;color:#00b900">
         <span style="font-size:22px">💚</span>
         <div style="text-align:left">
           <div style="font-weight:700;font-size:13px">Line</div>
-          <div style="font-size:11px;color:var(--text2)">@khaidee_lao</div>
+          <div style="font-size:11px;color:var(--text2)">@bizsun_lao</div>
         </div>
       </a>
       <a href="https://facebook.com/PSengSaenDy" target="_blank"
@@ -3895,7 +3918,7 @@ async function syncFromSupabase(){
     <div style="background:linear-gradient(90deg,#0f1018,#1a1b24);border-bottom:1px solid rgba(201,168,76,.25);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div>
-          <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:.5px">ຂາຍດີ Admin</div>
+          <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:.5px">BizSun Admin</div>
           <div style="font-size:11px;color:var(--text2)" id="adminWelcome">Backend Panel</div>
         </div>
       </div>
@@ -4107,17 +4130,17 @@ async function syncFromSupabase(){
 // ============ STATE ============
 // ════════════════════════════════════════════════════════
 //  USER DATABASE SYSTEM v2
-//  kd_users_db = { [id]: userObject, ... }  — all registered users
-//  kd_session  = userId of currently logged-in user
-//  kd_user     = kept for backward-compat (current user snapshot)
+//  bs_users_db = { [id]: userObject, ... }  — all registered users
+//  bs_session  = userId of currently logged-in user
+//  bs_user     = kept for backward-compat (current user snapshot)
 // ════════════════════════════════════════════════════════
 
 function getUsersDB(){
-  try{ return JSON.parse(localStorage.getItem('kd_users_db')||'{}'); }
+  try{ return JSON.parse(localStorage.getItem('bs_users_db')||'{}'); }
   catch(e){ return {}; }
 }
 function saveUsersDB(db){
-  localStorage.setItem('kd_users_db', JSON.stringify(db));
+  localStorage.setItem('bs_users_db', JSON.stringify(db));
   // ✅ sync users ທີ່ມີການປ່ຽນແປງໄປ Supabase (throttled per user)
   Object.values(db).forEach(u => {
     if(!u || !u.id) return;
@@ -4169,30 +4192,30 @@ function saveUser(){
   const db = getUsersDB();
   db[currentUser.id] = {...currentUser};
   saveUsersDB(db);
-  localStorage.setItem('kd_user', JSON.stringify(currentUser));
-  localStorage.setItem('kd_session', currentUser.id);
+  localStorage.setItem('bs_user', JSON.stringify(currentUser));
+  localStorage.setItem('bs_session', currentUser.id);
   // Sync to Supabase
   sbSaveUser(currentUser).catch(e=>console.warn('sbSaveUser:',e));
 }
 
-let products = JSON.parse(localStorage.getItem('kd_products') || '[]');
+let products = JSON.parse(localStorage.getItem('bs_products') || '[]');
 // ลบสินค้าจำลองทั้งหมดถาวร
 const _demoIds = ['PRD-001','PRD-002','PRD-003','PRD-004','PRD-005','PRD-006','PRD-007','PRD-008','PRD-009','PRD-010','PRD-011','PRD-012'];
 if(products.some(p=>_demoIds.includes(p.id))){
   products = products.filter(p=>!_demoIds.includes(p.id));
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
 }
 // ลบสินค้าที่ไม่มี sellerId (สินค้าจำลองเก่า)
 if(products.some(p=>!p.sellerId && !p.isGame)){
   products = products.filter(p=>p.sellerId || p.isGame);
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
 }
-let orders = JSON.parse(localStorage.getItem('kd_orders') || '[]');
-let chatMsgs = JSON.parse(localStorage.getItem('kd_chat') || '{}');
+let orders = JSON.parse(localStorage.getItem('bs_orders') || '[]');
+let chatMsgs = JSON.parse(localStorage.getItem('bs_chat') || '{}');
 let currentChat = null;
 let currentProduct = null;
 let pendingGameProduct = null;
-let currentLang = localStorage.getItem('kd_lang') || 'lo';
+let currentLang = localStorage.getItem('bs_lang') || 'lo';
 let sellGameData = null;
 
 // ============ INIT ============
@@ -4251,7 +4274,7 @@ async function checkForceUpdate() {
     if (!parsed || !parsed.ver) return false;
 
     // ถ้าเคย dismiss version นี้แล้ว ไม่ต้องแสดงอีก
-    const seenVer = localStorage.getItem('kd_fuo_seen');
+    const seenVer = localStorage.getItem('bs_fuo_seen');
     if (seenVer === parsed.ver) return false;
 
     // แสดง overlay
@@ -4285,8 +4308,8 @@ async function checkForceUpdate() {
 
 function dismissForceUpdate() {
   try {
-    const info = JSON.parse(localStorage.getItem('kd_update_info') || 'null');
-    if (info?.ver) localStorage.setItem('kd_fuo_seen', info.ver);
+    const info = JSON.parse(localStorage.getItem('bs_update_info') || 'null');
+    if (info?.ver) localStorage.setItem('bs_fuo_seen', info.ver);
   } catch(e) {}
   const overlay = document.getElementById('forceUpdateOverlay');
   overlay.style.opacity = '0';
@@ -4478,7 +4501,7 @@ function startProductsRealtime(){
     _productsChannel = null;
   }
   _productsChannel = supa
-    .channel('kd_products_changes')
+    .channel('bs_products_changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'kd_products' }, async (payload) => {
       const ev = payload.eventType; // INSERT UPDATE DELETE
       const deletedIds = _getDeletedProductIds();
@@ -4487,7 +4510,7 @@ function startProductsRealtime(){
         if(deletedId){
           _addDeletedProductId(deletedId);
           products = products.filter(p => p.id !== deletedId);
-          localStorage.setItem('kd_products', JSON.stringify(products));
+          localStorage.setItem('bs_products', JSON.stringify(products));
           renderProducts(products);
         }
       } else if(ev === 'INSERT'){
@@ -4497,7 +4520,7 @@ function startProductsRealtime(){
           if(!products.find(p => p.id === row.id)){
             const np = _sbRowToProduct(row);
             if(np) products.unshift(np);
-            localStorage.setItem('kd_products', JSON.stringify(products));
+            localStorage.setItem('bs_products', JSON.stringify(products));
             renderProducts(products);
           }
         }
@@ -4510,7 +4533,7 @@ function startProductsRealtime(){
           if(np){
             if(idx >= 0) products[idx] = np;
             else products.unshift(np);
-            localStorage.setItem('kd_products', JSON.stringify(products));
+            localStorage.setItem('bs_products', JSON.stringify(products));
             renderProducts(products);
           }
         }
@@ -4547,14 +4570,14 @@ function startOrdersRealtime(){
     _ordersChannel = null;
   }
   _ordersChannel = supa
-    .channel('kd_orders_changes')
+    .channel('bs_orders_changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'kd_orders' }, (payload) => {
       const ev = payload.eventType;
       if(ev === 'DELETE'){
         const did = payload.old && payload.old.id;
         if(did){
           orders = orders.filter(o => o.id !== did);
-          localStorage.setItem('kd_orders', JSON.stringify(orders));
+          localStorage.setItem('bs_orders', JSON.stringify(orders));
           renderBillsPage();
           if(typeof renderAdminTab === 'function') renderAdminTab('orders');
         }
@@ -4562,7 +4585,7 @@ function startOrdersRealtime(){
         const row = payload.new;
         if(row && row.id && !orders.find(o => o.id === row.id)){
           const no = _sbRowToOrder(row);
-          if(no){ orders.unshift(no); localStorage.setItem('kd_orders', JSON.stringify(orders)); renderBillsPage(); }
+          if(no){ orders.unshift(no); localStorage.setItem('bs_orders', JSON.stringify(orders)); renderBillsPage(); }
         }
       } else if(ev === 'UPDATE'){
         const row = payload.new;
@@ -4571,7 +4594,7 @@ function startOrdersRealtime(){
           const idx = orders.findIndex(o => o.id === row.id);
           if(no){
             if(idx >= 0) orders[idx] = no; else orders.unshift(no);
-            localStorage.setItem('kd_orders', JSON.stringify(orders));
+            localStorage.setItem('bs_orders', JSON.stringify(orders));
             renderBillsPage();
             if(typeof renderSaleHistoryPage === 'function') renderSaleHistoryPage();
           }
@@ -4669,7 +4692,7 @@ setInterval(async function(){
     const changed = fresh.some(p=>!oldIds.has(p.id)) || products.some(p=>!newIds.has(p.id));
     if(changed){
       products = fresh;
-      localStorage.setItem('kd_products', JSON.stringify(products));
+      localStorage.setItem('bs_products', JSON.stringify(products));
       renderProducts(products);
     }
   } catch(e){ /* silent */ }
@@ -4678,30 +4701,30 @@ setInterval(async function(){
 // ✅ Free up localStorage by clearing images from old products
 function _freeUpStorage(){
   try{
-    const prods = JSON.parse(localStorage.getItem('kd_products')||'[]');
+    const prods = JSON.parse(localStorage.getItem('bs_products')||'[]');
     // Remove images from oldest products (keep newest 6 with images)
     const withImgs = prods.filter(p=>p.images&&p.images.length>0)
       .sort((a,b)=>new Date(b.postedAt||0)-new Date(a.postedAt||0));
     const toClean = withImgs.slice(6);
     toClean.forEach(p=>{ p.images=[]; });
-    localStorage.setItem('kd_products', JSON.stringify(prods));
+    localStorage.setItem('bs_products', JSON.stringify(prods));
     
   }catch(e){ console.warn('freeUpStorage:', e); }
 }
 
 function saveProducts(){
   try{
-    localStorage.setItem('kd_products',JSON.stringify(products));
+    localStorage.setItem('bs_products',JSON.stringify(products));
   } catch(e){
     if(e.name==='QuotaExceededError'||e.code===22){
       // ✅ Auto-free: strip images from older products then retry
       _freeUpStorage();
       try{
-        localStorage.setItem('kd_products',JSON.stringify(products));
+        localStorage.setItem('bs_products',JSON.stringify(products));
       } catch(e2){
         // Last resort: save without images at all (images are in Supabase)
         const slim = products.map(p=>({...p, images:[]}));
-        localStorage.setItem('kd_products',JSON.stringify(slim));
+        localStorage.setItem('bs_products',JSON.stringify(slim));
       }
     }
   }
@@ -4726,7 +4749,7 @@ function saveProducts(){
 
 // ✅ Re-sync all products with images to Supabase (run once after images_json column created)
 async function resyncAllProductImages(){
-  const local = JSON.parse(localStorage.getItem('kd_products')||'[]');
+  const local = JSON.parse(localStorage.getItem('bs_products')||'[]');
   const withImgs = local.filter(p => p.images && p.images.length > 0);
   if(!withImgs.length){ showNotif('ບໍ່ມີສິນຄ້າທີ່ມີຮູບ'); return; }
   showNotif('⏳ ກຳລັງ sync ຮູບທັງໝົດ... ('+withImgs.length+' ລາຍການ)');
@@ -4740,7 +4763,7 @@ async function resyncAllProductImages(){
   showNotif('✅ Sync ຮູບສຳເລັດ '+done+'/'+withImgs.length+' ລາຍການ!');
 }
 function saveOrders(){
-  localStorage.setItem('kd_orders',JSON.stringify(orders));
+  localStorage.setItem('bs_orders',JSON.stringify(orders));
   // ✅ throttled sync ໄປ Supabase
   clearTimeout(window._saveOrdersTimer);
   window._saveOrdersTimer = setTimeout(()=>{
@@ -4755,7 +4778,7 @@ function saveOneOrder(orderId){
 // saveUser is defined above in USER DATABASE SYSTEM
 function _saveUserCompat(){ saveUser(); } // alias for any legacy calls
 function saveChat(){
-  localStorage.setItem('kd_chat', JSON.stringify(chatMsgs));
+  localStorage.setItem('bs_chat', JSON.stringify(chatMsgs));
   // ✅ sync ໄປ Supabase kd_app_settings (ໃຊ້ key 'chat_data' store JSON)
   sbSetSetting('chat_data', JSON.stringify(chatMsgs)).catch(e=>console.warn('saveChat sync:',e));
 }
@@ -5173,8 +5196,8 @@ function handleWishToggle(pid){
 // ✅ ระบบแชร์สินค้า — Web Share API + fallback copy link
 function shareProduct(id, name, price, desc){
   const url   = window.location.href.split('#')[0] + '#product-' + id;
-  const title = name + ' - Khaidee Shop';
-  const text  = (desc ? desc + '\n' : '') + '💰 ລາຄາ: ' + Number(price).toLocaleString() + ' ₭\n🛒 Khaidee Shop';
+  const title = name + ' - BizSun Shop';
+  const text  = (desc ? desc + '\n' : '') + '💰 ລາຄາ: ' + Number(price).toLocaleString() + ' ₭\n🛒 BizSun Shop';
   if(navigator.share){
     navigator.share({ title, text, url }).catch(()=>{});
   } else {
@@ -5655,7 +5678,6 @@ function setBillFilter(f, el){
 
 function _getBillType(o){
   if(o.id && o.id.startsWith('DIA-')) return 'diamond';
-  if(o.id && o.id.startsWith('GT-') && o.type==='game_topup') return 'topup';
   if(o.isGame || o.cat==='game' || o.gameType) return 'game';
   if(o.cat==='phoneparts') return 'phonepart';
   return 'general';
@@ -5666,7 +5688,6 @@ function _billTypeTag(type){
     general:  {label:'📦 ທົ່ວໄປ',  bg:'rgba(201,168,76,.12)', color:'#c9a84c'},
     game:     {label:'🎮 ID ເກມ',   bg:'rgba(105,100,255,.15)',color:'#9090ff'},
     diamond:  {label:'💎 ເຕີມເກມ', bg:'rgba(100,68,255,.15)', color:'#a080ff'},
-    topup:    {label:'🎮 ເຕີມຍອດ', bg:'rgba(50,180,120,.15)', color:'#4eff88'},
     phonepart:{label:'🔧 ອະໄຫຼ່',  bg:'rgba(100,200,255,.12)',color:'#64c8ff'},
   };
   const t = map[type]||map.general;
@@ -5716,7 +5737,6 @@ function renderBillsPage(){
       general:'ຍັງບໍ່ມີສິນຄ້າທົ່ວໄປ',
       game:'ຍັງບໍ່ມີ ID ເກມ',
       diamond:'ຍັງບໍ່ມີການເຕີມເກມ',
-      topup:'ຍັງບໍ່ມີການເຕີມຍອດ',
       phonepart:'ຍັງບໍ່ມີສິນຄ້າອະໄຫຼ່',
     }[_billFilter]||'ຍັງບໍ່ມີ';
     container.innerHTML=`<div style="text-align:center;color:var(--text2);padding:40px 20px"><div style="font-size:40px;margin-bottom:12px">📭</div><div>${emptyMsg}</div></div>`;
@@ -5728,7 +5748,7 @@ function renderBillsPage(){
     const isDia = type==='diamond';
     const clickFn = isDia
       ? `showMyDiamondOrderDetail('${o.id}')`
-      : (type==='topup' ? `showMyTopupOrderDetail('${o.id}')` : `viewBillDetail('${o.id}')`);
+      : `viewBillDetail('${o.id}')`;
     return `
     <div class="bill-card" style="border-color:${type==='diamond'?'rgba(100,68,255,.3)':type==='game'?'rgba(105,100,255,.2)':type==='phonepart'?'rgba(100,200,255,.2)':o.status==='cancelled'?'rgba(239,68,68,.3)':'rgba(201,168,76,.15)'};position:relative">
       ${(o.status==='done'||o.status==='cancelled'||o.autoDone||o.adminReleased)?`<button onclick="event.stopPropagation();deleteBillItem('${o.id}','${isDia?'diamond':'order'}')" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:'Sarabun',sans-serif;z-index:2">🗑 ລຶບ</button>`:(o.status==='pending'||o.status==='packed')&&o.date?(()=>{const _cr=o.createdAt?new Date(o.createdAt).getTime():new Date(o.date).getTime();const _left=Math.max(0,_cr+(24*60*60*1000)-Date.now());const _h=Math.floor(_left/3600000);const _m=Math.floor((_left%3600000)/60000);return _left>0?`<div style="position:absolute;top:8px;right:8px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.4);color:#fbbf24;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700">⏰ ${_h}h ${_m}m</div>`:`<div style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#f87171;border-radius:6px;padding:2px 8px;font-size:10px">⏰ ໝົດເວລາ</div>`;})():''}
@@ -5762,131 +5782,6 @@ function deleteBillItem(id, type){
     orders = orders.filter(o => o.id !== id);
     saveOrders();
   }
-  showNotif('🗑 ລຶບບິນແລ້ວ');
-  renderBillsPage();
-}
-
-function showMyTopupOrderDetail(id){
-  // ดึงจาก kd_diamond_orders (GT- orders เก็บไว้ที่นี่)
-  const allOrders = JSON.parse(localStorage.getItem('kd_diamond_orders')||'[]');
-  const o = allOrders.find(x=>x.id===id);
-  if(!o){ showNotif('ບໍ່ພົບ Order'); return; }
-
-  const isDone      = o.status==='done';
-  const isCancelled = o.status==='cancelled';
-  const isPending   = !isDone && !isCancelled;
-
-  // แยก accountInfo เป็น Game ID, ລາຄາ, ຈຳນວນ
-  const acInfo = o.accountInfo||'';
-  // แสดงสถานะ
-  const statusTag = isDone
-    ? `<span style="background:rgba(78,255,136,.2);border:1px solid rgba(78,255,136,.5);color:#4eff88;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✅ ສຳເລັດ</span>`
-    : isCancelled
-    ? `<span style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;border-radius:20px;padding:3px 10px;font-size:11px">❌ ຍົກເລີກ</span>`
-    : `<span style="background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.4);color:#ffa500;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">⏳ ລໍຖ້າ</span>`;
-
-  // ภาพบิลแบบรูปที่ 2 — overlay ข้อมูลลูกค้าลงบนรูป
-  const QR_B64_TOPUP = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII='; // placeholder
-
-  const html = `
-    <!-- Hero — รูปบิลเติมเกม + ข้อมูลทับ -->
-    <div style="position:relative;width:100%;overflow:hidden;border-radius:14px;margin-bottom:14px;background:#0a0505">
-      <!-- รูปพื้นหลัง (ใช้รูปจาก uploaded) -->
-      <img src="https://i.imgur.com/placeholder.png"
-        style="width:100%;display:block;opacity:0.18"
-        onerror="this.style.display='none'">
-      <!-- กล่องบิลทับ -->
-      <div style="position:relative;z-index:2;padding:0 16px 16px">
-        <!-- หัวบิล -->
-        <div style="text-align:center;padding:18px 0 10px">
-          <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7);margin-bottom:4px">ບິນເຕີມເກມ</div>
-          <div style="font-family:'Cinzel Decorative',serif;font-size:26px;font-weight:900;color:var(--gold);letter-spacing:2px;text-shadow:0 0 20px rgba(201,168,76,.5)">TOP·UPເກມ</div>
-          <div style="margin-top:10px">${statusTag}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:6px">#${o.id}</div>
-        </div>
-
-        <!-- กรอบบิล -->
-        <div style="background:rgba(0,0,0,.55);border:1.5px solid rgba(201,168,76,.35);border-radius:14px;padding:16px;backdrop-filter:blur(4px)">
-          <!-- Game ID -->
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,.15)">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🎮</div>
-            <div style="flex:1">
-              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Game ID:</div>
-              <div style="font-size:15px;font-weight:700;color:#fff;word-break:break-all">${acInfo||'-'}</div>
-            </div>
-          </div>
-          <!-- ລາຄາ -->
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,.15)">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💰</div>
-            <div style="flex:1">
-              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">ລາຄາ (LAK):</div>
-              <div style="font-size:18px;font-weight:900;color:var(--gold)">${Number(o.price||0).toLocaleString()} ກີບ</div>
-            </div>
-          </div>
-          <!-- ຈຳນວນ / Package -->
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,.15)">
-            <div style="width:28px;height:28px;border-radius:8px;background:rgba(100,180,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💎</div>
-            <div style="flex:1">
-              <div style="font-size:10px;color:var(--text2);margin-bottom:2px">ຈຳນວນເພັດ/ສະຕາ:</div>
-              <div style="font-size:15px;font-weight:700;color:#a0d0ff">${o.pkg||'-'}</div>
-            </div>
-          </div>
-          <!-- ລາຍລະອຽດ -->
-          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px">
-            <div style="font-size:10px;color:var(--text2);margin-bottom:8px">ລາຍລະອຽດການທຳລາການ:</div>
-            <div style="font-size:12px;color:var(--text);line-height:1.8">
-              🕹️ ເກມ: <strong style="color:var(--gold)">${o.game||'-'}</strong><br>
-              👤 ຜູ້ສັ່ງ: ${o.userName||'-'}<br>
-              📅 ວັນທີ: ${fmtBillDate(o.createdAt)}<br>
-              ${o.note?`📝 ໝາຍເຫດ: ${o.note}<br>`:''}
-            </div>
-          </div>
-        </div>
-
-        <!-- Logo KhaiDee -->
-        <div style="text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid rgba(201,168,76,.15)">
-          <div style="font-family:'Cinzel Decorative',serif;font-size:13px;color:var(--gold);opacity:.7">✦ KhaiDee ✦</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- สถานะ -->
-    ${isDone ? `
-    <div style="background:linear-gradient(135deg,rgba(78,255,136,.1),rgba(34,197,94,.05));border:1.5px solid rgba(78,255,136,.45);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
-      <div style="font-size:28px;margin-bottom:6px">✅</div>
-      <div style="font-size:14px;font-weight:800;color:#4eff88">ເຕີມສຳເລັດແລ້ວ!</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">ຂໍຂອບໃຈທີ່ໃຊ້ບໍລິການ KhaiDee</div>
-    </div>` : isCancelled ? `
-    <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
-      <div style="color:#f87171;font-weight:700;font-size:14px">❌ ຍົກເລີກ — ເງິນຄືນ Wallet ແລ້ວ</div>
-    </div>` : `
-    <div style="background:rgba(255,165,0,.06);border:1.5px solid rgba(255,165,0,.35);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center">
-      <div style="font-size:24px;margin-bottom:6px">⏳</div>
-      <div style="font-size:13px;font-weight:700;color:#ffa500">ລໍຖ້າການດຳເນີນການ...</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.7">Admin ຈະດຳເນີນການ<br>ພາຍໃນ <strong style="color:#ffa500">5–30 ນາທີ</strong></div>
-      <div style="height:4px;background:rgba(255,165,0,.15);border-radius:2px;margin-top:10px;overflow:hidden">
-        <div style="height:100%;width:65%;background:linear-gradient(90deg,#ffa500,#ffcc44);border-radius:2px;animation:shimmer 2s infinite"></div>
-      </div>
-    </div>`}
-
-    <!-- ปุ่มลบ (เมื่อสำเร็จ/ยกเลิก) -->
-    ${(isDone||isCancelled)?`
-    <button onclick="deleteTopupBill('${o.id}');closeModal('billDetailModal')"
-      style="width:100%;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);color:#f87171;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;margin-bottom:8px">
-      🗑 ລຶບບິນນີ້
-    </button>`:''}
-
-    <button class="btn btn-outline" onclick="closeModal('billDetailModal')" style="margin-top:4px">ປິດ</button>
-  `;
-
-  document.getElementById('billDetailContent').innerHTML = html;
-  openModal('billDetailModal');
-}
-
-function deleteTopupBill(id){
-  let arr = JSON.parse(localStorage.getItem('kd_diamond_orders')||'[]');
-  arr = arr.filter(x=>x.id!==id);
-  localStorage.setItem('kd_diamond_orders', JSON.stringify(arr));
   showNotif('🗑 ລຶບບິນແລ້ວ');
   renderBillsPage();
 }
@@ -7418,7 +7313,7 @@ function toggleProductActive(id){
   products[idx].hidden = !products[idx].hidden;
   const isHidden = products[idx].hidden;
   // ✅ sync hidden flag ໄປ Supabase ທັນທີ
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
   supa.from('kd_products').update({ hidden: isHidden, updated_at: new Date().toISOString() }).eq('id', id)
     .catch(e => console.warn('toggleProductActive sync:', e));
   renderManagePage();
@@ -7465,7 +7360,7 @@ function deleteProductFromManage(id){
   _addDeletedProductId(id);
 
   // ── Save local ──
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
 
   // ── ກັບໜ້າ + refresh ໜ້າຫຼັກທັນທີ (local) ──
   const curPage = document.querySelector('.page.active');
@@ -7705,7 +7600,7 @@ function renderAdminDiamondPanel(){
   updateAdminDiamondBadge();
 }
 
-function adminCancelDiamondOrder(orderId){
+function adminCancelDiamond(orderId){
   if(!confirm('❌ ຍົກເລີກ Order ນີ້ + Refund ເງິນໃຫ້ລູກຄ້າ?')) return;
   const dorders = getDiamondOrders();
   const idx = dorders.findIndex(o=>o.id===orderId);
@@ -8011,7 +7906,7 @@ function dismissPWA(){
 }
 
 // ============ SMART INSTALL PWA ============
-const APP_URL = 'https://tavanh903-byte.github.io/khaidee-V1/';
+const APP_URL = 'https://tavanh903-byte.github.io/bizsun/';
 
 function detectPlatform(){
   const ua = navigator.userAgent||'';
@@ -8075,7 +7970,7 @@ function smartInstallApp(){
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(r=>{
       if(r.outcome==='accepted'){
-        showNotif('🎉 ຕິດຕັ້ງ ຂາຍດີ App ສຳເລັດ!');
+        showNotif('🎉 ຕິດຕັ້ງ BizSun App ສຳເລັດ!');
         const badge = document.getElementById('installStatusBadge');
         const btn   = document.getElementById('bigInstallBtn');
         if(badge){badge.textContent='✅ ຕິດຕັ້ງແລ້ວ';}
@@ -8330,7 +8225,7 @@ function getAdminShopProducts(){
 // ══════════════════════════════════════════════
 // 👑 ADMIN OFFICIAL SHOP MANAGER
 // ══════════════════════════════════════════════
-const ADM_SHOP_KEY = 'kd_admin_shop_info';
+const ADM_SHOP_KEY = 'bs_admin_shop_info';
 function loadAdmShopInfo(){
   try{ return JSON.parse(localStorage.getItem(ADM_SHOP_KEY)||'{}'); }catch(e){ return {}; }
 }
@@ -8444,7 +8339,7 @@ function previewAdmShopCover(input){
     try{
       const info = loadAdmShopInfo();
       info.cover = data;
-      localStorage.setItem('kd_admin_shop_info', JSON.stringify(info));
+      localStorage.setItem('bs_admin_shop_info', JSON.stringify(info));
     }catch(e){ console.warn('localStorage cover save:', e); }
     // sync ไป Supabase
     OWNER_ACCOUNTS.forEach(o=>{
@@ -8472,7 +8367,7 @@ function previewAdmShopAvatar(input){
     try{
       const info = loadAdmShopInfo();
       info.avatar = data;
-      localStorage.setItem('kd_admin_shop_info', JSON.stringify(info));
+      localStorage.setItem('bs_admin_shop_info', JSON.stringify(info));
     }catch(e){ console.warn('localStorage avatar save:', e); }
     // sync ไป Supabase
     OWNER_ACCOUNTS.forEach(o=>{
@@ -8776,7 +8671,7 @@ async function saveAdmShopProduct(){
     }
 
     // update localStorage cache (ไม่ใช้ saveProducts() เต็ม — ไม่ต้อง re-sync ซ้ำ)
-    try { localStorage.setItem('kd_products', JSON.stringify(products)); } catch(e){}
+    try { localStorage.setItem('bs_products', JSON.stringify(products)); } catch(e){}
 
     renderProducts(products);
     updateAdminShopBannerProfile();
@@ -8842,7 +8737,7 @@ function admShopDeleteProd(id){
   const p = products.find(x=>x.id===id);
   products = products.filter(p=>p.id!==id);
   _addDeletedProductId(id);
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
   renderProducts();
   updateAdminShopBannerProfile();
   renderAdmShopProdList();
@@ -8859,7 +8754,7 @@ function restoreSession(){
     const db = getUsersDB();
 
     // Layer 1: kd_session pointer (most reliable)
-    const sid = localStorage.getItem('kd_session');
+    const sid = localStorage.getItem('bs_session');
     if(sid){
       const owner = OWNER_ACCOUNTS.find(o=>o.id===sid);
       if(owner) return db[sid] ? {...owner,...db[sid],isAdmin:true} : {...owner};
@@ -8867,7 +8762,7 @@ function restoreSession(){
     }
 
     // Layer 2: kd_user snapshot (backward compat)
-    const snap = JSON.parse(localStorage.getItem('kd_user')||'null');
+    const snap = JSON.parse(localStorage.getItem('bs_user')||'null');
     if(snap && snap.id){
       const owner = OWNER_ACCOUNTS.find(o=>o.id===snap.id);
       if(owner) return db[snap.id] ? {...owner,...db[snap.id],isAdmin:true} : {...owner};
@@ -8875,7 +8770,7 @@ function restoreSession(){
       // Migrate: user exists in snapshot but not in db yet
       db[snap.id] = snap;
       saveUsersDB(db);
-      localStorage.setItem('kd_session', snap.id);
+      localStorage.setItem('bs_session', snap.id);
       return snap;
     }
 
@@ -8915,7 +8810,7 @@ currentUser = restoreSession();
         };
         db[u.id] = u;
         saveUsersDB(db);
-        localStorage.setItem('kd_session', u.id);
+        localStorage.setItem('bs_session', u.id);
         currentUser = u;
         saveUser();
         if(typeof updateProfileUI==='function') updateProfileUI();
@@ -8977,7 +8872,7 @@ function doRegisterWithPIN(method){
   const waNum = fields.phone.replace(/[^0-9]/g,'');
   const fullWA = waNum.startsWith('856') ? waNum : '856'+waNum.replace(/^0/,'');
   const msg = [
-    '\ud83d\udd10 *ຂາຍດີ — ຢືນຢັນບັນຊີ*',
+    '\ud83d\udd10 *BizSun — ຢືນຢັນບັນຊີ*',
     '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
     '\ud83d\udc64 ຊື່: '+fields.name,
     '',
@@ -9091,9 +8986,9 @@ async function finishRegister(verified){
   // ✅ บันทึก localStorage ก่อน (ทันที)
   const db = getUsersDB();
   db[uid] = user;
-  try { localStorage.setItem('kd_users_db', JSON.stringify(db)); } catch(e){}
-  localStorage.setItem('kd_user', JSON.stringify(user));
-  localStorage.setItem('kd_session', uid);
+  try { localStorage.setItem('bs_users_db', JSON.stringify(db)); } catch(e){}
+  localStorage.setItem('bs_user', JSON.stringify(user));
+  localStorage.setItem('bs_session', uid);
 
   // ✅ Sync ไป Supabase ทันที (Cloud-First)
   sbSaveUser(user).catch(e=>console.warn('finishRegister sbSaveUser:', e));
@@ -9275,8 +9170,8 @@ function logoutUser(){
   stopOrdersRealtime();
   clearSupabaseUser(); // ✅ RLS
   currentUser = null;
-  localStorage.removeItem('kd_session');
-  localStorage.removeItem('kd_user');
+  localStorage.removeItem('bs_session');
+  localStorage.removeItem('bs_user');
   // Clear heartbeat so user shows offline immediately
   const m = getOnlineMap();
   if(m) { /* don't need to clear, just don't update */ }
@@ -9459,22 +9354,22 @@ function showQuotaContactModal(userName){
 function freeStorageSpace(){
   try {
     // 1. Strip images from old/approved seller apps
-    const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+    const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
     apps.forEach(a=>{ if(a.status!=='pending'){ delete a.idCardImg; delete a.selfieImg; } });
-    localStorage.setItem('kd_seller_apps', JSON.stringify(apps));
+    localStorage.setItem('bs_seller_apps', JSON.stringify(apps));
     // 2. Trim deposit history - keep slips only for pending
-    ['kd_deposit_requests','kd_withdraw_requests'].forEach(k=>{
+    ['bs_deposit_requests','bs_withdraw_requests'].forEach(k=>{
       const arr = JSON.parse(localStorage.getItem(k)||'[]');
       arr.forEach(r=>{ if(r.status!=='pending'){ delete r.slipImg; delete r.qrImg; } });
       localStorage.setItem(k, JSON.stringify(arr.slice(-30)));
     });
     // 3. Strip product images from old products (keep only newest 8 products with full images)
-    const prods = JSON.parse(localStorage.getItem('kd_products')||'[]');
+    const prods = JSON.parse(localStorage.getItem('bs_products')||'[]');
     const withImgs = prods.filter(p=>p.images&&p.images.length>0)
       .sort((a,b)=>new Date(b.postedAt||0)-new Date(a.postedAt||0));
     // Keep newest 8 with all images, strip rest to 1 image only
     withImgs.slice(8).forEach(p=>{ p.images = p.images.slice(0,1); });
-    localStorage.setItem('kd_products', JSON.stringify(prods));
+    localStorage.setItem('bs_products', JSON.stringify(prods));
     return true;
   } catch(e){ return false; }
 }
@@ -9561,10 +9456,10 @@ function submitSellerApply(){
         showNotif('⚠️ ສ່ງ offline — ຈະ sync ໃໝ່ທີຫຼັງ', 'warning');
       }
       // Also save to local for offline
-      const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+      const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
       const trimmed = apps.filter(a=>a.status==='pending').slice(-4);
       trimmed.push(newApp);
-      try { localStorage.setItem('kd_seller_apps', JSON.stringify(trimmed)); } catch(e){}
+      try { localStorage.setItem('bs_seller_apps', JSON.stringify(trimmed)); } catch(e){}
       currentUser.sellerPending = true;
       currentUser.sellerName = fn+' '+ln;
       saveUser();
@@ -10092,7 +9987,7 @@ function submitSellProduct(){
         }catch(e2){
           // Still full - save without images, upload to Supabase only
           p.images=[]; products.push(p);
-          localStorage.setItem('kd_products',JSON.stringify(products));
+          localStorage.setItem('bs_products',JSON.stringify(products));
           sbSaveProduct({...p, images: imgs}).catch(()=>{});
           closeModal('sellProductModal'); renderProducts(products);
           showNotif('✅ ລົງຂາຍສຳເລັດ! (ຮູບຖືກບັນທຶກ Supabase ຄົນອື່ນເຫັນໄດ້ ✓)');
@@ -10188,7 +10083,7 @@ function submitGameSell(){
           showNotif('✅ ລົງຂາຍ ID ເກມ ສຳເລັດ!');
         }catch(e2){
           p.images=[]; products.push(p);
-          localStorage.setItem('kd_products',JSON.stringify(products));
+          localStorage.setItem('bs_products',JSON.stringify(products));
           sbSaveProduct({...p, images: imgs}).catch(()=>{});
           closeModal('gameCredModal'); renderProducts(products);
           showNotif('✅ ລົງຂາຍ ID ເກມ ສຳເລັດ! (ຮູບຖືກບັນທຶກ Supabase ✓)');
@@ -10332,7 +10227,7 @@ function _renderFinTab(tab){
   if(!content) return;
 
   if(tab==='deposit'){
-    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]').filter(r=>r.userId===uid).reverse();
+    const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]').filter(r=>r.userId===uid).reverse();
     if(!deps.length){ content.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px">ຍັງບໍ່ມີປະຫວັດການເຕີມເງິນ</div>'; return; }
     content.innerHTML = deps.map(r=>`
       <div onclick="showFinBill('deposit','${r.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--dark3);border-radius:14px;margin-bottom:10px;cursor:pointer;border:1px solid ${r.status==='approved'?'rgba(12,180,100,.3)':r.status==='rejected'?'rgba(255,80,80,.3)':'rgba(201,168,76,.2)'};transition:.2s">
@@ -10349,7 +10244,7 @@ function _renderFinTab(tab){
       </div>
     `).join('');
   } else {
-    const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]').filter(r=>r.userId===uid).reverse();
+    const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]').filter(r=>r.userId===uid).reverse();
     if(!withs.length){ content.innerHTML='<div style="text-align:center;color:var(--text2);padding:30px 0;font-size:13px">ຍັງບໍ່ມີປະຫວັດການຖອນເງິນ</div>'; return; }
     content.innerHTML = withs.map(r=>`
       <div onclick="showFinBill('withdraw','${r.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--dark3);border-radius:14px;margin-bottom:10px;cursor:pointer;border:1px solid ${r.status==='approved'?'rgba(12,180,100,.3)':r.status==='rejected'?'rgba(255,80,80,.3)':'rgba(201,168,76,.2)'};transition:.2s">
@@ -10369,7 +10264,7 @@ function _renderFinTab(tab){
 
 function showFinBill(type, id){
   const isDeposit = type==='deposit';
-  const list = JSON.parse(localStorage.getItem(isDeposit?'kd_deposit_requests':'kd_withdraw_requests')||'[]');
+  const list = JSON.parse(localStorage.getItem(isDeposit?'bs_deposit_requests':'bs_withdraw_requests')||'[]');
   const r = list.find(x=>x.id===id);
   if(!r) return;
 
@@ -10401,8 +10296,8 @@ function showFinBill(type, id){
       <!-- Bill Header -->
       <div style="text-align:center;padding:20px 0 16px;border-bottom:1px dashed rgba(255,255,255,.1)">
         <div style="font-size:40px;margin-bottom:8px">${isDeposit?'📥':'📤'}</div>
-        <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:2px">ຂາຍດີ</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">KHAIDEE MARKETPLACE</div>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:15px;color:var(--gold);letter-spacing:2px">BizSun</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">BIZSUN MARKETPLACE</div>
         <div style="margin-top:12px;display:inline-block;padding:6px 20px;border-radius:20px;background:${statusBg};font-size:13px;font-weight:700;color:${statusColor}">${statusLabel}</div>
         ${r.approvedAt?`<div style="font-size:10px;color:var(--text2);margin-top:6px">ອະນຸມັດ: ${r.approvedAt}</div>`:''}
       </div>
@@ -10445,7 +10340,7 @@ function showFinBill(type, id){
 
       <!-- Footer -->
       <div style="text-align:center;margin-top:16px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.08)">
-        <div style="font-size:10px;color:var(--text2);letter-spacing:1px">ຂາຍດີ Marketplace · ຂອບໃຈທີ່ໃຊ້ບໍລິການ</div>
+        <div style="font-size:10px;color:var(--text2);letter-spacing:1px">BizSun Marketplace · ຂອບໃຈທີ່ໃຊ້ບໍລິການ</div>
       </div>
     </div>
   `;
@@ -10509,9 +10404,9 @@ function cleanupStorage(){
     // Also remove admin notifs
     localStorage.removeItem('kd_admin_notifs');
     // Reload products in memory
-    products = JSON.parse(localStorage.getItem('kd_products')||'[]');
-    depositRequests = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-    withdrawRequests = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+    products = JSON.parse(localStorage.getItem('bs_products')||'[]');
+    depositRequests = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
+    withdrawRequests = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
     showNotif('✅ ລ້າງ Cache ສຳເລັດ! ຕອນນີ້ສາມາດໃຊ້ງານໄດ້ປົກກະຕິ');
     closeModal('settingsModal');
   } catch(e){
@@ -10530,7 +10425,7 @@ function showSettings(){
 
 function saveSettings(){
   currentLang = document.getElementById('langSelect').value;
-  localStorage.setItem('kd_lang',currentLang);
+  localStorage.setItem('bs_lang',currentLang);
   const newName = document.getElementById('displayNameEdit').value;
   if(newName){currentUser.name=newName;saveUser();document.getElementById('profileDisplayName').textContent=newName;}
   closeModal('settingsModal');
@@ -10567,7 +10462,7 @@ function openAdminChat(adminName, adminId){
     if(!chatMsgs[roomId]) chatMsgs[roomId]=[];
     chatMsgs[roomId].push({
       uid:'admin',name:adminName,
-      text:'ຄຳຮ້ອງຂອງທ່ານຈະຖືກຕວດສອບໃນໄວໆນີ້ 🙏\nຖ້າຫາກທ່ານມີບັນຫາທີ່ດ່ວນ ໂປຣດຕິດຕໍ່:\n📱 WhatsApp: 020-549-66168\n💚 Line: @khaidee_lao\n📘 Facebook: P\'Seng SaenDy',
+      text:'ຄຳຮ້ອງຂອງທ່ານຈະຖືກຕວດສອບໃນໄວໆນີ້ 🙏\nຖ້າຫາກທ່ານມີບັນຫາທີ່ດ່ວນ ໂປຣດຕິດຕໍ່:\n📱 WhatsApp: 020-549-66168\n💚 Line: @bizsun_lao\n📘 Facebook: P\'Seng SaenDy',
       time:new Date().toLocaleTimeString('lo-LA',{hour:'2-digit',minute:'2-digit'})
     });
     saveChat();
@@ -10743,7 +10638,7 @@ function sendVerifyPIN(userId, phone){
 
   // ส่ง WA พร้อม PIN
   const msg = [
-    '🔐 *ຂາຍດີ — ຢືນຢັນບັນຊີ*',
+    '🔐 *BizSun — ຢືນຢັນບັນຊີ*',
     '─────────────────',
     'ລະຫັດຢືນຢັນຂອງທ່ານ:',
     '',
@@ -10864,7 +10759,7 @@ const AUTO_REPLY_TOPICS = [
   {
     keywords: ['ສລິບ','slip','ສລິບ','ໂອນ','ຝາກ','deposit','ເງິນ','wallet','ວໍເລດ','ບໍ່ເຂົ້າ','ບໍ່ຂຶ້ນ'],
     title: '💰 ບັນຫາການຝາກເງິນ / ສລິບ',
-    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 📋 ກ່ຽວກັບບັນຫາ ການຝາກເງິນ / ສລິບ ກາລຸນາກວດສອບດັ່ງນີ້:
 
@@ -10879,7 +10774,7 @@ const AUTO_REPLY_TOPICS = [
   {
     keywords: ['ລົງທະບຽນ','register','ສະໝັກ','ບັນຊີ','account','ເຂົ້າ','login','ລືມ','ລະຫັດ','password'],
     title: '🔐 ບັນຫາການເຂົ້າລະບົບ / ບັນຊີ',
-    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 📋 ກ່ຽວກັບບັນຫາ ການເຂົ້າລະບົບ / ບັນຊີ ກາລຸນາກວດສອບດັ່ງນີ້:
 
@@ -10894,7 +10789,7 @@ const AUTO_REPLY_TOPICS = [
   {
     keywords: ['ສິນຄ້າ','ສັ່ງ','order','ຊື້','buy','ບໍ່ໄດ້ຮັບ','ຍັງບໍ່','ລໍຖ້າ','ຈັດສົ່ງ','ສົ່ງ'],
     title: '📦 ບັນຫາການສັ່ງຊື້ / ຈັດສົ່ງ',
-    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 📋 ກ່ຽວກັບບັນຫາ ການສັ່ງຊື້ / ຈັດສົ່ງ ກາລຸນາກວດສອບດັ່ງນີ້:
 
@@ -10909,7 +10804,7 @@ const AUTO_REPLY_TOPICS = [
   {
     keywords: ['ຂາຍ','seller','ຮ້ານ','ສິນຄ້າ','ລົງ','post','ໂພສ','upload','ຮູບ','ລາຄາ'],
     title: '🏪 ບັນຫາການຂາຍ / ລົງສິນຄ້າ',
-    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 📋 ກ່ຽວກັບບັນຫາ ການຂາຍ / ລົງສິນຄ້າ ກາລຸນາກວດສອບດັ່ງນີ້:
 
@@ -10924,7 +10819,7 @@ const AUTO_REPLY_TOPICS = [
   {
     keywords: ['ຖອນ','withdraw','ຂໍຖອນ','ຕ້ອງການຖອນ','ເງິນຖອນ'],
     title: '💸 ບັນຫາການຖອນເງິນ',
-    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 📋 ກ່ຽວກັບບັນຫາ ການຖອນເງິນ ກາລຸນາກວດສອບດັ່ງນີ້:
 
@@ -10939,7 +10834,7 @@ const AUTO_REPLY_TOPICS = [
   {
     keywords: ['ແອັບ','app','ໂຫລດ','load','ຊ້າ','ຂັດຂ້ອງ','crash','ບໍ່ເຮັດວຽກ','error','ຜິດພາດ'],
     title: '⚙️ ບັນຫາດ້ານເຕັກນິກ',
-    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+    reply: `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 📋 ກ່ຽວກັບບັນຫາ ດ້ານເຕັກນິກ ກາລຸນາລອງດັ່ງນີ້:
 
@@ -10966,7 +10861,7 @@ function getAutoReply(text) {
 }
 
 function getDefaultAutoReply() {
-  return `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin ຂາຍດີ 🙏
+  return `ສະບາຍດີ! ຂໍຂອບໃຈທີ່ຕິດຕໍ່ຫາ Admin BizSun 🙏
 
 ຄຳຮ້ອງຂອງທ່ານຈະຖືກກວດສອບໃນໄວໆນີ້
 
@@ -11867,10 +11762,10 @@ function dssCompleteOrder(orderId){
   const o = dorders.find(x=>x.id===orderId);
   if(o) o.status='done';
   saveDiamondOrders(dorders);
-  const gOrders = JSON.parse(localStorage.getItem('kd_orders')||'[]');
+  const gOrders = JSON.parse(localStorage.getItem('bs_orders')||'[]');
   const go = gOrders.find(x=>x.id===orderId);
   if(go) go.status='done';
-  localStorage.setItem('kd_orders',JSON.stringify(gOrders));
+  localStorage.setItem('bs_orders',JSON.stringify(gOrders));
   showNotif('✅ ອໍເດີ #'+orderId+' ສຳເລັດ');
   renderDssOrders();
 }
@@ -12012,7 +11907,7 @@ function openAdminOfficialShop(){
   document.getElementById('pubStatRating').textContent = '⭐';
 
   const bio = document.getElementById('pubBio');
-  bio.textContent = '🏪 ຮ້ານຂາຍຂອງທີມງານ Admin ຂາຍດີ';
+  bio.textContent = '🏪 ຮ້ານຂາຍຂອງທີມງານ Admin BizSun';
   bio.style.display = 'block';
 
   // Apply gold border to avatar
@@ -12347,9 +12242,9 @@ function updateAdminNotifBadge(){
   if(!currentUser) return;
   let total = 0;
   if(currentUser.isAdmin){
-    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]').filter(r=>r.status==='pending');
-    const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]').filter(r=>r.status==='pending');
-    const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]').filter(a=>a.status==='pending');
+    const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]').filter(r=>r.status==='pending');
+    const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]').filter(r=>r.status==='pending');
+    const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]').filter(a=>a.status==='pending');
     total = deps.length + withs.length + apps.length;
     // Also sync from Supabase in background to keep badge accurate across devices
     if(total===0){
@@ -12398,9 +12293,9 @@ function addAdminNotification(type, data){
   sbSetSetting('admin_notifs', JSON.stringify(_notifs2)).catch(()=>{});
   updateAdminNotifBadge();
 }
-//  WHATSAPP NOTIFICATION SYSTEM — ຂາຍດີ-Shop
+//  WHATSAPP NOTIFICATION SYSTEM — BizSun-Shop
 const WA_ADMIN = '8562054966168';
-const WA_SITE  = 'tavanh903-byte.github.io/khaidee1';
+const WA_SITE  = 'tavanh903-byte.github.io/bizsun';
 
 function sendWANotif(msg){
   const text = Array.isArray(msg) ? msg.join('\n') : msg;
@@ -12522,7 +12417,7 @@ function waNewGameOrder(user, order){
 
 // 🏪 ແຈ້ງເຕືອນຜູ້ຂາຍໂດຍກົງ — ສັ່ງຊື້ສິນຄ້າຂອງຕົນ
 function waNotifySeller(order){
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const app = apps.find(a => a.userId === order.sellerId && a.status === 'approved');
   const sellerWA = app ? (app.waNum||'') : '';
   if(!sellerWA) return; // ບໍ່ມີເບີ WA ຜູ້ຂາຍ
@@ -12556,7 +12451,7 @@ function waNotifySeller(order){
 function waNotifyDiamondSeller(order){
   if(!order.sellerId || order.sellerId==='admin') return;
   // หาเบอร์ WA ของ seller จาก kd_seller_apps
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const db = getUsersDB();
   const sellerUser = db[order.sellerId];
   const sellerApp = apps.find(a=>a.userId===order.sellerId && a.status==='approved');
@@ -12713,9 +12608,9 @@ function renderDeadlineCountdown(orderId, deadlineMs){
 
 // ============ ADMIN HISTORY TAB ============
 function renderAdminHistory(){
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-  const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
+  const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const all = [...deps.map(r=>({...r,_type:'deposit'})),...withs.map(r=>({...r,_type:'withdraw'})),...apps.map(r=>({...r,_type:'seller'}))].sort((a,b)=>new Date(b.date)-new Date(a.date));
   if(!all.length) return '<div style="text-align:center;padding:30px;color:var(--text2)">ຍັງບໍ່ມີປະຫວັດ</div>';
   return all.map((r,i)=>`
@@ -12853,8 +12748,8 @@ let adminUsername = '';
 let currentAdminTab = 'overview';
 
 // Persistent store for deposit/withdraw requests with images
-let depositRequests = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-let withdrawRequests = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+let depositRequests = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
+let withdrawRequests = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
 
 // ── Admin Login Security ──
 let _adminLoginAttempts = 0;
@@ -12875,20 +12770,20 @@ function showAdminLogin(){
   openModal('adminLoginModal');
 }
 
-let adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'0');
-let adminIncome  = parseInt(localStorage.getItem('kd_admin_income')||'0');   // ລາຍຮັບ (ເມື່ອ approve ຖອນ)
-let adminExpense = parseInt(localStorage.getItem('kd_admin_expense')||'0');  // ລາຍຈ່າຍ (ເມື່ອ approve ຝາກ)
-let adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');   // ກຳໄລ (ຄ່າທຳນຽມ)
+let adminSysWallet = parseInt(localStorage.getItem('bs_admin_sys_wallet')||'0');
+let adminIncome  = parseInt(localStorage.getItem('bs_admin_income')||'0');   // ລາຍຮັບ (ເມື່ອ approve ຖອນ)
+let adminExpense = parseInt(localStorage.getItem('bs_admin_expense')||'0');  // ລາຍຈ່າຍ (ເມື່ອ approve ຝາກ)
+let adminProfit  = parseInt(localStorage.getItem('bs_admin_profit')||'0');   // ກຳໄລ (ຄ່າທຳນຽມ)
 
 function saveAdminSysWallet(){
-  localStorage.setItem('kd_admin_sys_wallet', String(adminSysWallet));
+  localStorage.setItem('bs_admin_sys_wallet', String(adminSysWallet));
   // ✅ sync ໄປ Supabase
   sbSetSetting('admin_sys_wallet', String(adminSysWallet)).catch(e=>console.warn('saveAdminSysWallet:',e));
 }
 function saveAdminFinance(){
-  localStorage.setItem('kd_admin_income',  String(adminIncome));
-  localStorage.setItem('kd_admin_expense', String(adminExpense));
-  localStorage.setItem('kd_admin_profit',  String(adminProfit));
+  localStorage.setItem('bs_admin_income',  String(adminIncome));
+  localStorage.setItem('bs_admin_expense', String(adminExpense));
+  localStorage.setItem('bs_admin_profit',  String(adminProfit));
   // ✅ sync ໄປ Supabase
   sbSetSetting('admin_finance', JSON.stringify({
     income: adminIncome, expense: adminExpense, profit: adminProfit
@@ -12980,10 +12875,10 @@ async function doAdminLogin(){
   panel.style.display = 'flex';
   document.getElementById('adminWelcome').textContent = 'ຍິນດີຕ້ອນຮັບ '+u;
   // Reset to initial state
-  adminSysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'0');
-  adminIncome  = parseInt(localStorage.getItem('kd_admin_income')||'0');
-  adminExpense = parseInt(localStorage.getItem('kd_admin_expense')||'0');
-  adminProfit  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
+  adminSysWallet = parseInt(localStorage.getItem('bs_admin_sys_wallet')||'0');
+  adminIncome  = parseInt(localStorage.getItem('bs_admin_income')||'0');
+  adminExpense = parseInt(localStorage.getItem('bs_admin_expense')||'0');
+  adminProfit  = parseInt(localStorage.getItem('bs_admin_profit')||'0');
   updateAdminSysWalletDisplay();
   updateAdminFinanceDisplay();
   currentAdminTab = 'overview';
@@ -13065,8 +12960,8 @@ function renderAdminTab(tab){
   if(tab==='overview'){
     // Sync users + products + orders
     Promise.all([sbLoadUsers(), syncFinanceFromSupabase(),
-      sbLoadProducts().then(p=>{ if(p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); }}),
-      sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('kd_orders',JSON.stringify(o)); }})
+      sbLoadProducts().then(p=>{ if(p.length){ products=p; localStorage.setItem('bs_products',JSON.stringify(p)); }}),
+      sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('bs_orders',JSON.stringify(o)); }})
     ]).finally(()=>{ c.innerHTML = renderAdminOverview() + renderAdminUpdateAnnounce(); });
   }
   else if(tab==='search'){
@@ -13078,7 +12973,7 @@ function renderAdminTab(tab){
   else if(tab==='products'){
     // ✅ Fix: โหลด products + phone parts พร้อมกันก่อน render
     Promise.all([
-      sbLoadProducts().then(p=>{ if(p&&p.length){ products=p; localStorage.setItem('kd_products',JSON.stringify(p)); }}).catch(()=>{}),
+      sbLoadProducts().then(p=>{ if(p&&p.length){ products=p; localStorage.setItem('bs_products',JSON.stringify(p)); }}).catch(()=>{}),
       sbLoadPhoneParts().then(pts=>{ if(pts&&pts.length){ _allPhoneParts=pts; _ppgParts=[...pts]; savePhoneParts(pts); }}).catch(()=>{
         if(!_allPhoneParts.length) _allPhoneParts = getPhoneParts();
         if(!_ppgParts.length) _ppgParts = [..._allPhoneParts];
@@ -13088,7 +12983,7 @@ function renderAdminTab(tab){
   else if(tab==='orders'){
     // Render local data immediately (fast), then sync Supabase in background
     c.innerHTML = renderAdminOrders();
-    sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('kd_orders',JSON.stringify(o)); c.innerHTML = renderAdminOrders(); } }).catch(()=>{});
+    sbLoadOrders().then(o=>{ if(o.length){ orders=o; localStorage.setItem('bs_orders',JSON.stringify(o)); c.innerHTML = renderAdminOrders(); } }).catch(()=>{});
   }
   else if(tab==='finance'){
     syncFinanceFromSupabase().then(()=>{ c.innerHTML = renderAdminFinance(); }).catch(()=>{ c.innerHTML = renderAdminFinance(); });
@@ -13303,10 +13198,10 @@ function renderAdminOverview(){
   const registeredCnt = Object.keys(db).filter(id=>!OWNER_ACCOUNTS.find(o=>o.id===id)).length;
   const totalWallet = allUsers.reduce((s,u)=>s+(u.wallet||0),0);
   const totalSales = orders.reduce((s,o)=>s+(o.total||0),0);
-  const sysWallet = parseInt(localStorage.getItem('kd_admin_sys_wallet')||'0');
-  const adminIncomeCur  = parseInt(localStorage.getItem('kd_admin_income')||'0');
-  const adminExpenseCur = parseInt(localStorage.getItem('kd_admin_expense')||'0');
-  const adminProfitCur  = parseInt(localStorage.getItem('kd_admin_profit')||'0');
+  const sysWallet = parseInt(localStorage.getItem('bs_admin_sys_wallet')||'0');
+  const adminIncomeCur  = parseInt(localStorage.getItem('bs_admin_income')||'0');
+  const adminExpenseCur = parseInt(localStorage.getItem('bs_admin_expense')||'0');
+  const adminProfitCur  = parseInt(localStorage.getItem('bs_admin_profit')||'0');
   const pwaCount = parseInt(localStorage.getItem('kd_pwa_install_count')||'0');
   // sync pwa count from Supabase in background
   sbGetSetting('pwa_install_count').then(v=>{
@@ -13406,12 +13301,12 @@ function renderAdminOverview(){
 
 // ════════════════════════════════════════════════
 //  ONLINE PRESENCE SYSTEM
-//  kd_online = { userId: lastSeenTimestamp }
+//  bs_online = { userId: lastSeenTimestamp }
 // ════════════════════════════════════════════════
 const ONLINE_THRESHOLD = 5 * 60 * 1000; // 5 min = online
 
-function getOnlineMap(){ try{ return JSON.parse(localStorage.getItem('kd_online')||'{}'); }catch(e){return{};} }
-function saveOnlineMap(m){ localStorage.setItem('kd_online', JSON.stringify(m)); }
+function getOnlineMap(){ try{ return JSON.parse(localStorage.getItem('bs_online')||'{}'); }catch(e){return{};} }
+function saveOnlineMap(m){ localStorage.setItem('bs_online', JSON.stringify(m)); }
 
 function heartbeat(){
   if(!currentUser) return;
@@ -13679,7 +13574,7 @@ function adminDoSearchProduct(){
 }
 
 function renderAdminSellers(){
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const pending = apps.filter(a=>a.status==='pending');
   const approved = apps.filter(a=>a.status==='approved');
   const rejected = apps.filter(a=>a.status==='rejected');
@@ -13718,11 +13613,11 @@ function renderAdminSellers(){
 }
 
 function adminApproveSeller(userId){
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const idx = apps.findIndex(a=>a.userId===userId&&a.status==='pending');
   if(idx<0)return;
   apps[idx].status='approved';
-  localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  localStorage.setItem('bs_seller_apps',JSON.stringify(apps));
   sbUpdateSellerAppStatus(userId,'approved').catch(()=>{});
   const waNum = apps[idx].waNum || '';
   const db1 = getUsersDB();
@@ -13736,11 +13631,11 @@ function adminApproveSeller(userId){
 }
 
 function adminRejectSeller(userId){
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const idx = apps.findIndex(a=>a.userId===userId&&a.status==='pending');
   if(idx<0)return;
   apps[idx].status='rejected';
-  localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  localStorage.setItem('bs_seller_apps',JSON.stringify(apps));
   sbUpdateSellerAppStatus(userId,'rejected').catch(()=>{});
   const db2 = getUsersDB();
   if(db2[userId]){
@@ -13902,8 +13797,8 @@ function adminDeleteUser(uid){
   supa.from('kd_users').delete().eq('id',uid).then(()=>{}).catch(()=>{});
   if(currentUser && currentUser.id===uid){
     currentUser=null;
-    localStorage.removeItem('kd_session');
-    localStorage.removeItem('kd_user');
+    localStorage.removeItem('bs_session');
+    localStorage.removeItem('bs_user');
     updateProfileUI();
   }
   renderAdminTab('users');
@@ -13969,7 +13864,7 @@ async function adminDeleteProduct(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
   _addDeletedProductId(id);
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
   showNotif('⏳ ກຳລັງລຶບ...', 'info');
   try{
     await sbDeleteProduct(id);
@@ -14003,7 +13898,7 @@ async function adminDeleteProductSearch(id){
   if(!confirm('ລຶບສິນຄ້ານີ້?')) return;
   products = products.filter(p=>p.id!==id);
   _addDeletedProductId(id);
-  localStorage.setItem('kd_products', JSON.stringify(products));
+  localStorage.setItem('bs_products', JSON.stringify(products));
   showNotif('⏳ ກຳລັງລຶບ...', 'info');
   try{
     await sbDeleteProduct(id);
@@ -14126,13 +14021,13 @@ async function syncFinanceFromSupabase(){
     // Deposits
     const sbDeps = await sbLoadDeposits();
     if(sbDeps && sbDeps.length){
-      const localDeps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+      const localDeps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
       const merged = sbDeps.map(sd=>{
         const local = localDeps.find(l=>l.id===sd.id);
         return { ...local, ...sd, slipImg: sd.slipImg || (local&&local.slipImg) || null };
       });
       localDeps.forEach(ld=>{ if(!merged.find(m=>m.id===ld.id)) merged.push(ld); });
-      localStorage.setItem('kd_deposit_requests', JSON.stringify(merged));
+      localStorage.setItem('bs_deposit_requests', JSON.stringify(merged));
       // ✅ If current user has newly approved deposit, reload wallet from Supabase
       if(currentUser){
         const myNewApproved = merged.filter(d=>
@@ -14156,18 +14051,18 @@ async function syncFinanceFromSupabase(){
     // Withdrawals
     const sbWiths = await sbLoadWithdrawals();
     if(sbWiths && sbWiths.length){
-      const localWiths = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+      const localWiths = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
       const mergedW = sbWiths.map(sw=>{
         const local = localWiths.find(l=>l.id===sw.id);
         return { ...local, ...sw, qrImg: sw.qrImg || (local&&local.qrImg) || null };
       });
       localWiths.forEach(lw=>{ if(!mergedW.find(m=>m.id===lw.id)) mergedW.push(lw); });
-      localStorage.setItem('kd_withdraw_requests', JSON.stringify(mergedW));
+      localStorage.setItem('bs_withdraw_requests', JSON.stringify(mergedW));
     }
     // Seller Apps
     const sbApps = await sbLoadSellerApps();
     if(sbApps && sbApps.length){
-      const localApps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+      const localApps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
       const mergedA = sbApps.map(sa=>{
         const local = localApps.find(l=>l.userId===sa.userId);
         return { ...local, ...sa,
@@ -14175,15 +14070,15 @@ async function syncFinanceFromSupabase(){
           selfieImg: sa.selfieImg || (local&&local.selfieImg)||null };
       });
       localApps.forEach(la=>{ if(!mergedA.find(m=>m.userId===la.userId)) mergedA.push(la); });
-      localStorage.setItem('kd_seller_apps', JSON.stringify(mergedA));
+      localStorage.setItem('bs_seller_apps', JSON.stringify(mergedA));
     }
   } catch(e){ console.warn('syncFinance error:', e); }
 }
 
 function renderAdminFinance(){
   // syncFinanceFromSupabase() ถูกเรียกก่อนหน้าแล้วใน renderAdminTab
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
-  const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+  const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
+  const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
   const pendDeps = deps.filter(r=>r.status==='pending');
   const pendWiths = withs.filter(r=>r.status==='pending');
   const totalDep = deps.reduce((s,r)=>s+(r.amount||0),0);
@@ -14257,7 +14152,7 @@ function adminViewImg(src){
 }
 
 function adminApproveDeposit(id){
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+  const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
   const idx = deps.findIndex(d=>d.id===id);
   if(idx<0){ showNotif('\u274c \u01a1\u0eb8\u0ec8\u0ea1\u0eb5\u0e82\u0ec9\u0ead\u0ea1\u0eb9\u0e99'); return; }
   if(deps[idx].status==='approved'){ showNotif('\u0ead\u0eb0\u0e99\u0eb8\u0ea1\u0eb1\u0e94\u0ec1\u0ea5\u0ec9\u0ea7'); return; }
@@ -14268,7 +14163,7 @@ function adminApproveDeposit(id){
   // update status local
   deps[idx].status = 'approved';
   deps[idx].approvedAt = new Date().toLocaleString('lo-LA');
-  localStorage.setItem('kd_deposit_requests', JSON.stringify(deps));
+  localStorage.setItem('bs_deposit_requests', JSON.stringify(deps));
 
   // update local DB
   const _dbDep = getUsersDB();
@@ -14308,11 +14203,11 @@ function adminApproveDeposit(id){
   updateAdminNotifBadge();
 }
 function adminRejectDeposit(id){
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+  const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
   const idx = deps.findIndex(d=>d.id===id);
   if(idx<0) return;
   deps[idx].status='rejected';
-  localStorage.setItem('kd_deposit_requests',JSON.stringify(deps));
+  localStorage.setItem('bs_deposit_requests',JSON.stringify(deps));
   sbUpdateDepositStatus(id,'rejected').catch(e=>console.warn('sbRejectDeposit:',e));
   const card = document.getElementById('fin_'+id);
   if(card){ card.style.transition='opacity .4s'; card.style.opacity='0'; setTimeout(()=>card.remove(),400); }
@@ -14346,7 +14241,7 @@ function clearAdminWithdrawSlip(wid){
 }
 
 function adminApproveWithdraw(id){
-  const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+  const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
   const idx = withs.findIndex(w=>w.id===id);
   if(idx<0) return;
   const netAmount = withs[idx].net || withs[idx].amount || 0;
@@ -14368,13 +14263,13 @@ function adminApproveWithdraw(id){
   // Schedule slip reset after 5 minutes
   if(slipData){
     setTimeout(()=>{
-      const w2 = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+      const w2 = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
       const i2 = w2.findIndex(x=>x.id===id);
-      if(i2>=0){ w2[i2].adminSlip=null; localStorage.setItem('kd_withdraw_requests',JSON.stringify(w2)); }
+      if(i2>=0){ w2[i2].adminSlip=null; localStorage.setItem('bs_withdraw_requests',JSON.stringify(w2)); }
       delete _adminWithdrawSlips[id];
     }, 5*60*1000);
   }
-  localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
+  localStorage.setItem('bs_withdraw_requests',JSON.stringify(withs));
   // ✅ Sync approved status to Supabase
   sbUpdateWithdrawalStatus(id, 'approved').catch(e=>console.warn('sbUpdateWithdrawal(approve):', e));
   const card = document.getElementById('fin_'+id);
@@ -14385,14 +14280,14 @@ function adminApproveWithdraw(id){
   updateAdminNotifBadge();
 }
 function adminRejectWithdraw(id){
-  const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+  const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
   const idx = withs.findIndex(w=>w.id===id);
   if(idx<0) return;
   const _dbWit = getUsersDB();
   const _witUid = withs[idx].userId;
   if(_dbWit[_witUid]){ _dbWit[_witUid].wallet=(_dbWit[_witUid].wallet||0)+(withs[idx].amount||0); saveUsersDB(_dbWit); if(currentUser&&currentUser.id===_witUid){currentUser.wallet=_dbWit[_witUid].wallet;saveUser();updateWalletDisplay();} }
   withs[idx].status='rejected';
-  localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
+  localStorage.setItem('bs_withdraw_requests',JSON.stringify(withs));
   sbUpdateWithdrawalStatus(id,'rejected').catch(e=>console.warn('sbRejectWith:',e));
   // ✅ sync wallet refund ກັບ Supabase
   if(_witUid){
@@ -14412,13 +14307,13 @@ function adminRejectWithdraw(id){
 
 // Seller approve/reject to hide card too
 function adminApproveSellerCard(userId){
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const idx = apps.findIndex(a=>a.userId===userId&&a.status==='pending');
   if(idx<0) return;
   apps[idx].status='approved';
   const waNum = apps[idx].waNum || '';
   delete apps[idx].idCardImg; delete apps[idx].selfieImg;
-  localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  localStorage.setItem('bs_seller_apps',JSON.stringify(apps));
   sbUpdateSellerAppStatus(userId,'approved').catch(()=>{});
   const _dbSC = getUsersDB();
   if(_dbSC[userId]){ _dbSC[userId].isSeller=true; _dbSC[userId].sellerPending=false; _dbSC[userId].sellerWA=waNum; saveUsersDB(_dbSC); sbSaveUser(_dbSC[userId]).catch(()=>{}); }
@@ -14429,11 +14324,11 @@ function adminApproveSellerCard(userId){
   updateAdminNotifBadge();
 }
 function adminRejectSellerCard(userId){
-  const apps = JSON.parse(localStorage.getItem('kd_seller_apps')||'[]');
+  const apps = JSON.parse(localStorage.getItem('bs_seller_apps')||'[]');
   const idx = apps.findIndex(a=>a.userId===userId&&a.status==='pending');
   if(idx<0) return;
   apps[idx].status='rejected';
-  localStorage.setItem('kd_seller_apps',JSON.stringify(apps));
+  localStorage.setItem('bs_seller_apps',JSON.stringify(apps));
   sbUpdateSellerAppStatus(userId,'rejected').catch(()=>{});
   const _dbRC = getUsersDB();
   if(_dbRC[userId]){ _dbRC[userId].sellerPending=false; _dbRC[userId].sellerRejected=true; saveUsersDB(_dbRC); sbSaveUser(_dbRC[userId]).catch(()=>{}); }
@@ -14752,9 +14647,9 @@ async function doDeposit(){
       status:'pending',
     };
 
-    const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+    const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
     deps.push(newDep);
-    localStorage.setItem('kd_deposit_requests', JSON.stringify(deps));
+    localStorage.setItem('bs_deposit_requests', JSON.stringify(deps));
     if(slipHash) saveSlipHash(slipHash);
 
     // Upload + Supabase (background)
@@ -14770,9 +14665,9 @@ async function doDeposit(){
           const url=await uploadImageToStorage(f,'slips');
           if(url&&!url.startsWith('data:')){
             newDep.slipImg=url;
-            const d2=JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+            const d2=JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
             const di=d2.findIndex(d=>d.id===newDep.id);
-            if(di>=0){d2[di].slipImg=url;localStorage.setItem('kd_deposit_requests',JSON.stringify(d2));}
+            if(di>=0){d2[di].slipImg=url;localStorage.setItem('bs_deposit_requests',JSON.stringify(d2));}
           }
         }
         await sbSaveDeposit(newDep);
@@ -14987,9 +14882,9 @@ async function doWithdraw(){
     const qrImg = e.target.result;
     currentUser.wallet=(currentUser.wallet||0)-amt;
     saveUser(); updateWalletDisplay();
-    const withs = JSON.parse(localStorage.getItem('kd_withdraw_requests')||'[]');
+    const withs = JSON.parse(localStorage.getItem('bs_withdraw_requests')||'[]');
     withs.push({id:'WDR-'+Date.now(),userId:currentUser.id,userName:currentUser.name,amount:amt,fee,net,feeRate,qrImg,date:new Date().toLocaleString(),status:'pending',type:'withdraw'});
-    localStorage.setItem('kd_withdraw_requests',JSON.stringify(withs));
+    localStorage.setItem('bs_withdraw_requests',JSON.stringify(withs));
     sbSaveWithdrawal(withs[withs.length-1]).catch(e=>console.warn('sbSaveWithdrawal:',e));
     // ✅ sync wallet ໄປ Supabase ທັນທີ
     supa.from('kd_users').update({ wallet: currentUser.wallet, updated_at: new Date().toISOString() })
@@ -15521,13 +15416,13 @@ function submitGameTopup(gameId){
 // ══════════════════════════════════════════
 // 🚀 UPDATE ANNOUNCEMENT SYSTEM
 // ══════════════════════════════════════════
-const KD_UPDATE_KEY = 'kd_last_seen_update';
+const BS_UPDATE_KEY = 'bs_last_seen_update';
 
 function checkUpdateOnLoad(){
   try {
-    const info = JSON.parse(localStorage.getItem('kd_update_info')||'null');
+    const info = JSON.parse(localStorage.getItem('bs_update_info')||'null');
     if(!info) return;
-    const seen = localStorage.getItem(KD_UPDATE_KEY);
+    const seen = localStorage.getItem(BS_UPDATE_KEY);
     if(seen !== info.ver){
       // Show popup after splash
       setTimeout(()=>{ showUpdatePopupData(info); }, 500);
@@ -15550,15 +15445,15 @@ function showUpdatePopupData(info){
 
 function showUpdatePopup(){
   try {
-    const info = JSON.parse(localStorage.getItem('kd_update_info')||'null');
+    const info = JSON.parse(localStorage.getItem('bs_update_info')||'null');
     if(info) showUpdatePopupData(info);
   } catch(e){}
 }
 
 function dismissUpdatePopup(){
   try {
-    const info = JSON.parse(localStorage.getItem('kd_update_info')||'null');
-    if(info) localStorage.setItem(KD_UPDATE_KEY, info.ver);
+    const info = JSON.parse(localStorage.getItem('bs_update_info')||'null');
+    if(info) localStorage.setItem(BS_UPDATE_KEY, info.ver);
   } catch(e){}
   document.getElementById('updatePopup').style.display = 'none';
   // Hide button after dismissed
@@ -15567,7 +15462,7 @@ function dismissUpdatePopup(){
 }
 
 function renderAdminUpdateAnnounce(){
-  const info = JSON.parse(localStorage.getItem('kd_update_info')||'null') || {ver:'',note:'',changes:[]};
+  const info = JSON.parse(localStorage.getItem('bs_update_info')||'null') || {ver:'',note:'',changes:[]};
   const changesVal = (info.changes||[]).join('\n');
   return `
   <div style="margin-top:14px;background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:16px">
@@ -15618,15 +15513,15 @@ async function claudeWriteUpdate() {
   if(statusEl) statusEl.textContent = '';
 
   // ดึงข้อมูลล่าสุดจาก localStorage — สิ่งที่มีในระบบตอนนี้
-  const info = JSON.parse(localStorage.getItem('kd_update_info')||'null') || {};
+  const info = JSON.parse(localStorage.getItem('bs_update_info')||'null') || {};
   const currentVer = info.ver || '';
-  const products = JSON.parse(localStorage.getItem('kd_products')||'[]');
+  const products = JSON.parse(localStorage.getItem('bs_products')||'[]');
   const users = JSON.parse(localStorage.getItem('kd_users')||'{}');
-  const deps = JSON.parse(localStorage.getItem('kd_deposit_requests')||'[]');
+  const deps = JSON.parse(localStorage.getItem('bs_deposit_requests')||'[]');
 
   // สร้าง context สำหรับ Claude
   const context = `
-แอพ: ຂາຍດີ (Khaidee) Marketplace ລາວ
+แอพ: BizSun Marketplace ລາວ
 ເວີຊັ່ນປັດຈຸບັນ: ${currentVer || 'ຍັງບໍ່ໄດ້ກຳນົດ'}
 ຈຳນວນສິນຄ້າ: ${products.length} ລາຍການ
 ຈຳນວນຜູ້ໃຊ້: ${Object.keys(users).length} ຄົນ
@@ -15653,7 +15548,7 @@ async function claudeWriteUpdate() {
           role: 'user',
           content: `${context}
 
-ຊ່ວຍຂຽນປະກາດອັບເດດແອັບໃຫ້ດ້ວຍ ໃນພາສາລາວ ສຳລັບແອັບ ຂາຍດີ
+ຊ່ວຍຂຽນປະກາດອັບເດດແອັບໃຫ້ດ້ວຍ ໃນພາສາລາວ ສຳລັບແອັບ BizSun
 
 ຕອບກັບ JSON ເທົ່ານັ້ນ ບໍ່ຕ້ອງມີ markdown:
 {
@@ -15706,10 +15601,10 @@ function adminPublishUpdate(){
   const changes = changesRaw ? changesRaw.split('\n').map(l=>l.trim()).filter(Boolean) : [];
   const force = document.getElementById('aupForce')?.checked || false;
   const info = { ver, note: note||'ມີການອັບເດດໃໝ່!', changes, force, publishedAt: new Date().toISOString() };
-  localStorage.setItem('kd_update_info', JSON.stringify(info));
+  localStorage.setItem('bs_update_info', JSON.stringify(info));
   sbSetSetting('update_info', JSON.stringify(info)).catch(e=>console.warn('sbSetSetting:',e));
   // Reset seen so all users see popup
-  localStorage.removeItem(KD_UPDATE_KEY);
+  localStorage.removeItem(BS_UPDATE_KEY);
   const statusEl = document.getElementById('aupStatus');
   if(statusEl) statusEl.innerHTML = '<span style="color:#4caf50">✅ ປະກາດສຳເລັດ! ລູກຄ້າຈະເຫັນ Popup ຕອນເປີດແອັບ</span>';
   showNotif('📢 ປະກາດອັບເດດສຳເລັດ!');
@@ -15719,8 +15614,8 @@ function adminPublishUpdate(){
 }
 
 function adminClearUpdate(){
-  localStorage.removeItem('kd_update_info');
-  localStorage.removeItem(KD_UPDATE_KEY);
+  localStorage.removeItem('bs_update_info');
+  localStorage.removeItem(BS_UPDATE_KEY);
   const btn = document.getElementById('updateBtn');
   if(btn){ btn.classList.remove('has-update'); btn.style.display='none'; }
   const statusEl = document.getElementById('aupStatus');
@@ -16923,81 +16818,6 @@ async function acsmConfirmRelease(orderId){
   }
 }
 
-</script>
-
-<!-- ── PWA Install Banner ── -->
-<div id="pwaInstallBanner" style="display:none;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:12px;right:12px;z-index:99000;background:linear-gradient(135deg,#1a1b24,#22242f);border:1px solid rgba(201,168,76,.35);border-radius:18px;padding:14px;display:none;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:460px;margin:0 auto;animation:bannerUp .4s cubic-bezier(.34,1.56,.64,1) both">
-  <div style="font-size:26px;width:44px;height:44px;background:linear-gradient(135deg,#c9a84c,#f0d080);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🛒</div>
-  <div style="flex:1;overflow:hidden">
-    <div id="pwaBannerTitle" style="font-size:13px;font-weight:700;color:#e8e0cc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ຕິດຕັ້ງ ຂາຍດີ</div>
-    <div id="pwaBannerDesc" style="font-size:11px;color:#a09880;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ທຳໃຫ້ເປັນ App ໄດ້ເລີຍ ຟຣີ!</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-    <button id="pwaInstallBtn" style="background:linear-gradient(135deg,#c9a84c,#f0d080);color:#000;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">ຕິດຕັ້ງ</button>
-    <button id="pwaCloseBtn" style="background:rgba(255,255,255,.08);color:#a09880;border:1px solid rgba(255,255,255,.1);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:11px">✕</button>
-  </div>
-</div>
-<!-- iOS tip -->
-<div id="pwaIosTip" style="display:none;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);left:16px;right:16px;z-index:99001;background:#1a1b24;border:1px solid rgba(201,168,76,.4);border-radius:16px;padding:16px 40px 16px 16px;font-size:13px;color:#e8e0cc;line-height:1.7;box-shadow:0 8px 32px rgba(0,0,0,.7)">
-  <span id="pwaIosClose" style="position:absolute;top:10px;right:12px;font-size:14px;color:#a09880;cursor:pointer">✕</span>
-  ເພື່ອເພີ່ມແອັບລົງໜ້າຈໍຫຼັກ:<br>ກົດ <strong>Share ⬆️</strong> ແລ້ວເລືອກ <strong>"Add to Home Screen"</strong>
-</div>
-<style>
-@keyframes bannerUp{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-</style>
-<script>
-/* ── Service Worker Register ── */
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/khaidee1/sw.js',{scope:'/khaidee1/'})
-      .then(reg=>{
-        reg.addEventListener('updatefound',()=>{
-          const w=reg.installing;
-          w&&w.addEventListener('statechange',()=>{
-            if(w.state==='installed'&&navigator.serviceWorker.controller) w.postMessage({type:'SKIP_WAITING'});
-          });
-        });
-      }).catch(e=>console.warn('[SW]',e));
-  });
-  let _ref=false;
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!_ref){_ref=true;location.reload();}});
-}
-/* ── Install Banner ── */
-(function(){
-  const BKEY='kd_pwa_dismissed', IKEY='kd_ios_dismissed', DAYS=7;
-  const banner=document.getElementById('pwaInstallBanner');
-  const iosTip=document.getElementById('pwaIosTip');
-  if(!banner) return;
-  if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone) return;
-  if(!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-  function stale(k){const t=localStorage.getItem(k);return t&&Date.now()-+t<DAYS*864e5;}
-  const isIos=/iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isSafari=/Safari/i.test(navigator.userAgent)&&!/Chrome|CriOS|FxiOS/i.test(navigator.userAgent);
-  if(isIos&&isSafari&&!stale(IKEY)){
-    document.getElementById('pwaBannerTitle').textContent='ເພີ່ມລົງໜ້າຈໍຫຼັກ';
-    document.getElementById('pwaBannerDesc').textContent='ເປີດໄດ້ໄວຄືກັບ App ຈິງ';
-    document.getElementById('pwaInstallBtn').textContent='ຄູ່ມື';
-    setTimeout(()=>{banner.style.display='flex';},3500);
-    document.getElementById('pwaInstallBtn').onclick=()=>{banner.style.display='none';iosTip.style.display='block';};
-    document.getElementById('pwaCloseBtn').onclick=()=>{banner.style.display='none';localStorage.setItem(IKEY,Date.now());};
-    document.getElementById('pwaIosClose').onclick=()=>{iosTip.style.display='none';localStorage.setItem(IKEY,Date.now());};
-    return;
-  }
-  let dp=null;
-  window.addEventListener('beforeinstallprompt',e=>{
-    e.preventDefault(); dp=e;
-    if(!stale(BKEY)) setTimeout(()=>{banner.style.display='flex';},3500);
-  });
-  document.getElementById('pwaInstallBtn').onclick=async()=>{
-    banner.style.display='none';
-    if(!dp) return;
-    dp.prompt();
-    await dp.userChoice;
-    dp=null;
-  };
-  document.getElementById('pwaCloseBtn').onclick=()=>{banner.style.display='none';localStorage.setItem(BKEY,Date.now());};
-  window.addEventListener('appinstalled',()=>{banner.style.display='none';dp=null;});
-})();
 </script>
 </body>
 </html>
