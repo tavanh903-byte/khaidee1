@@ -17,6 +17,7 @@
     align-items: center; justify-content: center;
     padding: 32px 24px; text-align: center;
   }
+  #loadingMsg { font-size: 14px; color: #a09880; }
   .icon { font-size: 72px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
   h1 {
     font-size: 22px; font-weight: 700; margin-bottom: 10px;
@@ -25,22 +26,66 @@
     -webkit-background-clip: text; background-clip: text;
   }
   p { font-size: 14px; color: #a09880; line-height: 1.8; max-width: 280px; margin-bottom: 28px; }
-  button {
+  .btn-primary {
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
     color: #000; border: none; border-radius: 14px;
     padding: 14px 32px; font-size: 15px; font-weight: 700;
     cursor: pointer; box-shadow: 0 4px 20px rgba(201,168,76,.4);
+    width: 100%; max-width: 280px; margin-bottom: 12px;
   }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-10px); }
+  .btn-secondary {
+    background: rgba(201,168,76,.1);
+    color: var(--gold); border: 1px solid rgba(201,168,76,.3); border-radius: 14px;
+    padding: 12px 32px; font-size: 14px; font-weight: 600;
+    cursor: pointer; width: 100%; max-width: 280px;
   }
+  .offline-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,100,80,.15); border: 1px solid rgba(255,100,80,.3);
+    border-radius: 20px; padding: 6px 14px; font-size: 12px; color: #ff8070;
+    margin-bottom: 20px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #ff6050; animation: pulse 1.5s infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
 </head>
 <body>
-  <div class="icon">📡</div>
-  <h1>ບໍ່ມີການເຊື່ອມຕໍ່ອິນເຕີເນັດ</h1>
-  <p>ກະລຸນາກວດສອບ Wi-Fi ຫຼື ອິນເຕີເນັດຂອງທ່ານ ແລ້ວລອງໃໝ່ອີກຄັ້ງ</p>
-  <button onclick="location.reload()">🔄 ລອງໃໝ່</button>
+
+  <!-- ขณะลองเปิด cache -->
+  <div id="loadingMsg">⏳ ກຳລັງໂຫລດ...</div>
+
+  <!-- แสดงเฉพาะถ้า cache ไม่มีจริงๆ -->
+  <div id="offlineCard" style="display:none;flex-direction:column;align-items:center;">
+    <div class="icon">📡</div>
+    <div class="offline-badge"><span class="dot"></span> Offline Mode</div>
+    <h1>ບໍ່ມີການເຊື່ອມຕໍ່ອິນເຕີເນັດ</h1>
+    <p>ກະລຸນາກວດສອບ Wi-Fi ຫຼື ອິນເຕີເນັດຂອງທ່ານ ແລ້ວລອງໃໝ່ອີກຄັ້ງ</p>
+    <button class="btn-primary" onclick="window.location.reload()">🔄 ລອງໃໝ່ອີກຄັ້ງ</button>
+    <button class="btn-secondary" onclick="window.location.replace('/khaidee1/')">📱 ເປີດ App (Offline)</button>
+  </div>
+
+<script>
+  // ลองเปิด app จาก cache ก่อนเลย ถ้ามีก็ redirect ไปเลย
+  async function tryOpenCachedApp() {
+    try {
+      const cacheNames = await caches.keys();
+      const shellCache = cacheNames.find(n => n.startsWith('khaidee-shell'));
+      if (shellCache) {
+        const cache = await caches.open(shellCache);
+        const cached = await cache.match('/khaidee1/') || await cache.match('/khaidee1/index.html');
+        if (cached) {
+          window.location.replace('/khaidee1/');
+          return;
+        }
+      }
+    } catch(e) {}
+    // ไม่มี cache → แสดงหน้า offline
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('offlineCard').style.display = 'flex';
+  }
+
+  tryOpenCachedApp();
+</script>
 </body>
 </html>

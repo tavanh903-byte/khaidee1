@@ -84,7 +84,34 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  /* ── Shell files (HTML / JS / CSS) → Cache-First → fallback offline ── */
+  /* ── Navigation (HTML page requests) → Network-First → Cache → offline.html ── */
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // อัปเดต cache เสมอเมื่อมีอินเทอร์เน็ต
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_SHELL).then(c => c.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          // offline → ลอง cache ก่อน
+          const cached =
+            await caches.match(request) ||
+            await caches.match('/khaidee1/') ||
+            await caches.match('/khaidee1/index.html');
+          // มี cache → เปิด app ได้เลย ไม่ต้องไป offline.html
+          if (cached) return cached;
+          // ไม่มีเลย → offline.html
+          return caches.match('/khaidee1/offline.html');
+        })
+    );
+    return;
+  }
+
+  /* ── Shell files (JS / CSS / icons) → Cache-First → fallback offline ── */
   if (
     url.pathname.startsWith('/khaidee1/') &&
     (url.hostname === self.location.hostname || url.hostname === 'tavanh903-byte.github.io')
@@ -96,8 +123,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  /* ── อื่นๆ → Network ── */
-  event.respondWith(fetch(request).catch(() => caches.match('/khaidee1/offline.html')));
+  /* ── อื่นๆ → Network → silent fail ── */
+  event.respondWith(fetch(request).catch(() => new Response('', { status: 503 })));
 });
 
 /* ================================================================

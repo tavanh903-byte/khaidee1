@@ -16946,6 +16946,48 @@ async function acsmConfirmRelease(orderId){
 @keyframes bannerUp{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 <script>
+/* ── Offline / Online Status Banner ── */
+(function(){
+  const BANNER_ID = 'kdOfflineBanner';
+  function createBanner(){
+    if(document.getElementById(BANNER_ID)) return;
+    const el = document.createElement('div');
+    el.id = BANNER_ID;
+    el.innerHTML = '<span>📡</span><span id="kdOfflineMsg">ທ່ານບໍ່ມີອິນເຕີເນັດ — ໃຊ້ງານໄດ້ສ່ວນໜຶ່ງ</span>';
+    Object.assign(el.style, {
+      position:'fixed', top:'0', left:'0', right:'0',
+      zIndex:'999999',
+      background:'linear-gradient(90deg,#3d0000,#6b1a00)',
+      color:'#ffcca0',
+      display:'none', alignItems:'center', justifyContent:'center',
+      gap:'8px', padding:'10px 16px',
+      fontSize:'13px', fontWeight:'600',
+      fontFamily:"'Sarabun',sans-serif",
+      boxShadow:'0 2px 12px rgba(0,0,0,.5)',
+      transition:'transform .3s ease',
+      paddingTop: 'calc(10px + env(safe-area-inset-top, 0px))'
+    });
+    document.body.appendChild(el);
+    return el;
+  }
+  function show(){
+    const b = document.getElementById(BANNER_ID) || createBanner();
+    b.style.display = 'flex';
+  }
+  function hide(){
+    const b = document.getElementById(BANNER_ID);
+    if(b){ b.style.display = 'none'; }
+  }
+  // ตรวจสอบตอนโหลด
+  if(!navigator.onLine) { document.addEventListener('DOMContentLoaded', show); show(); }
+  window.addEventListener('offline', () => { show(); });
+  window.addEventListener('online',  () => {
+    const b = document.getElementById(BANNER_ID);
+    if(b){ b.querySelector('#kdOfflineMsg').textContent = '✅ ເຊື່ອມຕໍ່ແລ້ວ!'; b.style.background='linear-gradient(90deg,#003d00,#006b1a)'; b.style.color='#a0ffb0'; }
+    setTimeout(hide, 2500);
+  });
+})();
+
 /* ── Service Worker Register ── */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
